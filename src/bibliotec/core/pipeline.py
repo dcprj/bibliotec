@@ -234,7 +234,7 @@ def _process_one(
     with finalize_lock:
         if confidence >= config.general.confidence_min:
             filename = _organizer_filename(classification)
-            organizer.add_organized(
+            entry = organizer.add_organized(
                 source_path=source_path,
                 grande_area=result.grande_area,
                 area_basica=result.area_basica,
@@ -247,7 +247,7 @@ def _process_one(
             # Persistir apenas classificações aprovadas no cache.
             cache.put(sha256, taxonomy_version, model_name, classification,
                       doc.used_ocr, confidence_min=config.general.confidence_min)
-            _emit_terminal("organizer", "organized",
+            _emit_terminal("organizer", entry.status.value,
                   f"Arquivo organizado: {filename}")
         else:
             reason = result.reasoning or f"Confiança {confidence:.2f} abaixo do limiar"

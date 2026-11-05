@@ -224,7 +224,7 @@ def _executar_organize(
                                  remaining=0, current_file="")
 
         def emit_with_progress(event):
-            on_event(event)
+            events.append(event)
             # Capturar total de PDFs quando o scanner terminar.
             if event.stage == "scanner" and event.status == "completed" and event.total_files:
                 total_files_var[0] = event.total_files or 0
@@ -239,8 +239,8 @@ def _executar_organize(
                     current_file=f"{event.stage}: {Path(event.source_path).name}",
                 )
                 return
-            # Eventos terminais (organized / manual_review / error): avançar a barra.
-            if event.status in ("organized", "manual_review", "error"):
+            # Eventos terminais (organized / manual_review / error / duplicate_skipped): avançar a barra.
+            if event.status in ("organized", "manual_review", "error", "duplicate_skipped"):
                 progress.advance(task, 1)
                 comp = int(progress.tasks[task].completed)
                 tot = int(progress.tasks[task].total or 0)

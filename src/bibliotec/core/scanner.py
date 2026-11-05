@@ -75,7 +75,7 @@ def _validate_pdf_signature(path: Path) -> bool:
     try:
         with open(path, "rb") as fh:
             header = fh.read(PDF_SIGNATURE_BYTES)
-        return header.startswith(PDF_SIGNATURE)
+        return PDF_SIGNATURE in header
     except OSError:
         return False
 

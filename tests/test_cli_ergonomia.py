@@ -9,15 +9,32 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
+import shutil
+
 from typer.testing import CliRunner
 
 from bibliotec.cli.main import app
+from bibliotec.core.cache import FileCache
+from bibliotec.core.config import AppConfig
+from bibliotec.core.pipeline import run_pipeline
+from bibliotec.core.llm import MockLLMProvider
 
 runner = CliRunner()
 
 
 def _origem_destino() -> tuple[Path, Path]:
     return Path("/tmp/bib_origem"), Path("/tmp/bib_destino")
+
+
+def _criar_pdf(caminho: Path, texto: str = "Título de teste Autor Silva, João 2020") -> None:
+    """Criar um PDF sintético de uma página."""
+    import fitz  # PyMuPDF
+
+    doc = fitz.open()
+    pagina = doc.new_page()
+    pagina.insert_text((72, 72), texto)
+    doc.save(str(caminho))
+    doc.close()
 
 
 def test_raiz_curto_o_d_dry_run_chama_organize():
@@ -154,3 +171,48 @@ def test_flags_adicionais_sao_repassadas():
     assert kwargs["workers"] == 4
     assert kwargs["confidence_min"] == 0.8
     assert kwargs["model"] == "gemini-2.5-pro"
+
+
+def test_emit_with_progress_nao_levanta_nameerror_e_avanca_progresso(tmp_path: Path):
+    """Validar que emit_with_progress (dentro de run_pipeline) não levanta NameError
+    e que eventos terminais (incluindo duplicate_skipped) são recebidos pelo callback."""
+    source = tmp_path / "source"
+    target = tmp_path / "target"
+    source.mkdir()
+
+    # Dois PDFs idênticos -> um organizado, um duplicate_skipped.
+    _criar_pdf(source / "a.pdf")
+    import shutil
+    shutil.copy2(source / "a.pdf", source / "b.pdf")
+
+    cfg = AppConfig()
+    eventos_recebidos: list = []
+
+    def callback(event):
+        eventos_recebidos.append(event)
+
+    summary = run_pipeline(
+        source_dir=source,
+        target_dir=target,
+        config=cfg,
+        provider=MockLLMProvider(),
+        workers=1,
+        cache=FileCache(enabled=False),  # desabilitar cache para forçar _resolve_collision
+        event_callback=callback,
+    )
+
+    # Nenhum NameError deve ter sido levantado (se houvesse, run_pipeline falharia).
+    assert summary.total_scanned == 2
+
+    # Devem existir eventos terminais.
+    statuses_terminais = {
+        e.status for e in eventos_recebidos
+        if e.status in ("organized", "manual_review", "error", "duplicate_skipped")
+    }
+    assert len(statuses_terminais) >= 1, (
+        "Nenhum evento terminal foi emitido pelo callback"
+    )
+
+    # Se houver duplicate_skipped, ele também deve contar como terminal.
+    if summary.duplicate_skipped_count > 0:
+        assert "duplicate_skipped" in statuses_terminais

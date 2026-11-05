@@ -5,6 +5,25 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.0.5] - 2026-11-05
+
+### Corrigido
+
+- **src/bibliotec/cli/main.py**: removida chamada a `on_event` inexistente que
+  travava a barra de progresso visual.
+- **src/bibliotec/core/scanner.py**: conformidade com ISO 32000-1 § 7.5.2 na
+  detecção de `%PDF-` dentro dos primeiros 1024 bytes. Leitores conformes
+  aceitam até 1024 bytes de dados arbitrários prévios (ex: cabeçalhos
+  HTTP/multipart de repositórios institucionais), então a verificação agora
+  busca a assinatura em qualquer posição do cabeçalho lido, não apenas no
+  início.
+
+### Adicionado
+
+- **src/bibliotec/core/pipeline.py**: suporte a avanço de barra de progresso
+  em eventos `duplicate_skipped`, garantindo que o contador de progresso
+  avance corretamente também para arquivos duplicados pulados.
+
 ## [0.0.4] - 2026-11-05
 
 ### Adicionado
