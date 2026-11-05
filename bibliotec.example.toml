@@ -1,0 +1,30 @@
+# Arquivo de configuração de EXEMPLO do BiblioTEC
+# Copie para bibliotec.toml (local) ou ~/.config/bibliotec/config.toml (global)
+# e preencha com seus próprios valores. Este arquivo é apenas um modelo:
+# não contém chaves de API reais e não deve ser versionado com segredos.
+
+[general]
+# Modo de varredura da pasta de origem: true = recursivo (padrão), false = plano
+recursive = true
+# Operação padrão nos arquivos: "copy" (copiar) ou "move" (mover)
+file_operation = "copy"
+# Limiar mínimo de confiança (0.0 a 1.0) para organizar automaticamente
+confidence_min = 0.70
+# Número de workers (1 = execução sequencial padrão segura para OCR e SQLite)
+workers = 1
+# Ativar cache local SQLite por SHA-256 (~/.cache/bibliotec/state.db)
+use_cache = true
+
+[llm]
+# Provedor de classificação (MVP implementa "gemini")
+provider = "gemini"
+# Modelo padrão do provedor
+model = "gemini-3.8-flash"
+
+[api_keys]
+# Chave de API do provedor de LLM (Gemini) - OBTENHA em https://aistudio.google.com/
+gemini_api_key = ""
+# Chave de API do Google Books (opcional)
+google_books_api_key = ""
+# E-mail opcional para uso do Polite Pool do OpenAlex (até 10 req/s)
+openalex_polite_email = ""

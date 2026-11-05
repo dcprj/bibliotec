@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bibliotec"
+version = "0.0.1"
+description = "Organizador Acadêmico de PDFs baseado na taxonomia CAPES/CNPq"
+requires-python = ">=3.11"
+authors = [
+    { name = "Dario" },
+]
+dependencies = [
+    "pymupdf",
+    "docling",
+    "httpx",
+    "tenacity",
+    "rapidfuzz",
+    "python-stdnum",
+    "pydantic",
+    "pydantic-settings",
+    "google-genai",
+    "typer",
+    "rich",
+    "tomli-w",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "respx",
+    "ruff",
+]
+
+[project.scripts]
+bibliotec = "bibliotec.cli.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bibliotec"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: testes lentos sobre o repositorio de referencia",
+]
+filterwarnings = [
+    "ignore::FutureWarning:google.*",
+    "ignore::FutureWarning:fitz.*",
+    "ignore:.*urllib3 v2 only supports OpenSSL.*",
+    "ignore::DeprecationWarning:.*SwigPy.*",
+    "ignore::DeprecationWarning:.*swigvarlink.*",
+]

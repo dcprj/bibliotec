@@ -1,0 +1,96 @@
+{
+  "version": "capes-cnpq-v1",
+  "areas": {
+    "Ciências Agrárias": [
+      "Agronomia",
+      "Engenharia Agrícola",
+      "Ciência dos Alimentos",
+      "Florestas",
+      "Medicina Veterinária",
+      "Zootecnia",
+      "Recursos Naturais",
+      "Desenvolvimento Rural"
+    ],
+    "Ciências Biológicas": [
+      "Bioquímica",
+      "Biologia Celular e Molecular",
+      "Botânica",
+      "Ecologia",
+      "Fisiologia",
+      "Genética",
+      "Imunologia",
+      "Microbiologia",
+      "Parasitologia",
+      "Zoologia"
+    ],
+    "Ciências da Saúde": [
+      "Medicina",
+      "Enfermagem",
+      "Nutrição",
+      "Farmácia",
+      "Odontologia",
+      "Fisioterapia",
+      "Fonoaudiologia",
+      "Terapia Ocupacional",
+      "Saúde Coletiva"
+    ],
+    "Ciências Exatas e da Terra": [
+      "Matemática",
+      "Computação",
+      "Estatística",
+      "Física",
+      "Química",
+      "Geociências"
+    ],
+    "Ciências Humanas": [
+      "Filosofia",
+      "História",
+      "Geografia",
+      "Sociologia",
+      "Antropologia",
+      "Psicologia",
+      "Comunicação",
+      "Educação",
+      "Ciência Política"
+    ],
+    "Ciências Sociais Aplicadas": [
+      "Direito",
+      "Administração",
+      "Economia",
+      "Contabilidade",
+      "Turismo",
+      "Biblioteconomia",
+      "Arquivologia",
+      "Serviço Social",
+      "Relações Internacionais"
+    ],
+    "Engenharias": [
+      "Engenharia Civil",
+      "Engenharia Mecânica",
+      "Engenharia Elétrica",
+      "Engenharia Química",
+      "Engenharia de Produção",
+      "Engenharia de Materiais",
+      "Engenharia de Transportes",
+      "Engenharia Nuclear"
+    ],
+    "Letras": [
+      "Língua Portuguesa",
+      "Língua Inglesa",
+      "Língua Espanhola",
+      "Língua Francesa",
+      "Língua Alemã",
+      "Línguas Clássicas",
+      "Literatura",
+      "Tradutologia"
+    ],
+    "Linguística, Letras e Artes": [
+      "Linguística",
+      "Artes Cênicas",
+      "Artes Visuais",
+      "Música",
+      "Dança",
+      "Cinema e Audiovisual"
+    ]
+  }
+}

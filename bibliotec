@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+"""Executável do BiblioTEC.
+
+Adiciona automaticamente 'src' ao sys.path e chama bibliotec.cli.main:main,
+permitindo rodar './bibliotec -o <origem> -d <destino> [--dry-run]' direto
+no terminal, sem precisar definir PYTHONPATH.
+Se existir um ambiente virtual em .venv, usa seu Python automaticamente
+(fallback para o interpretador atual).
+"""
+
+import os
+import sys
+
+# Se existir .venv, re-executar com seu Python para usar as dependências
+# instaladas ali (fallback para sys.executable se não existir).
+_VENV_PYTHON = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), ".venv", "bin", "python"
+)
+if os.path.exists(_VENV_PYTHON) and sys.executable != _VENV_PYTHON:
+    os.execv(_VENV_PYTHON, [_VENV_PYTHON] + sys.argv)
+
+import warnings  # noqa: E402
+
+# Silenciar avisos de bibliotecas externas antes de qualquer outro import.
+warnings.filterwarnings("ignore", category=FutureWarning, module=r"google\..*")
+warnings.filterwarnings("ignore", category=FutureWarning, module=r"fitz.*")
+warnings.filterwarnings(
+    "ignore", message=r".*urllib3 v2 only supports OpenSSL.*"
+)
+warnings.filterwarnings(
+    "ignore", category=DeprecationWarning, message=r".*SwigPy.*|.*swigvarlink.*"
+)
+
+# Adicionar o diretório src/ ao sys.path para importar o pacote bibliotec.
+_SRC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
+if _SRC_DIR not in sys.path:
+    sys.path.insert(0, _SRC_DIR)
+
+from bibliotec.cli.main import main  # noqa: E402
+
+if __name__ == "__main__":
+    main()

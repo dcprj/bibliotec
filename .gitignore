@@ -1,0 +1,38 @@
+# Ambientes virtuais
+.venv/
+venv/
+.env
+
+# Caches Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Metadados de terminais e editores locais
+.maestri/
+.vscode/
+
+# Bancos de dados SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Diretórios de saída de testes
+test_output/
+test-results/
+
+# Arquivo de configuração local com chaves de API
+bibliotec.toml
+.bibliotec.example.toml
+
+# Repositório de PDFs de teste (1.1 GB - não versionar)
+repositorio_de_pdfs_para_testes/
+
+# Logs
+*.log
