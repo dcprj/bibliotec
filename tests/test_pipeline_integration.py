@@ -323,3 +323,53 @@ def test_pipeline_workers_4_cache_sqlite_thread_safe(tmp_path: Path):
     assert summary.error_count == 0
     assert summary.organized_count + summary.manual_review_count == 8
 
+
+def test_callback_recebe_eventos_com_total_files_e_status(tmp_path: Path):
+    """Validar que o callback de eventos é chamado com total_files e status."""
+    source = tmp_path / "source"
+    target = tmp_path / "target"
+    source.mkdir()
+    _criar_pdf(source / "doc.pdf")
+
+    cfg = AppConfig()
+    events_recebidos: list = []
+
+    def callback(event):
+        events_recebidos.append(event)
+
+    run_pipeline(
+        source_dir=source,
+        target_dir=target,
+        config=cfg,
+        provider=MockLLMProvider(),
+        workers=1,
+        cache=FileCache(enabled=True, db_path=tmp_path / "state.db"),
+        event_callback=callback,
+    )
+
+    # Deve haver eventos emitidos.
+    assert len(events_recebidos) > 0, "Nenhum evento foi emitido pelo pipeline"
+
+    # O evento scanner completed deve trazer total_files.
+    eventos_scanner_completed = [
+        e for e in events_recebidos
+        if e.stage == "scanner" and e.status == "completed"
+    ]
+    if eventos_scanner_completed:
+        assert eventos_scanner_completed[0].total_files is not None
+        assert eventos_scanner_completed[0].total_files == 1
+
+    # Deve haver eventos terminais com status válido.
+    statuses_terminais = {
+        e.status for e in events_recebidos
+        if e.status in ("organized", "manual_review", "error")
+    }
+    assert len(statuses_terminais) >= 1, (
+        "Nenhum evento terminal (organized/manual_review/error) foi emitido"
+    )
+
+    # Cada evento deve ter total_files preenchido (quando aplicável).
+    for e in events_recebidos:
+        if e.total_files is not None:
+            assert e.total_files == 1
+

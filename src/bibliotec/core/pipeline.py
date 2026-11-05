@@ -63,7 +63,7 @@ def _emit(callback: EventCallback | None, stage: str, source_path: Path,
             status=status,
             message=message,
             total_files=total_files,
-            completed_files=completed_count[0] if completed_count else None,
+            completed_files=completed_files,
         ))
     except Exception:
         pass
@@ -358,6 +358,8 @@ def run_pipeline(
         else:
             provider = MockLLMProvider()
 
+    total_scanned = len(valid_pdfs)
+
     # Lock serializando OCR (dentro do extrator) e persistência (cache+organizer).
     finalize_lock = threading.RLock()
     # Contador de arquivos concluídos (para o campo completed_files dos eventos).
@@ -391,8 +393,6 @@ def run_pipeline(
             total_files=total_scanned,
         )
 
-    total_scanned = len(valid_pdfs)
-
     if workers > 1:
         # Paralelizar etapas de rede (enriquecimento + LLM); OCR e persistência
         # permanecem serializados pelo finalize_lock.
@@ -414,5 +414,6 @@ def run_pipeline(
 
     summary = organizer.finalize(total_scanned=total_scanned)
     _emit(emit, "pipeline", target_dir, "completed",
-          f"{summary.organized_count} organizado(s), {summary.manual_review_count} revisão manual")
+          f"{summary.organized_count} organizado(s), {summary.manual_review_count} revisão manual",
+          total_files=total_scanned)
     return summary

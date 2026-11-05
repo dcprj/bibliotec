@@ -1,4 +1,9 @@
+import os
 import warnings
+
+# Silenciar poluição de terminal do PyTorch e Docling ao carregar pesos de OCR.
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Silenciar avisos de bibliotecas externas antes de qualquer outro import do pacote.
 warnings.filterwarnings("ignore", category=FutureWarning, module=r"google\..*")
@@ -9,5 +14,7 @@ warnings.filterwarnings(
 warnings.filterwarnings(
     "ignore", category=DeprecationWarning, message=r".*SwigPy.*|.*swigvarlink.*"
 )
+warnings.filterwarnings("ignore", message=r".*Redirects are currently not supported.*")
+warnings.filterwarnings("ignore", category=UserWarning, module=r"torch\..*")
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"

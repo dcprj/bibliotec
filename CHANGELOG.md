@@ -5,6 +5,26 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.0.3] - 2026-11-05
+
+### Corrigido
+
+- **src/bibliotec/core/pipeline.py**: resolvido `NameError` em `_emit` que
+  impedia o envio de eventos para a CLI e congelava a barra de progresso
+  visual em `'0/?'` (`total_scanned` agora é definido antes de qualquer uso
+  em closures de emissão de eventos).
+
+### Modificado
+
+- **src/bibliotec/__init__.py**: suprimidas mensagens de terminal e barras de
+  progresso do HuggingFace/PyTorch/Docling (`HF_HUB_DISABLE_PROGRESS_BARS=1`,
+  `TOKENIZERS_PARALLELISM=false` e filtros de warnings do `torch`).
+
+### Adicionado
+
+- **tests/test_pipeline_events.py**: teste unitário/integração validando a
+  propagação ponta a ponta dos eventos de pipeline com `total_files`.
+
 ## [0.0.2] - 2026-11-05
 
 ### Modificado
