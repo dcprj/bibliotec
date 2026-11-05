@@ -5,6 +5,24 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.0.4] - 2026-11-05
+
+### Adicionado
+
+- **src/bibliotec/storage/companion.py**: geração automática de arquivo
+  companheiro (.md) ao lado do PDF organizado, contendo Front Matter YAML
+  completo (título, subtítulo, autores, ano, grande área, área básica, tipo,
+  DOI, ISBN, SHA-256, confidence_score, used_ocr, source_file, organized_at)
+  e referência bibliográfica formatada segundo a ABNT NBR 6023.
+- **src/bibliotec/storage/organizer.py**: integração para materializar o
+  arquivo companheiro juntamente com o PDF no destino (arquivo `.md` com o
+  mesmo nome base do PDF, gerado apenas quando não for `--dry-run`).
+- **src/bibliotec/storage/__init__.py**: exporta `generate_companion_markdown`
+  como parte da API pública da camada de armazenamento.
+- **tests/test_companion.py**: 18 testes unitários e de integração para o
+  módulo companheiro (formato de autores ABNT, referência bibliográfica,
+  front matter YAML, geração de markdown, integração com organizer).
+
 ## [0.0.3] - 2026-11-05
 
 ### Corrigido

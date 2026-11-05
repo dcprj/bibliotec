@@ -26,6 +26,8 @@ from bibliotec.core.models import (
     ProcessStatus,
 )
 
+from bibliotec.storage.companion import generate_companion_markdown
+
 REVISAO_DIR = "revisao_manual"
 MANIFEST_FILENAME = "manifest.json"
 RELATORIO_FILENAME = "relatorio_revisao.md"
@@ -213,6 +215,19 @@ class LibraryOrganizer:
             status = ProcessStatus.ORGANIZED
             self._organized_count += 1
             self._materialize(source_path, destination_path, sha256, status)
+            # Gerar arquivo companheiro (.md) apenas quando não for dry_run.
+            if not self.dry_run and classification:
+                companion_path = destination_path.with_suffix(".md")
+                companion_content = generate_companion_markdown(
+                    destination_path=companion_path,
+                    source_path=source_path,
+                    sha256=sha256,
+                    classification=classification,
+                    used_ocr=used_ocr,
+                )
+                companion_path.write_text(
+                    companion_content, encoding="utf-8"
+                )
 
         entry = FileManifestEntry(
             source_path=str(source_path),

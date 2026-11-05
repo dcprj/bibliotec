@@ -4,7 +4,12 @@ Exporta o formatador de nomes (format_academic_filename) e o
 materializador de diretórios (LibraryOrganizer).
 """
 
+from bibliotec.storage.companion import generate_companion_markdown
 from bibliotec.storage.namer import format_academic_filename
 from bibliotec.storage.organizer import LibraryOrganizer
 
-__all__ = ["format_academic_filename", "LibraryOrganizer"]
+__all__ = [
+    "format_academic_filename",
+    "LibraryOrganizer",
+    "generate_companion_markdown",
+]
