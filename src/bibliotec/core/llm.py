@@ -129,7 +129,7 @@ class GeminiProvider:
         self._types = genai_types
         # Cadeia de fallback quando o modelo padrão retorna 404 NOT_FOUND
         # ou 503 UNAVAILABLE (alta demanda).
-        self._fallback_models = ["gemini-3.8-flash", "gemini-3-flash-preview", "gemini-2.5-pro"]
+        self._fallback_models = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"]
 
     def _is_404(self, exc: BaseException) -> bool:
         """Verificar se uma exceção do google-genai é um erro HTTP 404 (NOT_FOUND)."""

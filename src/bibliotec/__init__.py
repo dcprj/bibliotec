@@ -10,4 +10,4 @@ warnings.filterwarnings(
     "ignore", category=DeprecationWarning, message=r".*SwigPy.*|.*swigvarlink.*"
 )
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"

@@ -5,6 +5,27 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.0.2] - 2026-11-05
+
+### Modificado
+
+- **src/bibliotec/core/llm.py**: cadeia de fallback atualizada para modelos
+  ativos da Google (`gemini-3.8-flash`, `gemini-3.7-flash`,
+  `gemini-3.5-flash`, `gemini-3.1-flash-lite`).
+
+### Corrigido
+
+- **src/bibliotec/core/pipeline.py** e **src/bibliotec/cli/main.py**:
+  contagem atômica thread-safe na barra de progresso da CLI com múltiplos
+  workers (`completed_count` incrementado apenas ao final de cada PDF, via
+  `list[int]` mutável + `threading.Lock`, garantindo `progress.advance`
+  chamado exatamente 1 vez por PDF concluído).
+
+### Removido
+
+- **src/bibliotec/core/llm.py**: modelos legados descontinuados da Google
+  (`gemini-2.5-pro`) removidos da cadeia de fallback.
+
 ## [0.0.1] - 2026-11-05
 
 ### Adicionado

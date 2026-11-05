@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bibliotec"
-version = "0.0.1"
+version = "0.0.2"
 description = "Organizador Acadêmico de PDFs baseado na taxonomia CAPES/CNPq"
 requires-python = ">=3.11"
 authors = [
