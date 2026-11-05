@@ -5,6 +5,26 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.0.6] - 2026-11-05
+
+### Adicionado
+
+- **src/bibliotec/storage/organizer.py**: gerenciamento de duplicatas no
+  destino em `duplicatas/<arquivo>` com criação automática de `.md`
+  companheiro apontando para a obra canônica organizada, garantindo que
+  `--move` limpe 100% da origem sem perda de dados.
+- **src/bibliotec/cli/main.py**: subcomando `bibliotec cache`
+  (`clean`, `clear`, `status`, `path`) para gerenciamento facilitado do
+  cache SQLite local.
+- **tests/test_cache.py**: suíte de testes do cache SQLite (conexão WAL,
+  get/put, confidence_min, --no-cache, invalidação).
+
+### Modificado
+
+- **src/bibliotec/cli/main.py**: barra de progresso visual reestruturada
+  com `Rich Group` e `Live`, posicionando a barra consolidada no topo e a
+  linha de status do arquivo/estágio abaixo dela.
+
 ## [0.0.5] - 2026-11-05
 
 ### Corrigido

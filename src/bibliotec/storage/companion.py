@@ -189,3 +189,60 @@ def generate_companion_markdown(
     lines.append(f"- **SHA-256:** {sha256}")
 
     return "\n".join(lines) + "\n"
+
+
+def generate_duplicate_companion_markdown(
+    duplicate_source: Path,
+    canonical_dest: Path,
+    sha256: str,
+) -> str:
+    """Gerar arquivo companheiro .md para uma duplicata detectada.
+
+    Front Matter YAML com status='duplicata' e corpo explicando que o arquivo
+    é idêntico à obra canônica, informando o caminho do PDF canônico e do seu
+    .md companheiro.
+    """
+    detected_at = datetime.now(timezone.utc).isoformat()
+    # Caminho canônico: relativo se possível, absoluto caso contrário.
+    try:
+        canonical_rel = canonical_dest.resolve().relative_to(Path.cwd().resolve())
+        canonical_path = str(canonical_rel)
+    except ValueError:
+        canonical_path = str(canonical_dest.resolve())
+    canonical_md = str(Path(canonical_path).with_suffix(".md"))
+
+    lines: list[str] = []
+    lines.append("---")
+    lines.append(f"status: 'duplicata'")
+    lines.append(f"original_filename: {duplicate_source.name!r}")
+    lines.append(f"sha256: {sha256}")
+    lines.append(f"canonical_path: {canonical_path!r}")
+    lines.append(f"detected_at: {detected_at}")
+    lines.append("---")
+    lines.append("")
+
+    lines.append(f"# {duplicate_source.name}")
+    lines.append("")
+    lines.append("## Arquivo Duplicado Detectado")
+    lines.append("")
+    lines.append(
+        "Este arquivo é uma **duplicata exata** (mesmo SHA-256) de uma obra "
+        "já organizada na árvore temática. Por não haver conteúdo novo, ele não "
+        "foi copiado novamente."
+    )
+    lines.append("")
+    lines.append("### Informações da Duplicata")
+    lines.append("")
+    lines.append(f"- **Arquivo duplicado:** {duplicate_source.name}")
+    lines.append(f"- **SHA-256:** {sha256}")
+    lines.append(f"- **Detectado em:** {detected_at}")
+    lines.append("")
+    lines.append("### Obra Canônica")
+    lines.append("")
+    lines.append(f"- **PDF canônico:** {canonical_path}")
+    lines.append(f"- **Companheiro canônico:** {canonical_md}")
+    lines.append("")
+    lines.append("> Ambos os arquivos compartilham o mesmo conteúdo binário; "
+    "apenas o primeiro foi mantido na árvore temática.")
+
+    return "\n".join(lines) + "\n"

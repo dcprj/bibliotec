@@ -26,9 +26,13 @@ from bibliotec.core.models import (
     ProcessStatus,
 )
 
-from bibliotec.storage.companion import generate_companion_markdown
+from bibliotec.storage.companion import (
+    generate_companion_markdown,
+    generate_duplicate_companion_markdown,
+)
 
 REVISAO_DIR = "revisao_manual"
+DUPLICATAS_DIR = "duplicatas"
 MANIFEST_FILENAME = "manifest.json"
 RELATORIO_FILENAME = "relatorio_revisao.md"
 COLLISION_SUFFIX = " (2)"
@@ -209,8 +213,42 @@ class LibraryOrganizer:
         if colisao_status == ProcessStatus.DUPLICATE_SKIPPED.value:
             status = ProcessStatus.DUPLICATE_SKIPPED
             self._duplicate_skipped_count += 1
-            # Não copiar/mover: duplicata exata já está no destino.
-            self._materialize_dry(source_path, destination_path)
+
+            # Não copiar/mover para a árvore temática: duplicata exata já
+            # existe no destino. Em vez disso, encaminha para a pasta
+            # duplicatas/ (a menos que dry_run).
+            if not self.dry_run:
+                duplicatas_dir = self.target_dir / DUPLICATAS_DIR
+                duplicatas_dir.mkdir(parents=True, exist_ok=True)
+
+                # Resolver colisão de nomes dentro da pasta duplicatas.
+                dup_dest_path = duplicatas_dir / source_path.name
+                dup_nome_final, _ = _resolve_collision(
+                    duplicatas_dir, source_path.name, source_path,
+                    self._planned_destinations,
+                )
+                dup_dest_path = duplicatas_dir / dup_nome_final
+                self._planned_destinations[dup_dest_path] = sha256
+
+                if self.file_operation == "move":
+                    # Movimentação segura: copiar e remover o original.
+                    shutil.copy2(source_path, dup_dest_path)
+                    try:
+                        source_path.unlink()
+                    except OSError:
+                        pass
+                else:
+                    shutil.copy2(source_path, dup_dest_path)
+
+                # Gravar .md companheiro da duplicata.
+                md_content = generate_duplicate_companion_markdown(
+                    duplicate_source=source_path,
+                    canonical_dest=destination_path,
+                    sha256=sha256,
+                )
+                md_path = dup_dest_path.with_suffix(".md")
+                md_path.write_text(md_content, encoding="utf-8")
+            # No dry_run apenas planeja sem tocar em disco.
         else:
             status = ProcessStatus.ORGANIZED
             self._organized_count += 1

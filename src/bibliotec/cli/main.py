@@ -32,7 +32,8 @@ from pathlib import Path
 from typing import Optional
 
 import typer
-from rich.console import Console
+from rich.console import Console, Group
+from rich.live import Live
 from rich.table import Table
 from rich.progress import (
     Progress,
@@ -56,7 +57,7 @@ from bibliotec.core.config import (
 )
 from bibliotec.core.models import ProcessStatus
 from bibliotec.core.pipeline import run_pipeline
-from bibliotec.core.cache import FileCache
+from bibliotec.core.cache import CACHE_DB_PATH, FileCache
 from bibliotec.core.llm import GeminiProvider, MockLLMProvider
 from bibliotec.core.scanner import scan_directory
 from bibliotec.storage.organizer import LibraryOrganizer
@@ -208,47 +209,62 @@ def _executar_organize(
     total_files_var: list[int] = [0]  # mutable para capturar do evento scanner
     completed_files_var: list[int] = [0]
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[bold blue]{task.description}"),
+    # Barra de progresso consolidada no topo.
+    prog_bar = Progress(
+        TextColumn("[bold blue]{task.fields[top_desc]}", justify="left"),
         BarColumn(bar_width=40),
         MofNCompleteColumn(),
         TaskProgressColumn(),
         TextColumn("• Restam: [bold yellow]{task.fields[remaining]}[/bold yellow]"),
         TimeElapsedColumn(),
         TimeRemainingColumn(),
-        TextColumn("• [dim]{task.fields[current_file]}[/dim]"),
         transient=False,
-    ) as progress:
-        task = progress.add_task("Iniciando pipeline...", total=None,
-                                 remaining=0, current_file="")
+    )
+    # Linha de status do arquivo atual abaixo da barra.
+    status_prog = Progress(
+        TextColumn("  ↳ [dim]{task.description}[/dim]", justify="left"),
+        transient=False,
+    )
+    group = Group(prog_bar, status_prog)
+
+    task_geral = prog_bar.add_task(
+        "Progresso Geral", total=None, remaining=0, top_desc="Iniciando pipeline...",
+    )
+    task_status = status_prog.add_task("Status do arquivo atual", start=False)
+
+    with Live(group, console=console, refresh_per_second=10, transient=False):
 
         def emit_with_progress(event):
             events.append(event)
             # Capturar total de PDFs quando o scanner terminar.
             if event.stage == "scanner" and event.status == "completed" and event.total_files:
                 total_files_var[0] = event.total_files or 0
-                if not progress.tasks[task].total:
-                    progress.update(task, total=event.total_files,
-                                    remaining=event.total_files)
-            # Eventos de início (started): apenas atualizar descrição e arquivo atual.
+                prog_bar.update(
+                    task_geral,
+                    total=event.total_files,
+                    remaining=event.total_files,
+                )
+            # Eventos de início (started): atualizar status abaixo.
             if event.status == "started":
-                progress.update(
-                    task,
+                status_prog.update(
+                    task_status,
                     description=f"{event.stage}: {Path(event.source_path).name}",
-                    current_file=f"{event.stage}: {Path(event.source_path).name}",
                 )
                 return
-            # Eventos terminais (organized / manual_review / error / duplicate_skipped): avançar a barra.
+            # Eventos terminais: avançar barra geral e atualizar status.
             if event.status in ("organized", "manual_review", "error", "duplicate_skipped"):
-                progress.advance(task, 1)
-                comp = int(progress.tasks[task].completed)
-                tot = int(progress.tasks[task].total or 0)
+                prog_bar.advance(task_geral, 1)
+                comp = int(prog_bar.tasks[task_geral].completed)
+                tot = int(prog_bar.tasks[task_geral].total or 0)
                 rem = max(0, tot - comp)
-                progress.update(
-                    task,
+                prog_bar.update(
+                    task_geral,
                     remaining=rem,
-                    current_file=Path(event.source_path).name,
+                    top_desc=f"{event.stage}: {Path(event.source_path).name} - {event.status}",
+                )
+                status_prog.update(
+                    task_status,
+                    description=f"{event.stage}: {Path(event.source_path).name} - {event.status}",
                 )
 
         try:
@@ -525,6 +541,59 @@ def config_path(
         console.print(str(GLOBAL_CONFIG_PATH))
     else:
         console.print(str(GLOBAL_CONFIG_PATH))
+
+
+# --------------------------------------------------------------------------- #
+# Grupo: cache
+# --------------------------------------------------------------------------- #
+cache_app = typer.Typer(help="Gerenciar o cache SQLite local (~/.cache/bibliotec/state.db).")
+app.add_typer(cache_app, name="cache")
+
+
+@cache_app.command("clean")
+@cache_app.command("clear")
+def cache_clean() -> None:
+    """Remover o banco de dados SQLite do cache local."""
+    if CACHE_DB_PATH.exists():
+        # Remover state.db e arquivos auxiliares (WAL, SHM).
+        removed = []
+        for suffix in ("", "-wal", "-shm"):
+            p = Path(str(CACHE_DB_PATH) + suffix)
+            if p.exists():
+                p.unlink()
+                removed.append(p.name)
+        if removed:
+            console.print(f"[green]Cache limpo:[/green] {', '.join(removed)} removido(s) de {CACHE_DB_PATH}")
+        else:
+            console.print(f"[yellow]Cache já estava vazio:[/yellow] {CACHE_DB_PATH}")
+    else:
+        console.print(f"[yellow]Nenhum cache encontrado em:[/yellow] {CACHE_DB_PATH}")
+
+
+@cache_app.command("status")
+def cache_status() -> None:
+    """Exibir informações sobre o cache SQLite local."""
+    if CACHE_DB_PATH.exists():
+        tamanho_kb = CACHE_DB_PATH.stat().st_size / 1024
+        # Contar registros na tabela processed_files.
+        import sqlite3
+        conn = sqlite3.connect(str(CACHE_DB_PATH))
+        try:
+            cur = conn.execute("SELECT COUNT(*) FROM processed_files")
+            registros = cur.fetchone()[0]
+        finally:
+            conn.close()
+        console.print(f"[blue]Caminho:[/blue] {CACHE_DB_PATH}")
+        console.print(f"[blue]Tamanho:[/blue] {tamanho_kb:.1f} KB")
+        console.print(f"[blue]Registros:[/blue] {registros}")
+    else:
+        console.print(f"[yellow]Nenhum cache encontrado em:[/yellow] {CACHE_DB_PATH}")
+
+
+@cache_app.command("path")
+def cache_path() -> None:
+    """Imprimir o caminho absoluto do banco de dados do cache."""
+    console.print(str(CACHE_DB_PATH))
 
 
 def main() -> None:
