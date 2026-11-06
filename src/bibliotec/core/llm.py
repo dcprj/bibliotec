@@ -329,7 +329,7 @@ class NvidiaProvider:
     def __init__(
         self,
         api_key: str,
-        model: str = "meta/llama-3.2-90b-vision-instruct",
+        model: str = "nvidia/nemotron-3.5-super-vl-120b-a12b",
         base_url: str = "https://integrate.api.nvidia.com/v1",
         max_sampled_chars: int = 15_000,
     ) -> None:
@@ -363,7 +363,7 @@ class NvidiaProvider:
                 {"role": "user", "content": context_payload},
             ],
             "temperature": 0.1,
-            "max_tokens": 1024,
+            "max_tokens": 2048,
         }
         resp = self._client.post("/chat/completions", json=payload)
         resp.raise_for_status()

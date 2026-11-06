@@ -130,7 +130,7 @@ def _build_provider(config: AppConfig, api_key: Optional[str],
             raise typer.Exit(code=1)
         resolved_model = model or (
             config.llm.model if config.llm.provider == "nvidia"
-            else "meta/llama-3.2-90b-vision-instruct"
+            else "nvidia/nemotron-3.5-super-vl-120b-a12b"
         )
         return NvidiaProvider(api_key=resolved_key, model=resolved_model)
 

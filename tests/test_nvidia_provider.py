@@ -22,7 +22,7 @@ from bibliotec.core.models import ExternalMetadata
 BASE_URL = "https://integrate.api.nvidia.com/v1"
 
 
-def _make_provider(api_key="test-key", model="meta/llama-3.2-90b-vision-instruct"):
+def _make_provider(api_key="test-key", model="nvidia/nemotron-3.5-super-vl-120b-a12b"):
     return NvidiaProvider(api_key=api_key, model=model)
 
 
