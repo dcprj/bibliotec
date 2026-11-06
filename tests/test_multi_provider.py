@@ -18,6 +18,8 @@ from bibliotec.core.llm import (
     ClaudeProvider,
     DeepSeekProvider,
     FallbackLLMDispatcher,
+    GitHubModelsProvider,
+    GroqProvider,
     NvidiaProvider,
     ClassificationResult,
     ExternalMetadata,
@@ -122,6 +124,64 @@ def test_claude_chamada_sucesso():
 
 
 # --------------------------------------------------------------------------- #
+# 2b. Instanciação de GroqProvider e GitHubModelsProvider
+# --------------------------------------------------------------------------- #
+def test_groq_provider_instancia():
+    provider = GroqProvider(api_key="test-key", model="llama-3.3-70b-versatile")
+    assert provider is not None
+    assert provider._model == "llama-3.3-70b-versatile"
+
+
+def test_github_models_provider_instancia():
+    provider = GitHubModelsProvider(api_key="test-key", model="openai/gpt-4o")
+    assert provider is not None
+    assert provider._model == "openai/gpt-4o"
+
+
+# --------------------------------------------------------------------------- #
+# 2c. Mock de chamada com sucesso para Groq e GitHub Models
+# --------------------------------------------------------------------------- #
+@respx.mock
+def test_groq_chamada_sucesso():
+    payload = _classification_payload()
+    route = respx.post("https://api.groq.com/openai/v1/chat/completions")
+    _mock_success_openai(route, payload)
+
+    provider = GroqProvider(api_key="test-key")
+    result = provider.classify(
+        sampled_text="Texto de amostra com conteúdo suficiente para classificação.",
+        cip_text="",
+        external_metadata=None,
+    )
+
+    assert result.confidence_score == 0.92
+    assert result.grande_area == "Ciências Humanas"
+    assert result.area_basica == "Psicologia"
+    assert result.tipo == "Livro"
+    assert result.title == "Psicologia Social"
+
+
+@respx.mock
+def test_github_models_chamada_sucesso():
+    payload = _classification_payload()
+    route = respx.post("https://models.github.ai/inference/chat/completions")
+    _mock_success_openai(route, payload)
+
+    provider = GitHubModelsProvider(api_key="test-key")
+    result = provider.classify(
+        sampled_text="Texto de amostra com conteúdo suficiente para classificação.",
+        cip_text="",
+        external_metadata=None,
+    )
+
+    assert result.confidence_score == 0.92
+    assert result.grande_area == "Ciências Humanas"
+    assert result.area_basica == "Psicologia"
+    assert result.tipo == "Livro"
+    assert result.title == "Psicologia Social"
+
+
+# --------------------------------------------------------------------------- #
 # 3. FallbackLLMDispatcher: falha no primário -> chaveamento para o fallback
 # --------------------------------------------------------------------------- #
 @respx.mock
@@ -209,3 +269,35 @@ def test_fallback_dispatcher_primario_retorna_erro_rede_secundario_sucesso():
 
     assert result.confidence_score == 0.92
     assert result.reasoning == "Classificação via Claude fallback."
+
+
+@respx.mock
+def test_fallback_dispatcher_groq_falha_github_sucesso():
+    """Provedor primário Groq falha; GitHub Models responde com sucesso."""
+    erro_payload = _classification_payload(
+        reasoning="Falha na chamada ao LLM Groq: timeout",
+        confidence_score=0.0,
+    )
+    rota_primario = respx.post("https://api.groq.com/openai/v1/chat/completions")
+    _mock_success_openai(rota_primario, erro_payload)
+
+    ok_payload = _classification_payload(reasoning="Classificação via GitHub Models fallback.")
+    rota_fallback = respx.post("https://models.github.ai/inference/chat/completions")
+    _mock_success_openai(rota_fallback, ok_payload)
+
+    primario = GroqProvider(api_key="test-key")
+    fallback = GitHubModelsProvider(api_key="test-key")
+
+    dispatcher = FallbackLLMDispatcher([("groq", primario), ("github", fallback)])
+
+    assert dispatcher.primary_name == "groq"
+    assert dispatcher.provider_names == ["groq", "github"]
+
+    result = dispatcher.classify(
+        sampled_text="Texto de amostra com conteúdo suficiente para classificação.",
+        cip_text="",
+        external_metadata=None,
+    )
+
+    assert result.confidence_score == 0.92
+    assert result.reasoning == "Classificação via GitHub Models fallback."

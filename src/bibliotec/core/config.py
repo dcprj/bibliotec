@@ -138,6 +138,20 @@ class ApiKeysConfig(BaseSettings):
         ),
         description="Chave de API da Anthropic Claude.",
     )
+    groq_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "groq_api_key", "BIBLIOTEC_GROQ_API_KEY", "GROQ_API_KEY"
+        ),
+        description="Chave de API da Groq.",
+    )
+    github_token: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "github_token", "BIBLIOTEC_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"
+        ),
+        description="Token de acesso do GitHub (API REST).",
+    )
 
 
 class AppConfig(BaseSettings):
@@ -264,6 +278,16 @@ model = "gemini-3.8-flash"
 #base_url = "https://api.anthropic.com"
 #max_tokens = 4096
 
+#[llm.providers.groq]
+#model = "llama-3.1-8b-instant"
+#base_url = "https://api.groq.com/openai/v1"
+#max_tokens = 4096
+
+#[llm.providers.github]
+#model = "gpt-4o"  # ou qualquer modelo suportado pelo GitHub Models
+#base_url = "https://models.github.ai/inference"
+#max_tokens = 4096
+
 [api_keys]
 # Chaves de API do provedor de LLM e serviços de busca acadêmica
 gemini_api_key = ""
@@ -276,6 +300,10 @@ nvidia_api_key = ""
 deepseek_api_key = ""
 # Chave de API da Anthropic Claude (também aceita ANTHROPIC_API_KEY via env)
 claude_api_key = ""
+# Chave de API da Groq
+groq_api_key = ""
+# Token de acesso do GitHub (também aceita GITHUB_TOKEN / GH_TOKEN via env)
+github_token = ""
 """
 
 

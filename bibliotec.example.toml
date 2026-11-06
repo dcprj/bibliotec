@@ -41,6 +41,16 @@ model = "gemini-3.8-flash"
 #base_url = "https://api.anthropic.com"
 #max_tokens = 4096
 
+#[llm.providers.groq]
+#model = "llama-3.1-8b-instant"
+#base_url = "https://api.groq.com/openai/v1"
+#max_tokens = 4096
+
+#[llm.providers.github]
+#model = "gpt-4o"
+#base_url = "https://models.github.ai/inference"
+#max_tokens = 4096
+
 [api_keys]
 # Chave de API do provedor de LLM (Gemini) - OBTENHA em https://aistudio.google.com/
 gemini_api_key = ""
@@ -54,3 +64,7 @@ nvidia_api_key = ""
 deepseek_api_key = ""
 # Chave de API da Anthropic Claude (também aceita ANTHROPIC_API_KEY via env)
 claude_api_key = ""
+# Chave de API da Groq
+groq_api_key = ""
+# Token de acesso do GitHub (também aceita GITHUB_TOKEN / GH_TOKEN via env)
+github_token = ""

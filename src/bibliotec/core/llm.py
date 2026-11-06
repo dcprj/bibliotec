@@ -82,6 +82,13 @@ def _retry_on_retryable_http():
     )
 
 
+def _is_generic_openai_retryable(exc: BaseException) -> bool:
+    """Verificar se uma exceção httpx é HTTP 429 ou 503 (retryable em APIs OpenAI-compatíveis)."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code in (429, 503)
+    return False
+
+
 @dataclass
 class ClassificationResult:
     """Resultado da classificação de um documento."""
@@ -1538,6 +1545,295 @@ class ClaudeProvider:
         )
 
 
+class GroqProvider:
+    """Provedor Groq (OpenAI-compatível) usando httpx diretamente.
+
+    Chama a API Groq em POST /chat/completions e aplica travas
+    determinísticas de confiança idênticas às dos demais provedores.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "llama-3.3-70b-versatile",
+        base_url: str = "https://api.groq.com/openai/v1",
+        max_sampled_chars: int = 15_000,
+    ) -> None:
+        self._client = httpx.Client(
+            base_url=base_url,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            timeout=60.0,
+        )
+        self._model = model
+        self._max_sampled_chars = max_sampled_chars
+
+    @retry(
+        retry=retry_if_exception(_is_generic_openai_retryable),
+        stop=stop_after_attempt(4),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        reraise=True,
+    )
+    def _call_groq(self, system_prompt: str, context_payload: str) -> str:
+        """Chamar a API Groq /chat/completions com retry em 429/503."""
+        payload = {
+            "model": self._model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": system_prompt
+                    + "\n\nResponda APENAS com um objeto JSON válido estritamente no schema solicitado, sem marcação markdown adicional.",
+                },
+                {"role": "user", "content": context_payload},
+            ],
+            "temperature": 0.1,
+            "max_tokens": 2048,
+            "response_format": {"type": "json_object"},
+        }
+        resp = self._client.post("/chat/completions", json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["choices"][0]["message"]["content"]
+
+    def classify(
+        self,
+        sampled_text: str,
+        cip_text: str,
+        external_metadata: ExternalMetadata | None,
+        used_ocr: bool = False,
+    ) -> ClassificationResult:
+        """Classificar via Groq aplicando travas determinísticas de confiança."""
+        useful_chars = _alphanumeric_count(sampled_text) + _alphanumeric_count(cip_text)
+        has_external = external_metadata is not None and bool(
+            external_metadata.title or external_metadata.authors
+        )
+        if useful_chars < MIN_USEFUL_CHARS and not has_external:
+            return ClassificationResult(
+                grande_area="",
+                area_basica="",
+                tipo="Outros",
+                authors=[],
+                title="",
+                subtitle="",
+                year=None,
+                confidence_score=0.0,
+                reasoning=(
+                    "Texto alfanumérico útil inferior a 50 caracteres e sem "
+                    "metadados externos; classificação não realizada."
+                ),
+                used_ocr=used_ocr,
+            )
+
+        system_prompt = build_system_prompt()
+        context_payload = build_context_payload(sampled_text, cip_text, external_metadata)
+
+        try:
+            content = self._call_groq(system_prompt, context_payload)
+        except Exception as exc:
+            return ClassificationResult(
+                grande_area="",
+                area_basica="",
+                tipo="Outros",
+                authors=[],
+                title="",
+                subtitle="",
+                year=None,
+                confidence_score=0.0,
+                reasoning=f"Falha na chamada ao LLM Groq: {exc}",
+                used_ocr=used_ocr,
+            )
+
+        json_text = NvidiaProvider._strip_markdown_json(content)
+        try:
+            output = LLMClassificationOutput.model_validate_json(json_text)
+        except Exception:
+            output = LLMClassificationOutput.model_validate(json.loads(json_text))
+
+        reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
+        if reparado is None:
+            return ClassificationResult(
+                grande_area=output.grande_area,
+                area_basica=output.area_basica,
+                tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
+                authors=list(output.authors),
+                title=output.title,
+                subtitle=output.subtitle,
+                year=output.year,
+                confidence_score=0.0,
+                reasoning=(
+                    f"{output.reasoning} Par (grande_area, area_basica) irreparável "
+                    f"contra o catálogo CAPES/CNPq."
+                ),
+                used_ocr=used_ocr,
+            )
+        grande_area, area_basica = reparado
+
+        confidence = float(output.confidence_score)
+        title = output.title or ""
+        has_authors = bool(output.authors)
+        if is_generic_title(title) and not has_authors:
+            confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
+
+        return ClassificationResult(
+            grande_area=grande_area,
+            area_basica=area_basica,
+            tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
+            authors=list(output.authors),
+            title=title,
+            subtitle=output.subtitle,
+            year=output.year,
+            confidence_score=confidence,
+            reasoning=output.reasoning,
+            used_ocr=used_ocr,
+        )
+
+
+class GitHubModelsProvider:
+    """Provedor GitHub Models usando httpx diretamente.
+
+    Chama a API GitHub Models em POST /chat/completions e aplica travas
+    determinísticas de confiança idênticas às dos demais provedores.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "openai/gpt-4o",
+        base_url: str = "https://models.github.ai/inference",
+        max_sampled_chars: int = 15_000,
+    ) -> None:
+        self._client = httpx.Client(
+            base_url=base_url,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            timeout=60.0,
+        )
+        self._model = model
+        self._max_sampled_chars = max_sampled_chars
+
+    @retry(
+        retry=retry_if_exception(_is_generic_openai_retryable),
+        stop=stop_after_attempt(4),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        reraise=True,
+    )
+    def _call_github_models(self, system_prompt: str, context_payload: str) -> str:
+        """Chamar a API GitHub Models /chat/completions com retry em 429/503."""
+        payload = {
+            "model": self._model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": system_prompt
+                    + "\n\nResponda APENAS com um objeto JSON válido estritamente no schema solicitado, sem marcação markdown adicional.",
+                },
+                {"role": "user", "content": context_payload},
+            ],
+            "temperature": 0.1,
+            "max_tokens": 2048,
+            "response_format": {"type": "json_object"},
+        }
+        resp = self._client.post("/chat/completions", json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["choices"][0]["message"]["content"]
+
+    def classify(
+        self,
+        sampled_text: str,
+        cip_text: str,
+        external_metadata: ExternalMetadata | None,
+        used_ocr: bool = False,
+    ) -> ClassificationResult:
+        """Classificar via GitHub Models aplicando travas determinísticas de confiança."""
+        useful_chars = _alphanumeric_count(sampled_text) + _alphanumeric_count(cip_text)
+        has_external = external_metadata is not None and bool(
+            external_metadata.title or external_metadata.authors
+        )
+        if useful_chars < MIN_USEFUL_CHARS and not has_external:
+            return ClassificationResult(
+                grande_area="",
+                area_basica="",
+                tipo="Outros",
+                authors=[],
+                title="",
+                subtitle="",
+                year=None,
+                confidence_score=0.0,
+                reasoning=(
+                    "Texto alfanumérico útil inferior a 50 caracteres e sem "
+                    "metadados externos; classificação não realizada."
+                ),
+                used_ocr=used_ocr,
+            )
+
+        system_prompt = build_system_prompt()
+        context_payload = build_context_payload(sampled_text, cip_text, external_metadata)
+
+        try:
+            content = self._call_github_models(system_prompt, context_payload)
+        except Exception as exc:
+            return ClassificationResult(
+                grande_area="",
+                area_basica="",
+                tipo="Outros",
+                authors=[],
+                title="",
+                subtitle="",
+                year=None,
+                confidence_score=0.0,
+                reasoning=f"Falha na chamada ao LLM GitHub Models: {exc}",
+                used_ocr=used_ocr,
+            )
+
+        json_text = NvidiaProvider._strip_markdown_json(content)
+        try:
+            output = LLMClassificationOutput.model_validate_json(json_text)
+        except Exception:
+            output = LLMClassificationOutput.model_validate(json.loads(json_text))
+
+        reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
+        if reparado is None:
+            return ClassificationResult(
+                grande_area=output.grande_area,
+                area_basica=output.area_basica,
+                tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
+                authors=list(output.authors),
+                title=output.title,
+                subtitle=output.subtitle,
+                year=output.year,
+                confidence_score=0.0,
+                reasoning=(
+                    f"{output.reasoning} Par (grande_area, area_basica) irreparável "
+                    f"contra o catálogo CAPES/CNPq."
+                ),
+                used_ocr=used_ocr,
+            )
+        grande_area, area_basica = reparado
+
+        confidence = float(output.confidence_score)
+        title = output.title or ""
+        has_authors = bool(output.authors)
+        if is_generic_title(title) and not has_authors:
+            confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
+
+        return ClassificationResult(
+            grande_area=grande_area,
+            area_basica=area_basica,
+            tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
+            authors=list(output.authors),
+            title=title,
+            subtitle=output.subtitle,
+            year=output.year,
+            confidence_score=confidence,
+            reasoning=output.reasoning,
+            used_ocr=used_ocr,
+        )
+
 
 # --------------------------------------------------------------------------- #
 # FallbackLLMDispatcher e fábrica de cadeia de provedores
@@ -1683,7 +1979,7 @@ def create_provider_chain(
     Se o primário não tiver chave, o primeiro com chave válida torna-se o
     primário efetivo.
 
-    Suporta: "gemini", "nvidia", "deepseek", "claude".
+    Suporta: "gemini", "nvidia", "deepseek", "claude", "groq", "github".
     """
     provedores_disponiveis: dict[str, dict[str, Any]] = {
         "gemini": {
@@ -1713,6 +2009,18 @@ def create_provider_chain(
                 "CLAUDE_API_KEY",
                 "ANTHROPIC_API_KEY",
             ),
+        },
+        "groq": {
+            "classe": GroqProvider,
+            "chave": config.api_keys.groq_api_key,
+            "modelo_padrao": "llama-3.3-70b-versatile",
+            "chave_env": ("BIBLIOTEC_GROQ_API_KEY", "GROQ_API_KEY"),
+        },
+        "github": {
+            "classe": GitHubModelsProvider,
+            "chave": config.api_keys.github_token,
+            "modelo_padrao": "openai/gpt-4o",
+            "chave_env": ("BIBLIOTEC_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"),
         },
     }
 
@@ -1772,7 +2080,7 @@ def create_provider_chain(
 
     # Se o solicitado não teve chave, garantir pelo menos um com chave.
     if not cadeia:
-        for nome in ("gemini", "nvidia", "deepseek", "claude"):
+        for nome in ("gemini", "nvidia", "deepseek", "claude", "groq", "github"):
             _adicionar_provedor(nome, usar_cli_key=False, usar_cli_model=False)
             if cadeia:
                 break
@@ -1780,8 +2088,9 @@ def create_provider_chain(
     if not cadeia:
         raise ValueError(
             "Nenhum provedor de LLM tem chave de API configurada. "
-            "Defina gemini_api_key, nvidia_api_key, deepseek_api_key ou "
-            "claude_api_key no config.toml ou variáveis de ambiente."
+            "Defina gemini_api_key, nvidia_api_key, deepseek_api_key, "
+            "claude_api_key, groq_api_key ou github_token no config.toml "
+            "ou variáveis de ambiente."
         )
 
     return FallbackLLMDispatcher(cadeia)

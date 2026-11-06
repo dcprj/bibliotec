@@ -395,7 +395,7 @@ def _root_callback(
     ),
     provider: str = Option(
         "gemini", "--provider", "-p",
-        help="Provedor de LLM (gemini, nvidia, deepseek, claude).",
+        help="Provedor de LLM (gemini, nvidia, deepseek, claude, groq, github).",
     ),
 ) -> None:
     """Ponto de entrada único do BiblioTEC.
@@ -494,7 +494,7 @@ def organize(
     ),
     provider: str = Option(
         "gemini", "--provider", "-p",
-        help="Provedor de LLM (gemini, nvidia, deepseek, claude).",
+        help="Provedor de LLM (gemini, nvidia, deepseek, claude, groq, github).",
     ),
 ) -> None:
     """Organizar uma biblioteca de PDFs (5 estágios).
@@ -577,6 +577,8 @@ def config_show(
     table.add_row("api_keys.nvidia_api_key", mask_key(cfg.api_keys.nvidia_api_key) or "(não definida)")
     table.add_row("api_keys.deepseek_api_key", mask_key(cfg.api_keys.deepseek_api_key) or "(não definida)")
     table.add_row("api_keys.claude_api_key", mask_key(cfg.api_keys.claude_api_key) or "(não definida)")
+    table.add_row("api_keys.groq_api_key", mask_key(cfg.api_keys.groq_api_key) or "(não definida)")
+    table.add_row("api_keys.github_token", mask_key(cfg.api_keys.github_token) or "(não definida)")
     console.print(table)
 
 

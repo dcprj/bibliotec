@@ -5,6 +5,24 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adota versionamento semântico ([Semantic Versioning](https://semver.org/lang/pt-BR/)).
 
+## [0.3.0] - 2026-11-06
+
+### Entregas da Sprint v0.3.0
+
+#### [CLI-10] Novos provedores LLM: Groq e GitHub Models (`src/bibliotec/core/llm.py`, `src/bibliotec/cli/main.py`)
+* `create_provider_chain()` expande suporte para provedores `"groq"` e `"github"`.
+  * `"groq"`: instancia `GroqProvider` (API Groq /chat/completions), resolve `groq_api_key` via CLI > env > config.
+  * `"github"`: instancia `GitHubModelsProvider` (API GitHub Models /chat/completions), resolve `github_token` via CLI > env > config.
+* Flag `--provider` / `-p` na CLI aceita: `gemini`, `nvidia`, `deepseek`, `claude`, `groq`, `github`.
+* `config show` exibe `api_keys.groq_api_key` e `api_keys.github_token` (mascarados).
+
+#### [TST-11] Testes de Groq e GitHub Models (`tests/test_multi_provider.py`)
+* Instanciação de `GroqProvider` e `GitHubModelsProvider`.
+* Mock de chamada com sucesso para Groq (formato OpenAI) e GitHub Models (formato OpenAI).
+* `FallbackLLMDispatcher`: falha no primário Groq → chaveamento automático para GitHub Models.
+
+---
+
 ## [0.2.0] - 2026-11-06
 
 ### Entregas da Sprint v0.2.0
