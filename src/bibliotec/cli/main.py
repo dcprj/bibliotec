@@ -338,6 +338,26 @@ def _print_summary(summary, dry_run: bool) -> None:
     if dry_run:
         console.print("[yellow]Modo dry-run: nenhum PDF foi copiado/movido e "
                       "nenhuma pasta temática criada.[/yellow]")
+    if summary.ignored_non_pdf_count > 0:
+        webloc_count = sum(
+            1
+            for e in summary.entries
+            if e.status == ProcessStatus.IGNORED_NON_PDF
+            and Path(e.source_path).suffix.lower() == ".webloc"
+        )
+        outros_count = summary.ignored_non_pdf_count - webloc_count
+        partes = []
+        if webloc_count > 0:
+            partes.append(f"[bold]{webloc_count}[/bold] atalho(s) macOS (.webloc)")
+        if outros_count > 0:
+            partes.append(f"[bold]{outros_count}[/bold] outro(s) arquivo(s) não-PDF")
+        detalhes = ", ".join(partes) if partes else f"{summary.ignored_non_pdf_count} arquivo(s)"
+        console.print(
+            f"[yellow]ℹ️  Diagnóstico de arquivos ignorados:[/yellow] {detalhes}."
+        )
+        console.print(
+            "    ↳ Relação detalhada gravada em: [cyan]revisao_manual/relatorio_revisao.md[/cyan]"
+        )
     console.print(f"Manifesto gravado em: {summary.entries and 'manifest.json'}")
 
 

@@ -324,13 +324,39 @@ class LibraryOrganizer:
         self._materialize(source_path, destination_path, sha256, ProcessStatus.ERROR)
         return entry
 
-    def add_ignored_non_pdf(self, source_path: Path) -> FileManifestEntry:
-        """Registrar arquivo não-PDF ignorado."""
+    def add_ignored_non_pdf(
+        self, source_path: Path, reason: str = ""
+    ) -> FileManifestEntry:
+        """Registrar arquivo não-PDF ignorado com diagnóstico detalhado."""
+        if not reason:
+            suffix = source_path.suffix.lower()
+            if suffix == ".webloc":
+                reason = "Atalho de internet macOS (.webloc)"
+            elif suffix == ".url":
+                reason = "Atalho de internet Windows (.url)"
+            elif suffix == ".desktop":
+                reason = "Atalho de aplicativo Linux (.desktop)"
+            elif suffix in (".epub", ".mobi", ".azw", ".azw3"):
+                reason = f"E-book não-PDF ({suffix})"
+            elif suffix in (".doc", ".docx", ".odt", ".rtf", ".txt"):
+                reason = f"Documento de texto não-PDF ({suffix})"
+            elif suffix in (".ppt", ".pptx", ".odp", ".key"):
+                reason = f"Apresentação não-PDF ({suffix})"
+            elif suffix in (".xls", ".xlsx", ".ods", ".csv"):
+                reason = f"Planilha/dados ({suffix})"
+            elif suffix in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".tiff"):
+                reason = f"Imagem avulsa ({suffix})"
+            elif suffix:
+                reason = f"Arquivo com extensão não suportada ({suffix})"
+            else:
+                reason = "Arquivo sem extensão (não-PDF)"
+
         entry = FileManifestEntry(
             source_path=str(source_path),
             destination_path=None,
             sha256="",
             status=ProcessStatus.IGNORED_NON_PDF,
+            error_message=reason,
         )
         self.entries.append(entry)
         self._ignored_non_pdf_count += 1
@@ -417,6 +443,21 @@ class LibraryOrganizer:
                 lines.append(f"  - Status: {entry.status.value}")
                 lines.append(f"  - Motivo: {motivo}")
                 lines.append("")
+
+        # Seção de diagnósticos para arquivos não-PDF e atalhos ignorados ([DIAG-06])
+        ignorados = [
+            e for e in summary.entries if e.status == ProcessStatus.IGNORED_NON_PDF
+        ]
+        if ignorados:
+            lines.append("## Arquivos Não-PDF e Atalhos Ignorados\n")
+            lines.append(
+                f"Total de itens ignorados na varredura: {len(ignorados)}\n"
+            )
+            for entry in ignorados:
+                motivo = entry.error_message or "Não-PDF ignorado"
+                lines.append(f"- `{entry.source_path}`")
+                lines.append(f"  - Diagnóstico: {motivo}")
+            lines.append("")
 
         relatorio_path.write_text("\n".join(lines), encoding="utf-8")
         return relatorio_path

@@ -5,6 +5,22 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adota versionamento semântico ([Semantic Versioning](https://semver.org/lang/pt-BR/)).
 
+## [0.4.0] - 2026-11-06
+
+### Entregas da Sprint v0.4.0
+
+#### [SCH-01] Schema JSON explícito para Provedores OpenAI-Compatíveis (`src/bibliotec/core/prompts.py`, `src/bibliotec/core/llm.py`)
+* Prompt de sistema atualizado com especificação JSON formal completa para todos os campos (`title`, `subtitle`, `year`, `authors`, `grande_area`, `area_basica`, `tipo`, `confidence_score`, `reasoning`).
+* Elevação da acurácia e riqueza de nomenclatura de arquivos gerados por DeepSeek, NVIDIA NIM, Groq e GitHub Models para o mesmo nível editorial do Gemini.
+* Proteção contra respostas vazias ou nulas (`choice.message.content is None`) em todos os adaptadores HTTP.
+
+#### [DIAG-06] Diagnósticos Detalhados e Notificação de Atalhos Ignorados (`src/bibliotec/storage/organizer.py`, `src/bibliotec/cli/main.py`)
+* Diagnóstico tipado automático de arquivos não-PDF no scanner e organizador, diferenciando atalhos de internet do macOS (`.webloc`), Windows (`.url`), e-books (`.epub`, `.mobi`), documentos de escritório e mídias.
+* Geração da seção `## Arquivos Não-PDF e Atalhos Ignorados` no relatório `revisao_manual/relatorio_revisao.md`, com caminho de origem e diagnóstico detalhado de cada item ignorado.
+* Notificação contextual amigável na saída de console da CLI (`_print_summary`) discriminando atalhos macOS e arquivos não suportados.
+
+---
+
 ## [0.3.0] - 2026-11-06
 
 ### Entregas da Sprint v0.3.0

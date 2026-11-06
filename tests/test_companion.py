@@ -432,3 +432,27 @@ def test_generate_duplicate_companion_markdown():
     assert "detected_at:" in md
     assert "## Arquivo Duplicado Detectado" in md
     assert "b.pdf" in md
+
+
+def test_organizer_ignored_non_pdf_diagnostics(tmp_path: Path):
+    """[DIAG-06] Não-PDFs e atalhos .webloc devem ter diagnóstico detalhado em relatorio_revisao.md."""
+    target = tmp_path / "target"
+    organizer = LibraryOrganizer(target, file_operation="copy", dry_run=False)
+
+    e1 = organizer.add_ignored_non_pdf(Path("/origem/artigo.webloc"))
+    assert "Atalho de internet macOS (.webloc)" in e1.error_message
+
+    e2 = organizer.add_ignored_non_pdf(Path("/origem/livro.epub"))
+    assert "E-book não-PDF (.epub)" in e2.error_message
+
+    summary = organizer.finalize(total_scanned=2)
+    assert summary.ignored_non_pdf_count == 2
+
+    relatorio_md = target / "revisao_manual" / "relatorio_revisao.md"
+    assert relatorio_md.exists()
+    conteudo = relatorio_md.read_text(encoding="utf-8")
+    assert "## Arquivos Não-PDF e Atalhos Ignorados" in conteudo
+    assert "artigo.webloc" in conteudo
+    assert "Atalho de internet macOS (.webloc)" in conteudo
+    assert "livro.epub" in conteudo
+    assert "E-book não-PDF (.epub)" in conteudo

@@ -17,4 +17,4 @@ warnings.filterwarnings(
 warnings.filterwarnings("ignore", message=r".*Redirects are currently not supported.*")
 warnings.filterwarnings("ignore", category=UserWarning, module=r"torch\..*")
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"

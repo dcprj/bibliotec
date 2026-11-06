@@ -46,32 +46,43 @@ def _truncate_sampled_text(sampled_text: str, cip_text: str) -> str:
 
 
 def build_system_prompt() -> str:
-    """Construir o prompt de sistema com regras de classificação fechadas."""
+    """Construir o prompt de sistema com regras de classificação fechadas e schema JSON explícito."""
     return (
-        "Você é um classificador acadêmico especializado na tabela CAPES/CNPq. "
+        "Você é um classificador acadêmico especializado na tabela CAPES/CNPq.\n"
         "Sua tarefa é classificar um documento PDF com base no texto amostrado "
         "extraído (páginas iniciais e finais) e na Ficha Catalográfica (CIP) "
         "quando disponível.\n\n"
-        "Regras obrigatórias:\n"
-        "1. Responda SOMENTE em JSON válido, conforme o esquema de saída.\n"
+        "Regras obrigatórias de classificação e extração de metadados:\n"
+        "1. Responda SOMENTE em JSON válido estritamente no esquema solicitado.\n"
         "2. 'grande_area' e 'area_basica' devem pertencer ao catálogo fechado "
         "CAPES/CNPq fornecido no contexto; não invente categorias.\n"
         "3. 'tipo' deve ser exatamente um dos cinco valores: Livro, "
         "Revista Científica, Artigo, Tese_Dissertacao ou Outros.\n"
-        "4. 'authors' deve ser uma lista de strings no formato 'Sobrenome, Nome'.\n"
-        "5. 'confidence_score' deve estar entre 0.0 e 1.0.\n"
-        "6. 'reasoning' deve justificar brevemente a classificação escolhida.\n\n"
+        "4. 'authors' deve ser uma lista de strings no formato 'Sobrenome, Nome'. Se desconhecido ou institucional, use ['Autor Desconhecido'].\n"
+        "5. 'title' deve ser o título principal da obra/documento em português ou idioma original (não deixe vazio se o título for identificável no texto ou CIP).\n"
+        "6. 'subtitle' deve ser o subtítulo da obra se houver, ou string vazia (\"\") se ausente.\n"
+        "7. 'year' deve ser o ano de publicação como número inteiro de 4 dígitos (ex: 2014) ou null se não puder ser determinado.\n"
+        "8. 'confidence_score' deve estar entre 0.0 e 1.0 representando o grau de certeza na classificação temática.\n"
+        "9. 'reasoning' deve justificar brevemente a escolha da Grande Área e Área Básica com base no texto analisado.\n\n"
+        "Formato JSON obrigatório:\n"
+        "{\n"
+        '  "grande_area": "string (exata da tabela CAPES)",\n'
+        '  "area_basica": "string (exata da tabela CAPES)",\n'
+        '  "tipo": "Livro | Revista Científica | Artigo | Tese_Dissertacao | Outros",\n'
+        '  "authors": ["Sobrenome, Nome"],\n'
+        '  "title": "string (título completo)",\n'
+        '  "subtitle": "string (subtítulo ou vazio)",\n'
+        '  "year": 2024,\n'
+        '  "confidence_score": 0.95,\n'
+        '  "reasoning": "string (justificativa sucinta)"\n'
+        "}\n\n"
         "Distinga os tipos documentais assim:\n"
         "- Livro: obra monográfica completa, livro-texto ou coletânea.\n"
-        "- Revista Científica: edição ou fascículo completo de periódico com "
-        "múltiplos artigos.\n"
-        "- Artigo: artigo científico individual, ensaio acadêmico ou revisão "
-        "de literatura avulsa.\n"
+        "- Revista Científica: edição ou fascículo completo de periódico com múltiplos artigos.\n"
+        "- Artigo: artigo científico individual, ensaio acadêmico ou revisão de literatura avulsa.\n"
         "- Tese_Dissertacao: teses, dissertações, TCCs e monografias acadêmicas.\n"
-        "- Outros: slides de aula, apostilas institucionais, cartilhas, relatórios "
-        "ou ementas.\n\n"
-        "Formate os autores sempre como 'Sobrenome, Nome'. Se o autor for uma "
-        "instituição ou não for identificável, use 'Autor Desconhecido'."
+        "- Outros: slides de aula, apostilas institucionais, cartilhas, relatórios ou ementas.\n\n"
+        "Formate os autores sempre como 'Sobrenome, Nome'. Se o autor for uma instituição ou não for identificável, use 'Autor Desconhecido'."
     )
 
 

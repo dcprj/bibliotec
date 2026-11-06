@@ -364,7 +364,11 @@ class NvidiaProvider:
         resp = self._client.post("/chat/completions", json=payload)
         resp.raise_for_status()
         data = resp.json()
-        return data["choices"][0]["message"]["content"]
+        choice = data.get("choices", [{}])[0]
+        content = choice.get("message", {}).get("content")
+        if not content or not str(content).strip():
+            raise ValueError("Resposta do LLM NVIDIA veio vazia")
+        return str(content)
 
     def classify(
         self,
@@ -508,7 +512,11 @@ class DeepSeekProvider:
         resp = self._client.post("/chat/completions", json=payload)
         resp.raise_for_status()
         data = resp.json()
-        return data["choices"][0]["message"]["content"]
+        choice = data.get("choices", [{}])[0]
+        content = choice.get("message", {}).get("content")
+        if not content or not str(content).strip():
+            raise ValueError("Resposta do LLM DeepSeek veio vazia")
+        return str(content)
 
     def classify(
         self,
@@ -787,7 +795,11 @@ class GroqProvider:
         resp = self._client.post("/chat/completions", json=payload)
         resp.raise_for_status()
         data = resp.json()
-        return data["choices"][0]["message"]["content"]
+        choice = data.get("choices", [{}])[0]
+        content = choice.get("message", {}).get("content")
+        if not content or not str(content).strip():
+            raise ValueError("Resposta do LLM Groq veio vazia")
+        return str(content)
 
     def classify(
         self,
@@ -932,7 +944,11 @@ class GitHubModelsProvider:
         resp = self._client.post("/chat/completions", json=payload)
         resp.raise_for_status()
         data = resp.json()
-        return data["choices"][0]["message"]["content"]
+        choice = data.get("choices", [{}])[0]
+        content = choice.get("message", {}).get("content")
+        if not content or not str(content).strip():
+            raise ValueError("Resposta do LLM GitHub Models veio vazia")
+        return str(content)
 
     def classify(
         self,
