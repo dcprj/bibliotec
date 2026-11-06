@@ -21,6 +21,8 @@ from bibliotec.core.taxonomy import (
 from bibliotec.core.config import AppConfig
 from bibliotec.core.scanner import scan_directory
 from bibliotec.core.cache import FileCache
+from bibliotec.core.logging import setup_logging, get_logger
+from bibliotec.core.session import SessionState, save_session, load_session, clear_session, SESSION_FILE
 from bibliotec.core.prompts import (
     build_system_prompt,
     build_context_payload,
@@ -61,4 +63,11 @@ __all__ = [
     "GeminiProvider",
     "MockLLMProvider",
     "ClassificationResult",
+    "setup_logging",
+    "get_logger",
+    "SessionState",
+    "save_session",
+    "load_session",
+    "clear_session",
+    "SESSION_FILE",
 ]

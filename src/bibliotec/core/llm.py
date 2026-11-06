@@ -12,10 +12,12 @@ min(score, 0.50) quando o título for vazio/genérico sem autor identificável.
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
+import httpx
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from bibliotec.core.models import ExternalMetadata, LLMClassificationOutput
@@ -308,3 +310,171 @@ class MockLLMProvider:
         used_ocr: bool = False,
     ) -> ClassificationResult:
         return self._result
+
+
+def _is_nvidia_retryable(exc: BaseException) -> bool:
+    """Verificar se uma exceção httpx é HTTP 429 ou 503 (retryable na NVIDIA)."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code in (429, 503)
+    return False
+
+
+class NvidiaProvider:
+    """Provedor NVIDIA NIM usando httpx diretamente (Item LLM-03).
+
+    Chama a API NVIDIA NIM em POST /chat/completions e aplica travas
+    determinísticas de confiança idênticas às do GeminiProvider.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "meta/llama-3.2-90b-vision-instruct",
+        base_url: str = "https://integrate.api.nvidia.com/v1",
+        max_sampled_chars: int = 15_000,
+    ) -> None:
+        self._client = httpx.Client(
+            base_url=base_url,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            timeout=60.0,
+        )
+        self._model = model
+        self._max_sampled_chars = max_sampled_chars
+
+    @retry(
+        retry=retry_if_exception(_is_nvidia_retryable),
+        stop=stop_after_attempt(4),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        reraise=True,
+    )
+    def _call_nvidia(self, system_prompt: str, context_payload: str) -> str:
+        """Chamar a API NVIDIA NIM /chat/completions com retry em 429/503."""
+        payload = {
+            "model": self._model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": system_prompt
+                    + "\n\nResponda APENAS com um objeto JSON válido estritamente no schema solicitado, sem marcação markdown adicional.",
+                },
+                {"role": "user", "content": context_payload},
+            ],
+            "temperature": 0.1,
+            "max_tokens": 1024,
+        }
+        resp = self._client.post("/chat/completions", json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["choices"][0]["message"]["content"]
+
+    @staticmethod
+    def _strip_markdown_json(text: str) -> str:
+        """Remover eventuais blocos markdown (```json ... ```) da resposta."""
+        text = text.strip()
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1] if "\n" in text else text
+        if text.endswith("```"):
+            text = text.rsplit("\n", 1)[0] if "\n" in text else text
+        text = text.strip()
+        if text.startswith("json"):
+            text = text[4:].strip()
+        return text
+
+    def classify(
+        self,
+        sampled_text: str,
+        cip_text: str,
+        external_metadata: ExternalMetadata | None,
+        used_ocr: bool = False,
+    ) -> ClassificationResult:
+        """Classificar via NVIDIA NIM aplicando travas determinísticas de confiança."""
+        # Short-circuit: texto útil insuficiente e sem metadado externo.
+        useful_chars = _alphanumeric_count(sampled_text) + _alphanumeric_count(cip_text)
+        has_external = external_metadata is not None and bool(
+            external_metadata.title or external_metadata.authors
+        )
+        if useful_chars < MIN_USEFUL_CHARS and not has_external:
+            return ClassificationResult(
+                grande_area="",
+                area_basica="",
+                tipo="Outros",
+                authors=[],
+                title="",
+                subtitle="",
+                year=None,
+                confidence_score=0.0,
+                reasoning=(
+                    "Texto alfanumérico útil inferior a 50 caracteres e sem "
+                    "metadados externos; classificação não realizada."
+                ),
+                used_ocr=used_ocr,
+            )
+
+        system_prompt = build_system_prompt()
+        context_payload = build_context_payload(sampled_text, cip_text, external_metadata)
+
+        try:
+            content = self._call_nvidia(system_prompt, context_payload)
+        except Exception as exc:  # falha de rede / API / parse
+            return ClassificationResult(
+                grande_area="",
+                area_basica="",
+                tipo="Outros",
+                authors=[],
+                title="",
+                subtitle="",
+                year=None,
+                confidence_score=0.0,
+                reasoning=f"Falha na chamada ao LLM NVIDIA: {exc}",
+                used_ocr=used_ocr,
+            )
+
+        # Remover marcação markdown e validar JSON de saída.
+        json_text = self._strip_markdown_json(content)
+        try:
+            output = LLMClassificationOutput.model_validate_json(json_text)
+        except Exception:
+            output = LLMClassificationOutput.model_validate(json.loads(json_text))
+
+        # Validar/reparar par (grande_area, area_basica) contra o catálogo.
+        reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
+        if reparado is None:
+            return ClassificationResult(
+                grande_area=output.grande_area,
+                area_basica=output.area_basica,
+                tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
+                authors=list(output.authors),
+                title=output.title,
+                subtitle=output.subtitle,
+                year=output.year,
+                confidence_score=0.0,
+                reasoning=(
+                    f"{output.reasoning} Par (grande_area, area_basica) irreparável "
+                    f"contra o catálogo CAPES/CNPq."
+                ),
+                used_ocr=used_ocr,
+            )
+        grande_area, area_basica = reparado
+
+        # Teto de confiança para título vazio/genérico sem autor identificável.
+        confidence = float(output.confidence_score)
+        title = output.title or ""
+        has_authors = bool(output.authors)
+        if is_generic_title(title) and not has_authors:
+            confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
+
+        return ClassificationResult(
+            grande_area=grande_area,
+            area_basica=area_basica,
+            tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
+            authors=list(output.authors),
+            title=title,
+            subtitle=output.subtitle,
+            year=output.year,
+            confidence_score=confidence,
+            reasoning=output.reasoning,
+            used_ocr=used_ocr,
+        )

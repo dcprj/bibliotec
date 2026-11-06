@@ -55,10 +55,12 @@ from bibliotec.core.config import (
     generate_config_template,
     mask_key,
 )
+from bibliotec.core.logging import setup_logging
 from bibliotec.core.models import ProcessStatus
 from bibliotec.core.pipeline import run_pipeline
 from bibliotec.core.cache import CACHE_DB_PATH, FileCache
-from bibliotec.core.llm import GeminiProvider, MockLLMProvider
+from bibliotec.core.llm import GeminiProvider, MockLLMProvider, NvidiaProvider
+from bibliotec.core.session import SessionState, clear_session, load_session, save_session
 from bibliotec.core.scanner import scan_directory
 from bibliotec.storage.organizer import LibraryOrganizer
 from bibliotec.core.taxonomy import get_taxonomy_version
@@ -109,9 +111,34 @@ def _resolve_api_key(config: AppConfig, cli_key: Optional[str]) -> str:
 
 
 def _build_provider(config: AppConfig, api_key: Optional[str],
-                    model: Optional[str]) -> object | None:
+                    model: Optional[str], provider: str = "gemini") -> object | None:
+    """Construir o provedor de LLM conforme o provedor solicitado."""
+    resolved_provider = provider or config.llm.provider or "gemini"
+
+    if resolved_provider == "nvidia":
+        # Resolver chave NVIDIA: CLI > env > config.
+        resolved_key = api_key or os.environ.get(
+            "BIBLIOTEC_NVIDIA_API_KEY"
+        ) or os.environ.get("NVIDIA_API_KEY") or config.api_keys.nvidia_api_key
+        if not resolved_key:
+            console.print("[red]Erro:[/red] Nenhuma chave de API da NVIDIA configurada.")
+            console.print(
+                "Defina nvidia_api_key no bibliotec.toml (ou ~/.config/bibliotec/config.toml) "
+                "ou defina a variável de ambiente BIBLIOTEC_NVIDIA_API_KEY / NVIDIA_API_KEY "
+                "ou passe --api-key na linha de comando."
+            )
+            raise typer.Exit(code=1)
+        resolved_model = model or (
+            config.llm.model if config.llm.provider == "nvidia"
+            else "meta/llama-3.2-90b-vision-instruct"
+        )
+        return NvidiaProvider(api_key=resolved_key, model=resolved_model)
+
+    # provider == "gemini" (padrão)
     resolved_key = _resolve_api_key(config, api_key)
-    resolved_model = model or config.llm.model
+    resolved_model = model or (
+        config.llm.model if config.llm.provider == "gemini" else "gemini-3.8-flash"
+    )
     if resolved_key:
         return GeminiProvider(api_key=resolved_key, model=resolved_model)
     # Sem chave de API: não usar MockLLMProvider silenciosamente na CLI real.
@@ -173,8 +200,12 @@ def _executar_organize(
     confidence_min: Optional[float] = None,
     no_cache: bool = False,
     workers: int = 1,
+    provider: str = "gemini",
+    verbose: bool = False,
 ) -> None:
     """Executar o pipeline de organização (comum a organize e ao callback raiz)."""
+    setup_logging(verbose=verbose)
+
     cfg = _load_config(config)
     cfg = _aplicar_overrides(
         cfg,
@@ -187,8 +218,8 @@ def _executar_organize(
         google_books_key=google_books_key,
     )
 
-    provider = _build_provider(cfg, api_key, model)
-    if provider is None:
+    provider_inst = _build_provider(cfg, api_key, model, provider=provider)
+    if provider_inst is None:
         console.print("[red]Erro:[/red] Nenhuma chave de API do Gemini configurada.")
         console.print(
             "Defina gemini_api_key no bibliotec.toml (ou ~/.config/bibliotec/config.toml) "
@@ -232,6 +263,20 @@ def _executar_organize(
     )
     task_status = status_prog.add_task("Status do arquivo atual", start=False)
 
+    # Salvar sessão no início (para retomada posterior via ./bibliotec resume).
+    save_session(SessionState(
+        source_dir=str(source_dir),
+        target_dir=str(target_dir),
+        recursive=cfg.general.recursive,
+        move=cfg.general.file_operation == "move",
+        dry_run=dry_run,
+        provider=provider,
+        model=cfg.llm.model,
+        confidence_min=cfg.general.confidence_min,
+        workers=cfg.general.workers,
+        no_cache=cfg.general.use_cache is False,
+    ))
+
     with Live(group, console=console, refresh_per_second=10, transient=False):
 
         def emit_with_progress(event):
@@ -272,7 +317,7 @@ def _executar_organize(
                 source_dir=source_dir,
                 target_dir=target_dir,
                 config=cfg,
-                provider=provider,
+                provider=provider_inst,
                 cache=cache,
                 organizer=organizer,
                 workers=cfg.general.workers,
@@ -281,9 +326,11 @@ def _executar_organize(
             )
         finally:
             cache.close()
-            progress.update(task, description="Concluído")
 
     _print_summary(summary, dry_run)
+
+    # Limpar sessão após conclusão bem-sucedida.
+    clear_session()
 
 
 def _print_summary(summary, dry_run: bool) -> None:
@@ -357,6 +404,14 @@ def _root_callback(
     workers: int = Option(
         1, "--workers", help="Concorrência para chamadas de rede (padrão: 1).",
     ),
+    verbose: bool = Option(
+        False, "--verbose", "-v",
+        help="Exibir logs detalhados em tempo real no console.",
+    ),
+    provider: str = Option(
+        "gemini", "--provider", "-p",
+        help="Provedor de LLM (gemini ou nvidia).",
+    ),
 ) -> None:
     """Ponto de entrada único do BiblioTEC.
 
@@ -390,13 +445,15 @@ def _root_callback(
         confidence_min=confidence_min,
         no_cache=no_cache,
         workers=workers,
+        provider=provider,
+        verbose=verbose,
     )
 
 
 # --------------------------------------------------------------------------- #
 # Comando: organize
 # --------------------------------------------------------------------------- #
-@app.command("organize")
+@app.command("organize", hidden=True)
 def organize(
     source_dir: Optional[Path] = Option(
         None, "--origem", "-o", "--source",
@@ -446,6 +503,14 @@ def organize(
     workers: int = Option(
         1, "--workers", help="Concorrência para chamadas de rede (padrão: 1).",
     ),
+    verbose: bool = Option(
+        False, "--verbose", "-v",
+        help="Exibir logs detalhados em tempo real no console.",
+    ),
+    provider: str = Option(
+        "gemini", "--provider", "-p",
+        help="Provedor de LLM (gemini ou nvidia).",
+    ),
 ) -> None:
     """Organizar uma biblioteca de PDFs (5 estágios).
 
@@ -475,6 +540,8 @@ def organize(
         confidence_min=confidence_min,
         no_cache=no_cache,
         workers=workers,
+        provider=provider,
+        verbose=verbose,
     )
 
 
@@ -542,6 +609,45 @@ def config_path(
         console.print(str(GLOBAL_CONFIG_PATH))
     else:
         console.print(str(GLOBAL_CONFIG_PATH))
+
+
+# --------------------------------------------------------------------------- #
+# Comando: resume
+# --------------------------------------------------------------------------- #
+@app.command("resume")
+def resume_command(
+    verbose: bool = Option(
+        False, "--verbose", "-v",
+        help="Exibir logs detalhados em tempo real no console.",
+    ),
+) -> None:
+    """Retomar a última organização interrompida sem precisar digitar parâmetros."""
+    state = load_session()
+    if state is None:
+        console.print("[yellow]Nenhuma sessão anterior encontrada para continuar.[/yellow]")
+        raise typer.Exit(code=0)
+
+    source_path = Path(state.source_dir)
+    target_path = Path(state.target_dir)
+    if not source_path.exists():
+        console.print(f"[red]Erro:[/red] O diretório de origem \"{source_path}\" não existe mais.")
+        clear_session()
+        raise typer.Exit(code=1)
+
+    console.print(f"[bold green]Retomando organização anterior:[/bold green] {source_path} ➔ {target_path}")
+    _executar_organize(
+        source_dir=source_path,
+        target_dir=target_path,
+        recursive=state.recursive,
+        move=state.move,
+        dry_run=state.dry_run,
+        provider=state.provider,
+        model=state.model,
+        confidence_min=state.confidence_min,
+        workers=state.workers,
+        no_cache=state.no_cache,
+        verbose=verbose,
+    )
 
 
 # --------------------------------------------------------------------------- #

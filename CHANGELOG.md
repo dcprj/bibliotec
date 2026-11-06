@@ -3,210 +3,195 @@
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
-e este projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
+e este projeto adota versionamento semântico ([Semantic Versioning](https://semver.org/lang/pt-BR/)).
 
-## [0.0.6] - 2026-11-05
+## [0.1.0] - 2026-11-05
 
-### Adicionado
+### Entregas da Release Minor v0.1.0
 
-- **src/bibliotec/storage/organizer.py**: gerenciamento de duplicatas no
-  destino em `duplicatas/<arquivo>` com criação automática de `.md`
-  companheiro apontando para a obra canônica organizada, garantindo que
-  `--move` limpe 100% da origem sem perda de dados.
-- **src/bibliotec/cli/main.py**: subcomando `bibliotec cache`
-  (`clean`, `clear`, `status`, `path`) para gerenciamento facilitado do
-  cache SQLite local.
-- **tests/test_cache.py**: suíte de testes do cache SQLite (conexão WAL,
-  get/put, confidence_min, --no-cache, invalidação).
+#### [LOG-01] Sistema de Logs Profissional (`src/bibliotec/core/logging.py`)
+* Configuração de logging estruturado que redireciona logs detalhados para arquivo
+  (`bibliotec.log`), mantendo o terminal 100% limpo para a barra de progresso do Rich.
+* `setup_logging(verbose=verbose)`: quando `verbose=True`, anexa um StreamHandler ao console;
+  caso contrário, apenas o arquivo de log recebe as mensagens.
+* Silenciamento defensivo de loggers de terceiros (RapidOCR, docling, transformers, torch,
+  urllib3, httpx, fitz) e variáveis de ambiente (GLOG_minloglevel, TORCH_CPP_LOG_LEVEL,
+  TOKENIZERS_PARALLELISM, HF_HUB_DISABLE_PROGRESS_BARS).
 
-### Modificado
+#### [RES-02] Persistência de Sessão para Retomada (`src/bibliotec/core/session.py`)
+* `SessionState` (Pydantic BaseModel): serializa estado de execução (source_dir, target_dir,
+  recursive, move, dry_run, provider, model, confidence_min, workers, no_cache, created_at).
+* `save_session(state)`: grava o estado em `.bibliotec_session.json`.
+* `load_session()`: carrega o estado salvo, retornando None se o arquivo não existir ou
+  estiver corrompido.
+* `clear_session()`: remove o arquivo de sessão com tolerância a arquivo ausente.
+* Novo comando CLI `./bibliotec resume` para retomada automática da execução interrompida.
 
-- **src/bibliotec/cli/main.py**: barra de progresso visual reestruturada
-  com `Rich Group` e `Live`, posicionando a barra consolidada no topo e a
-  linha de status do arquivo/estágio abaixo dela.
+#### [LLM-03] Provedor NVIDIA NIM (`src/bibliotec/core/llm.py`)
+* `NvidiaProvider`: chama a API NVIDIA NIM em `POST /chat/completions` via httpx, com retry
+  em 429/503, strip de blocos markdown JSON e travas determinísticas de confiança idênticas
+  às do GeminiProvider (short-circuit < 50 chars, teto 0.50 para título genérico).
+* Modelo padrão: `meta/llama-3.2-90b-vision-instruct`.
+* Resolução de chave: flag CLI `--api-key` > env `BIBLIOTEC_NVIDIA_API_KEY` / `NVIDIA_API_KEY`
+  > config `nvidia_api_key`.
 
-## [0.0.5] - 2026-11-05
+#### [CLI-04] Integração CLI + Pipeline para release v0.1.0 (`src/bibliotec/cli/main.py`)
+* Novas flags globais: `--verbose` / `-v` e `--provider` / `-p` (gemini ou nvidia).
+* `setup_logging(verbose=verbose)` chamado no início de `_executar_organize`.
+* `_build_provider` agora aceita parâmetro `provider`; suporte a NVIDIA com resolução de chave
+  e erro amigável quando ausente.
+* Sessão e Retomada: `save_session(SessionState(...))` no início de `_executar_organize`;
+  `clear_session()` após conclusão bem-sucedida.
+* Subcomando `organize` ocultado do `--help` raiz (`hidden=True`).
+* Comando `bibliotec resume` adicionado.
+* Barra de progresso Rich reescrita com `rich.console.Group` + `rich.live.Live`:
+  barra consolidada no topo e linha de status do arquivo abaixo.
+* Comando `bibliotec cache` com subcomandos `clean`/`clear`, `status` e `path`.
+* Remoção do resquício `progress.update(task, description="Concluído")` do bloco `finally`.
+* Bump de versão para **0.1.0** em `pyproject.toml` e `src/bibliotec/__init__.py`.
 
-### Corrigido
+---
 
-- **src/bibliotec/cli/main.py**: removida chamada a `on_event` inexistente que
-  travava a barra de progresso visual.
-- **src/bibliotec/core/scanner.py**: conformidade com ISO 32000-1 § 7.5.2 na
-  detecção de `%PDF-` dentro dos primeiros 1024 bytes. Leitores conformes
-  aceitam até 1024 bytes de dados arbitrários prévios (ex: cabeçalhos
-  HTTP/multipart de repositórios institucionais), então a verificação agora
-  busca a assinatura em qualquer posição do cabeçalho lido, não apenas no
-  início.
-
-### Adicionado
-
-- **src/bibliotec/core/pipeline.py**: suporte a avanço de barra de progresso
-  em eventos `duplicate_skipped`, garantindo que o contador de progresso
-  avance corretamente também para arquivos duplicados pulados.
-
-## [0.0.4] - 2026-11-05
-
-### Adicionado
-
-- **src/bibliotec/storage/companion.py**: geração automática de arquivo
-  companheiro (.md) ao lado do PDF organizado, contendo Front Matter YAML
-  completo (título, subtítulo, autores, ano, grande área, área básica, tipo,
-  DOI, ISBN, SHA-256, confidence_score, used_ocr, source_file, organized_at)
-  e referência bibliográfica formatada segundo a ABNT NBR 6023.
-- **src/bibliotec/storage/organizer.py**: integração para materializar o
-  arquivo companheiro juntamente com o PDF no destino (arquivo `.md` com o
-  mesmo nome base do PDF, gerado apenas quando não for `--dry-run`).
-- **src/bibliotec/storage/__init__.py**: exporta `generate_companion_markdown`
-  como parte da API pública da camada de armazenamento.
-- **tests/test_companion.py**: 18 testes unitários e de integração para o
-  módulo companheiro (formato de autores ABNT, referência bibliográfica,
-  front matter YAML, geração de markdown, integração com organizer).
-
-## [0.0.3] - 2026-11-05
-
-### Corrigido
-
-- **src/bibliotec/core/pipeline.py**: resolvido `NameError` em `_emit` que
-  impedia o envio de eventos para a CLI e congelava a barra de progresso
-  visual em `'0/?'` (`total_scanned` agora é definido antes de qualquer uso
-  em closures de emissão de eventos).
-
-### Modificado
-
-- **src/bibliotec/__init__.py**: suprimidas mensagens de terminal e barras de
-  progresso do HuggingFace/PyTorch/Docling (`HF_HUB_DISABLE_PROGRESS_BARS=1`,
-  `TOKENIZERS_PARALLELISM=false` e filtros de warnings do `torch`).
+## [0.0.6] - 2026-11-04
 
 ### Adicionado
-
-- **tests/test_pipeline_events.py**: teste unitário/integração validando a
-  propagação ponta a ponta dos eventos de pipeline com `total_files`.
-
-## [0.0.2] - 2026-11-05
-
-### Modificado
-
-- **src/bibliotec/core/llm.py**: cadeia de fallback atualizada para modelos
-  ativos da Google (`gemini-3.8-flash`, `gemini-3.7-flash`,
-  `gemini-3.5-flash`, `gemini-3.1-flash-lite`).
-
-### Corrigido
-
-- **src/bibliotec/core/pipeline.py** e **src/bibliotec/cli/main.py**:
-  contagem atômica thread-safe na barra de progresso da CLI com múltiplos
-  workers (`completed_count` incrementado apenas ao final de cada PDF, via
-  `list[int]` mutável + `threading.Lock`, garantindo `progress.advance`
-  chamado exatamente 1 vez por PDF concluído).
-
-### Removido
-
-- **src/bibliotec/core/llm.py**: modelos legados descontinuados da Google
-  (`gemini-2.5-pro`) removidos da cadeia de fallback.
-
-## [0.0.1] - 2026-11-05
-
-### Adicionado
-
-- **pyproject.toml**: pacote `bibliotec`, Python >= 3.11, build hatchling,
-  entrypoint `bibliotec = bibliotec.cli.main:app`, dependências de produção
-  (`pymupdf`, `docling`, `httpx`, `tenacity`, `rapidfuzz`, `python-stdnum`,
-  `pydantic`, `pydantic-settings`, `google-genai`, `typer`, `rich`, `tomli-w`)
-  e de desenvolvimento (`pytest`, `respx`, `ruff`).
-- **.gitignore**: ignora ambientes virtuais (`.venv/`), caches Python
-  (`__pycache__/`, `.pytest_cache/`, `.ruff_cache/`), arquivos de sistema
-  (`.DS_Store`), bancos SQLite locais (`*.db`), arquivo de configuração local
-  com chaves de API (`bibliotec.toml`) e o repositório de PDFs de teste
-  (`repositorio_de_pdfs_para_testes/`, ~1.1 GB).
-- **README.md**: documenta instalação, configuração inicial via
-  `bibliotec config init`, estrutura do `config.toml`, exemplos de uso de
-  `bibliotec organize` (incluindo `--dry-run`, `--move`, `--flat`) e a
-  arquitetura em 5 estágios.
-- **src/bibliotec/__init__.py**: define `__version__ = "0.0.1"` e expõe a API
-  pública de alto nível do pacote.
-- **src/bibliotec/core/__init__.py**: exporta as entidades principais do
-  domínio e o orquestrador do pipeline, mantendo a fronteira limpa entre o
-  motor central (`core`) e a camada de interface (`cli`, futura `gui`).
-- **src/bibliotec/core/config.py**: `AppConfig(BaseSettings)` composto pelos
-  submodelos `GeneralConfig`, `LLMConfig` e `ApiKeysConfig` usando
-  `pydantic-settings`, `TomlConfigSettingsSource` e `AliasChoices`
-  (`BIBLIOTEC_GEMINI_API_KEY` > `GEMINI_API_KEY`, etc.) com precedência
-  `init -> env -> ./bibliotec.toml -> ~/.config/bibliotec/config.toml`.
-  Inclui geração de template TOML comentado com permissão `0600`
-  (`os.chmod`) e mascaramento de chaves de API (`mask_key`).
-- **src/bibliotec/core/models.py**: enumeradores `DocumentType`,
-  `ProcessStatus`, `FileOperation` e modelos Pydantic
-  `ExtractedDocument`, `ExternalMetadata`, `LLMClassificationOutput`,
-  `FileManifestEntry`, `ExecutionSummary`, `PipelineEvent` conforme a Seção 3
-  do design, fornecendo contratos de dados tipados e o
-  `response_schema` exigido pelo Structured Outputs do Gemini.
-- **src/bibliotec/core/resources/taxonomy_capes.json**: dicionário canônico
-  oficial `{"version": "capes-cnpq-v1", "areas": {...}}` com as 9 Grandes
-  Áreas da CAPES/CNPq e suas Áreas Básicas em português, sem barras `/`
-  nos nomes. Fonte única de verdade para validação de pastas e
-  `taxonomy_version` usada na chave do cache.
-- **src/bibliotec/core/taxonomy.py**: `get_taxonomy_version()`,
-  `get_grandes_areas()`, `get_areas_basicas()`,
-  `validate_or_repair_pair(grande_area, area_basica) -> tuple[str, str] |
-  None` (repara a `grande_area` pai quando a `area_basica` existe em outra
-  Grande Área; retorna `None` quando ambas são inválidas) e
-  `format_taxonomy_for_prompt()`.
-- **src/bibliotec/core/scanner.py**: resolve `source_dir` e `target_dir`,
-  rejeita `source_dir == target_dir`, exclui a subárvore de `target_dir`,
-  varredura recursiva (padrão) ou plana (`--flat`), ignora ocultos e
-  não-PDFs (`ignored_non_pdf`), valida a assinatura `%PDF-` nos primeiros
-  1024 bytes e calcula SHA-256 em blocos de 64 KB.
-- **src/bibliotec/core/cache.py**: banco SQLite em
-  `~/.cache/bibliotec/state.db` em modo WAL (`PRAGMA journal_mode=WAL`) com
-  tabela `processed_files` indexada por `(sha256, taxonomy_version,
-  model_name)`, persistindo apenas resultados com
-  `confidence_score >= confidence_min` e suportando invalidação via
-  `--no-cache`. Usa `check_same_thread=False` para uso seguro em worker
-  threads com `--workers > 1` (acesso serializado pelo `finalize_lock` do
-  pipeline).
-- **src/bibliotec/core/llm.py**: `Protocol LLMProvider` e `GeminiProvider`
-  usando o SDK `google-genai` com saída estruturada
-  (`response_mime_type="application/json"`,
-  `response_schema=LLMClassificationOutput`), retry em HTTP 429 e 503
-  (`wait_exponential`, `stop_after_attempt(4)`), cadeia de fallback de
-  modelos (`gemini-3.8-flash`, `gemini-3-flash-preview`,
-  `gemini-2.5-pro`) em 404 ou 503, short-circuit quando texto útil < 50
-  caracteres sem metadado externo (`confidence_score = 0.0`), teto
-  `min(score, 0.50)` para títulos genéricos sem autor, e validação do par
-  `(grande_area, area_basica)` via `validate_or_repair_pair`.
-- **bibliotec.example.toml**: modelo limpo de configuração (sem chaves
-  reais) para copiar e preencher com os próprios valores do usuário.
-- **CHANGELOG.md**: este arquivo, no padrão Keep a Changelog.
-- **tests/test_config.py**: testes unitários para `init_config_file()`,
-  leitura de `./bibliotec.toml` sem `ValidationError`, variáveis de
-  ambiente diretas e `extra='ignore'` para chaves desconhecidas.
-- **tests/test_namer.py**: testes unitários de formatação de nomes de
-  arquivo (1, 2 e 3+ autores, ausência de subtítulo/ano, caracteres
-  especiais, truncamento abaixo de 240 bytes UTF-8).
-- **tests/test_taxonomy_and_identifiers.py**: testes de integridade da
-  taxonomia, reparo automático de Grande Área, extração de DOI por regex,
-  validação de ISBN via `python-stdnum` e detecção de Ficha Catalográfica.
-- **tests/test_pipeline_integration.py**: testes de integração do pipeline
-  completo (árvore temática, ignorar `.webloc`/não-PDFs, deduplicação por
-  SHA-256, baixa confiança -> `revisao_manual/`, modo `--dry-run`, cache
-  SQLite, PDF corrompido, execução com `workers=4`).
+* **Arquivo companheiro (.md)**: `src/bibliotec/storage/companion.py` com funções
+  `format_abnt_author`, `format_abnt_authors`, `format_abnt_reference`,
+  `generate_companion_markdown` e `generate_duplicate_companion_markdown`.
+* **Gerenciamento de duplicatas**: `LibraryOrganizer` encaminha duplicatas para
+  `target_dir/duplicatas/` com resolução de colisão de nomes, `.md` companheiro e
+  suporte a `move` (limpa a origem) e `copy`.
+* **Comando `bibliotec cache`**: subcomandos `clean`/`clear`, `status` e `path` para
+  gerenciar o banco SQLite `~/.cache/bibliotec/state.db`.
+* **Barra de progresso Rich**: reescrita com `Group(prog_bar, status_prog)` e `Live`,
+  com barra consolidada no topo e linha de status do arquivo abaixo.
 
 ### Alterado
+* `src/bibliotec/storage/organizer.py`: integração do arquivo companheiro na etapa
+  `add_organized` (quando `status == ORGANIZED` e não `dry_run`).
 
-- Versão do pacote ajustada de `0.1.0` para `0.0.1` (primeira versão
-  oficial, conforme diretrizes de versionamento).
+---
+
+## [0.0.5] - 2026-11-03
 
 ### Corrigido
+* **Modelo Gemini**: padrão atualizado para `gemini-3.8-flash` em `config.py`, `llm.py`
+  e `bibliotec.toml`.
+* **Fallback inteligente**: `GeminiProvider._call_gemini` tenta cadeia de modelos
+  (`gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.5-flash`, `gemini-3.1-flash-lite`)
+  quando o modelo atual retorna HTTP 404 NOT_FOUND.
+* **Poluição do cache SQLite**: `FileCache` aceita `db_path`; nunca lê/grava resultados
+  com `reasoning == 'mock'` no cache real (~/.cache/bibliotec/state.db); 113 entradas
+  mock removidas; testes usam `db_path=tmp_path/'state.db'`.
+* **CLI sem chave**: levanta erro amigável + `typer.Exit(1)` em vez de usar
+  `MockLLMProvider` silenciosamente.
+* **Colisão de nomes em `--dry-run`**: `LibraryOrganizer._planned_destinations`
+  detecta colisões contra arquivos planejados na mesma execução, funcionando em
+  modo dry-run.
+* **Ambiente virtual Python 3.12**: `.venv` criado na raiz; `./bibliotec` re-executa
+  com `.venv/bin/python` se existir.
+* **Silenciamento de avisos**: `HF_HUB_DISABLE_PROGRESS_BARS=1`,
+  `TOKENIZERS_PARALLELISM=false`, filtros para `google.*`, `fitz.*`, urllib3 OpenSSL,
+  `SwigPy`/`swigvarlink`, `Redirects are currently not supported`, `UserWarning` do torch.
+* **Bug da barra de progresso**: corrigido `NameError` no `_emit` (variável
+  `completed_count` inexistente no escopo) que congelava a barra em `0/?`; eventos
+  `duplicate_skipped` agora avançam a barra; `on_event` removido do callback.
 
-- `ApiKeysConfig` agora inclui o nome do próprio campo em cada
-  `AliasChoices` (ex: `gemini_api_key`, `BIBLIOTEC_GEMINI_API_KEY`,
-  `GEMINI_API_KEY`) para que o TOML seja lido sem `extra_forbidden`.
-- `model_config = ConfigDict(populate_by_name=True, extra="ignore")`
-  adicionado a `GeneralConfig`, `LLMConfig`, `ApiKeysConfig` e
-  `AppConfig`.
-- Removido `env_nested_delimiter="__"` do `AppConfig` para que variáveis
-  de ambiente diretas (`BIBLIOTEC_GEMINI_API_KEY`) sejam lidas corretamente.
-- `FilteredTomlSettingsSource` ignora strings vazias (`""`) no TOML,
-  permitindo que variáveis de ambiente preencham campos deixados vazios no
-  arquivo de configuração.
-- `sqlite3.connect(..., check_same_thread=False)` no cache SQLite para
-  evitar `ProgrammingError` com `--workers > 1`.
+---
+
+## [0.0.4] - 2026-11-02
+
+### Adicionado
+* **Ergonomia da CLI**: `bibliotec -o <origem> -d <destino> [--dry-run]` executa o
+  organize automaticamente sem precisar do subcomando.
+* **Opções curtas**: `--origem/-o/--source` e `--destino/-d/--target` tanto no callback
+  raiz quanto no subcomando `organize`.
+* **Script executável `./bibliotec`**: adiciona `src/` ao `sys.path` automaticamente e
+  chama `bibliotec.cli.main:main`; usa `.venv/bin/python` se existir.
+* **Testes de ergonomia**: `tests/test_cli_ergonomia.py` com `typer.testing.CliRunner`
+  cobrindo `-o/-d`, `--origem/--destino`, posições, opções source/target, precedência
+  e casos de erro.
+
+### Alterado
+* `src/bibliotec/cli/main.py`: refatorado para extrair lógica comum em
+  `_executar_organize`, evitando duplicação entre callback raiz e `organize`.
+
+---
+
+## [0.0.3] - 2026-11-01
+
+### Adicionado (Itens 17 a 27 — Fase 2/3)
+* **`src/bibliotec/core/prompts.py`**: prompt de sistema e payload contextual com
+  truncamento de `sampled_text` a 15.000 caracteres priorizando `cip_text`; regras dos
+  5 tipos documentais; autores no formato `'Sobrenome, Nome'`; catálogo fechado via
+  `format_taxonomy_for_prompt`.
+* **`src/bibliotec/core/llm.py`**: `Protocol LLMProvider`; short-circuit < 50 chars
+  sem metadado externo (`confidence_score = 0.0`); `GeminiProvider` com
+  `google-genai` (`response_mime_type='application/json'`,
+  `response_schema=LLMClassificationOutput`); retry em HTTP 429; validação via
+  `validate_or_repair_pair` forçando `confidence_score = 0.0` se retornar `None`;
+  teto `min(score, 0.50)` quando título for vazio/genérico sem autor.
+* **`src/bibliotec/storage/__init__.py`**: exporta `format_academic_filename` e
+  `LibraryOrganizer`.
+* **`src/bibliotec/storage/namer.py`**: `<autor> - <titulo> - <subtitulo> - <ano>.pdf`
+  com 1/2/3+ autores; omissão de subtítulo vazio; `s.d.` quando `year` for `None`;
+  normalização Unicode NFC; sanitização de proibidos; truncamento progressivo em
+  fronteira de palavra garantindo ≤ 240 bytes UTF-8.
+* **`src/bibliotec/storage/organizer.py`**: árvore temática
+  `<Grande Área>/<Área Básica>/<Tipo>/<nome>.pdf`; `revisao_manual/` preservando nome
+  original; `shutil.copy2` ou move seguro; `dry_run` sem pastas temáticas nem cópias;
+  colisão por SHA-256 (`duplicate_skipped` ou sufixo ` (2).pdf`); gravação de
+  `manifest.json` e `revisao_manual/relatorio_revisao.md`.
+* **`src/bibliotec/core/pipeline.py`**: orquestrador de 5 estágios
+  (scan → cache → extrator → enriquecer → LLM → organizador); `workers=1` padrão ou
+  rede paralela com lock no OCR + finalização; `ExecutionSummary` com teto de 20%
+  para `revisao_manual/`; emissão de `PipelineEvent`.
+* **`src/bibliotec/cli/__init__.py`** e **`src/bibliotec/cli/main.py`**: Typer+Rich
+  com comandos `organize`, `config init [--local]`, `config show`, `config path`.
+* **Testes**: `tests/test_namer.py`, `tests/test_taxonomy_and_identifiers.py`,
+  `tests/test_pipeline_integration.py` (31 testes não-slow).
+
+### Alterado
+* `src/bibliotec/core/__init__.py`: exporta novos módulos (prompts, llm).
+
+---
+
+## [0.0.2] - 2026-10-29
+
+### Adicionado (Itens 12 a 16 — Fase 1, implementados pelo agente Lince)
+* **`src/bibliotec/extractors/__init__.py`**: `extract_document_content(path, sha256)`.
+* **`src/bibliotec/extractors/identifiers.py`**: extração de DOI por regex estrita,
+  ISBN validado via `python-stdnum`, detecção de Ficha Catalográfica CIP.
+* **`src/bibliotec/extractors/native_pdf.py`**: extração nativa via PyMuPDF das 10
+  primeiras e 5 últimas páginas; decisão de necessidade de OCR.
+* **`src/bibliotec/extractors/ocr_docling.py`**: fallback de OCR seletivo via Docling
+  com recorte de páginas sem texto (máximo 8 páginas).
+* **`src/bibliotec/core/enrichers.py`**: consultas HTTP para OpenAlex e Google Books
+  com `httpx` + `tenacity` (retry 3 tentativas, timeout 8s); validação de similaridade
+  `rapidfuzz.fuzz.token_set_ratio >= 88.0`.
+
+---
+
+## [0.0.1] - 2026-10-27
+
+### Adicionado (Fase 1 — Itens 1 a 11)
+* **`pyproject.toml`**: metadados do pacote, dependências, ponto de entrada
+  `bibliotec = "bibliotec.cli.main:app"`.
+* **`src/bibliotec/__init__.py`**: `__version__ = "0.1.0"`.
+* **`src/bibliotec/core/__init__.py`**: exporta entidades de domínio.
+* **`src/bibliotec/core/config.py`**: `AppConfig` com `pydantic-settings`, fontes TOML
+  aninhadas, ordem de precedência (CLI > env > local TOML > global TOML), geração de
+  template TOML com permissão `0600`.
+* **`src/bibliotec/core/models.py`**: enums (`DocumentType`, `ProcessStatus`,
+  `FileOperation`) e modelos Pydantic (`ExtractedDocument`, `ExternalMetadata`,
+  `LLMClassificationOutput`, `FileManifestEntry`, `ExecutionSummary`, `PipelineEvent`).
+* **`src/bibliotec/core/resources/taxonomy_capes.json`**: 9 Grandes Áreas e Áreas
+  Básicas da CAPES/CNPq.
+* **`src/bibliotec/core/taxonomy.py`**: carregamento da taxonomia,
+  `validate_or_repair_pair`, `format_taxonomy_for_prompt`.
+* **`src/bibliotec/core/scanner.py`**: varredura recursiva/plana, validação de
+  assinatura `%PDF-`, SHA-256, exclusão da subárvore do destino.
+* **`src/bibliotec/core/cache.py`**: cache SQLite em `~/.cache/bibliotec/state.db`
+  (modo WAL), persistência apenas de classificações aprovadas.
+* **`.gitignore`**: ignora ambientes virtuais, caches, chaves de API, bancos SQLite.
+* **`README.md`**: documentação de instalação, configuração e uso.
