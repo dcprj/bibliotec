@@ -144,7 +144,9 @@ def generate_companion_markdown(
     isbn = classification.get("isbn")
     confidence_score = classification.get("confidence_score", 0.0)
 
-    organized_at = datetime.now(timezone.utc).isoformat()
+    now = datetime.now()
+    organized_at = now.strftime("%Y-%m-%d %H:%M:%S")
+    data_amigavel = now.strftime("%d/%m/%Y às %H:%M:%S")
 
     # Front matter YAML.
     lines: list[str] = []
@@ -169,7 +171,7 @@ def generate_companion_markdown(
     lines.append(f"confidence_score: {confidence_score}")
     lines.append(f"used_ocr: {str(used_ocr).lower()}")
     lines.append(f"source_file: {source_path.name}")
-    lines.append(f"organized_at: {organized_at}")
+    lines.append(f"organized_at: {organized_at!r}")
     lines.append("---")
     lines.append("")
 
@@ -187,6 +189,7 @@ def generate_companion_markdown(
     lines.append(f"- **Tipo de Documento:** {tipo}")
     lines.append(f"- **Arquivo Original:** {source_path.name}")
     lines.append(f"- **SHA-256:** {sha256}")
+    lines.append(f"- **Organizado em:** {data_amigavel}")
 
     return "\n".join(lines) + "\n"
 
@@ -202,7 +205,9 @@ def generate_duplicate_companion_markdown(
     é idêntico à obra canônica, informando o caminho do PDF canônico e do seu
     .md companheiro.
     """
-    detected_at = datetime.now(timezone.utc).isoformat()
+    now = datetime.now()
+    detected_at = now.strftime("%Y-%m-%d %H:%M:%S")
+    data_detectada = now.strftime("%d/%m/%Y às %H:%M:%S")
     # Caminho canônico: relativo se possível, absoluto caso contrário.
     try:
         canonical_rel = canonical_dest.resolve().relative_to(Path.cwd().resolve())
@@ -217,13 +222,15 @@ def generate_duplicate_companion_markdown(
     lines.append(f"original_filename: {duplicate_source.name!r}")
     lines.append(f"sha256: {sha256}")
     lines.append(f"canonical_path: {canonical_path!r}")
-    lines.append(f"detected_at: {detected_at}")
+    lines.append(f"detected_at: {detected_at!r}")
     lines.append("---")
     lines.append("")
 
     lines.append(f"# {duplicate_source.name}")
     lines.append("")
     lines.append("## Arquivo Duplicado Detectado")
+    lines.append("")
+    lines.append(f"- **Detectado em:** {data_detectada}")
     lines.append("")
     lines.append(
         "Este arquivo é uma **duplicata exata** (mesmo SHA-256) de uma obra "
