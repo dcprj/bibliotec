@@ -286,6 +286,257 @@ class GeminiProvider:
         )
 
 
+# --------------------------------------------------------------------------- #
+# FallbackLLMDispatcher e fábrica de cadeia de provedores
+# --------------------------------------------------------------------------- #
+import logging  # noqa: E402
+
+_llm_logger = logging.getLogger("bibliotec.llm")
+
+
+class FallbackLLMDispatcher:
+    """Despachante de provedores LLM com fallback automático.
+
+    Implementa o protocolo :class:`LLMProvider`. Recebe uma cadeia ordenada de
+    tuplas ``(nome_provedor, instancia_provedor)``. O primeiro é o provedor
+    primário; os demais são fallbacks tentados em ordem quando o anterior
+    falha (exceção ou resultado com reasoning contendo 'Falha na chamada ao
+    LLM').
+
+    Quando todos os provedores falham, retorna o último resultado de falha.
+    """
+
+    def __init__(
+        self,
+        providers: list[tuple[str, object]],
+    ) -> None:
+        if not providers:
+            raise ValueError("FallbackLLMDispatcher requer pelo menos um provedor.")
+        self._providers: list[tuple[str, object]] = providers
+
+    @property
+    def primary_name(self) -> str:
+        """Retornar o nome do provedor primário."""
+        return self._providers[0][0]
+
+    @property
+    def provider_names(self) -> list[str]:
+        """Retornar a lista ordenada de nomes dos provedores na cadeia."""
+        return [nome for nome, _ in self._providers]
+
+    def classify(
+        self,
+        sampled_text: str,
+        cip_text: str,
+        external_metadata: ExternalMetadata | None,
+        used_ocr: bool = False,
+    ) -> ClassificationResult:
+        """Classificar tentando os provedores em ordem até obter sucesso.
+
+        Se um provedor levantar exceção ou retornar resultado com
+        reasoning contendo 'Falha na chamada ao LLM', loga um warning e
+        tenta o próximo da cadeia.
+        """
+        ultimo_resultado: ClassificationResult | None = None
+        ultimo_erro: str | None = None
+
+        for indice, (nome, provedor) in enumerate(self._providers):
+            try:
+                resultado = provedor.classify(
+                    sampled_text=sampled_text,
+                    cip_text=cip_text,
+                    external_metadata=external_metadata,
+                    used_ocr=used_ocr,
+                )
+            except Exception as exc:
+                ultimo_erro = str(exc)
+                _llm_logger.warning(
+                    "Provedor %s falhou: %s. Tentando fallback para %s...",
+                    nome,
+                    exc,
+                    self._providers[indice + 1][0]
+                    if indice + 1 < len(self._providers)
+                    else "nenhum (último)",
+                )
+                ultimo_resultado = ClassificationResult(
+                    grande_area="",
+                    area_basica="",
+                    tipo="Outros",
+                    authors=[],
+                    title="",
+                    subtitle="",
+                    year=None,
+                    confidence_score=0.0,
+                    reasoning=f"Falha na chamada ao LLM {nome}: {exc}",
+                    used_ocr=used_ocr,
+                )
+                continue
+
+            # Resultado de erro de rede/API: reasoning começa com
+            # 'Falha na chamada ao LLM ...' -> tenta o próximo provedor.
+            if resultado.reasoning.startswith("Falha na chamada ao LLM"):
+                ultimo_erro = resultado.reasoning
+                _llm_logger.warning(
+                    "Provedor %s falhou: %s. Tentando fallback para %s...",
+                    nome,
+                    resultado.reasoning,
+                    self._providers[indice + 1][0]
+                    if indice + 1 < len(self._providers)
+                    else "nenhum (último)",
+                )
+                ultimo_resultado = resultado
+                continue
+
+            # Sucesso: retorna o resultado imediatamente.
+            return resultado
+
+        # Todos os provedores falharam: retornar o último resultado de erro.
+        if ultimo_resultado is not None:
+            return ultimo_resultado
+        # Caso teoricamente impossível (pelo menos um provedor existe), mas
+        # mantido para satisfazer o type checker.
+        return ClassificationResult(
+            grande_area="",
+            area_basica="",
+            tipo="Outros",
+            authors=[],
+            title="",
+            subtitle="",
+            year=None,
+            confidence_score=0.0,
+            reasoning=(
+                f"Falha na chamada ao LLM: {ultimo_erro or 'provedor desconhecido'}"
+            ),
+            used_ocr=used_ocr,
+        )
+
+
+def create_provider_chain(
+    config: AppConfig,
+    *,
+    cli_provider: str | None = None,
+    cli_model: str | None = None,
+    cli_api_key: str | None = None,
+) -> LLMProvider:
+    """Criar uma cadeia de provedores LLM com fallback automático.
+
+    Parâmetros:
+        config: configuração ativa (AppConfig).
+        cli_provider: provedor solicitado via CLI (sobrescreve config).
+        cli_model: modelo solicitado via CLI (sobrescreve config).
+        cli_api_key: chave de API via CLI (sobrescreve config e env).
+
+    A cadeia usa o provedor especificado pelo usuário como primário e inclui
+    como fallback os demais provedores que tiverem chave de API configurada.
+    Se o primário não tiver chave, o primeiro com chave válida torna-se o
+    primário efetivo.
+
+    Suporta: "gemini", "nvidia", "deepseek", "claude".
+    """
+    provedores_disponiveis: dict[str, dict[str, Any]] = {
+        "gemini": {
+            "classe": GeminiProvider,
+            "chave": config.api_keys.gemini_api_key,
+            "modelo_padrao": "gemini-3.8-flash",
+            "chave_env": ("BIBLIOTEC_GEMINI_API_KEY", "GEMINI_API_KEY"),
+        },
+        "nvidia": {
+            "classe": NvidiaProvider,
+            "chave": config.api_keys.nvidia_api_key,
+            "modelo_padrao": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+            "chave_env": ("BIBLIOTEC_NVIDIA_API_KEY", "NVIDIA_API_KEY"),
+        },
+        "deepseek": {
+            "classe": DeepSeekProvider,
+            "chave": config.api_keys.deepseek_api_key,
+            "modelo_padrao": "deepseek-chat",
+            "chave_env": ("BIBLIOTEC_DEEPSEEK_API_KEY", "DEEPSEEK_API_KEY"),
+        },
+        "claude": {
+            "classe": ClaudeProvider,
+            "chave": config.api_keys.claude_api_key,
+            "modelo_padrao": "claude-3-5-haiku-20241022",
+            "chave_env": (
+                "BIBLIOTEC_CLAUDE_API_KEY",
+                "CLAUDE_API_KEY",
+                "ANTHROPIC_API_KEY",
+            ),
+        },
+    }
+
+    def _resolver_chave(nome_provedor: str, cli_key: str | None) -> str | None:
+        """Resolver a chave de API: CLI > env > config."""
+        if cli_key:
+            return cli_key
+        info = provedores_disponiveis[nome_provedor]
+        for env_var in info["chave_env"]:
+            valor = os.environ.get(env_var, "")
+            if valor:
+                return valor
+        return info["chave"] or None
+
+    def _resolver_modelo(nome_provedor: str, cli_model_val: str | None) -> str:
+        """Resolver o modelo: CLI > config.llm.model > padrão do provedor."""
+        if cli_model_val:
+            return cli_model_val
+        if config.llm.provider == nome_provedor and config.llm.model:
+            return config.llm.model
+        return provedores_disponiveis[nome_provedor]["modelo_padrao"]
+
+    # Determinar provedor primário: CLI > config.llm.provider > "gemini".
+    provedor_solicitado = cli_provider or config.llm.provider or "gemini"
+    if provedor_solicitado not in provedores_disponiveis:
+        provedor_solicitado = "gemini"
+
+    # Construir cadeia: começar com o solicitado, depois os demais com chave.
+    cadeia: list[tuple[str, object]] = []
+    nomes_vistos: set[str] = set()
+
+    def _adicionar_provedor(nome: str, usar_cli_key: bool, usar_cli_model: bool) -> None:
+        if nome in nomes_vistos:
+            return
+        info = provedores_disponiveis[nome]
+        chave = _resolver_chave(
+            nome, cli_api_key if usar_cli_key else None
+        )
+        if not chave:
+            return  # sem chave: não adicionar
+        modelo = _resolver_modelo(
+            nome, cli_model if usar_cli_model else None
+        )
+        instancia = info["classe"](api_key=chave, model=modelo)
+        cadeia.append((nome, instancia))
+        nomes_vistos.add(nome)
+
+    # Primeiro: o provedor solicitado pelo usuário (se tiver chave).
+    _adicionar_provedor(
+        provedor_solicitado,
+        usar_cli_key=(cli_provider is not None),
+        usar_cli_model=(cli_model is not None),
+    )
+
+    # Depois: os demais da cadeia de fallback do config (se houver chave).
+    for nome in config.llm.fallback_chain:
+        if nome != provedor_solicitado:
+            _adicionar_provedor(nome, usar_cli_key=False, usar_cli_model=False)
+
+    # Se o solicitado não teve chave, garantir pelo menos um com chave.
+    if not cadeia:
+        for nome in ("gemini", "nvidia", "deepseek", "claude"):
+            _adicionar_provedor(nome, usar_cli_key=False, usar_cli_model=False)
+            if cadeia:
+                break
+
+    if not cadeia:
+        raise ValueError(
+            "Nenhum provedor de LLM tem chave de API configurada. "
+            "Defina gemini_api_key, nvidia_api_key, deepseek_api_key ou "
+            "claude_api_key no config.toml ou variáveis de ambiente."
+        )
+
+    return FallbackLLMDispatcher(cadeia)
+
+
 class MockLLMProvider:
     """Provedor de teste determinístico (não requer rede)."""
 
@@ -478,3 +729,1059 @@ class NvidiaProvider:
             reasoning=output.reasoning,
             used_ocr=used_ocr,
         )
+
+
+# --------------------------------------------------------------------------- #
+# FallbackLLMDispatcher e fábrica de cadeia de provedores
+# --------------------------------------------------------------------------- #
+import logging  # noqa: E402
+
+_llm_logger = logging.getLogger("bibliotec.llm")
+
+
+class FallbackLLMDispatcher:
+    """Despachante de provedores LLM com fallback automático.
+
+    Implementa o protocolo :class:`LLMProvider`. Recebe uma cadeia ordenada de
+    tuplas ``(nome_provedor, instancia_provedor)``. O primeiro é o provedor
+    primário; os demais são fallbacks tentados em ordem quando o anterior
+    falha (exceção ou resultado com reasoning contendo 'Falha na chamada ao
+    LLM').
+
+    Quando todos os provedores falham, retorna o último resultado de falha.
+    """
+
+    def __init__(
+        self,
+        providers: list[tuple[str, object]],
+    ) -> None:
+        if not providers:
+            raise ValueError("FallbackLLMDispatcher requer pelo menos um provedor.")
+        self._providers: list[tuple[str, object]] = providers
+
+    @property
+    def primary_name(self) -> str:
+        """Retornar o nome do provedor primário."""
+        return self._providers[0][0]
+
+    @property
+    def provider_names(self) -> list[str]:
+        """Retornar a lista ordenada de nomes dos provedores na cadeia."""
+        return [nome for nome, _ in self._providers]
+
+    def classify(
+        self,
+        sampled_text: str,
+        cip_text: str,
+        external_metadata: ExternalMetadata | None,
+        used_ocr: bool = False,
+    ) -> ClassificationResult:
+        """Classificar tentando os provedores em ordem até obter sucesso.
+
+        Se um provedor levantar exceção ou retornar resultado com
+        reasoning contendo 'Falha na chamada ao LLM', loga um warning e
+        tenta o próximo da cadeia.
+        """
+        ultimo_resultado: ClassificationResult | None = None
+        ultimo_erro: str | None = None
+
+        for indice, (nome, provedor) in enumerate(self._providers):
+            try:
+                resultado = provedor.classify(
+                    sampled_text=sampled_text,
+                    cip_text=cip_text,
+                    external_metadata=external_metadata,
+                    used_ocr=used_ocr,
+                )
+            except Exception as exc:
+                ultimo_erro = str(exc)
+                _llm_logger.warning(
+                    "Provedor %s falhou: %s. Tentando fallback para %s...",
+                    nome,
+                    exc,
+                    self._providers[indice + 1][0]
+                    if indice + 1 < len(self._providers)
+                    else "nenhum (último)",
+                )
+                ultimo_resultado = ClassificationResult(
+                    grande_area="",
+                    area_basica="",
+                    tipo="Outros",
+                    authors=[],
+                    title="",
+                    subtitle="",
+                    year=None,
+                    confidence_score=0.0,
+                    reasoning=f"Falha na chamada ao LLM {nome}: {exc}",
+                    used_ocr=used_ocr,
+                )
+                continue
+
+            # Resultado de erro de rede/API: reasoning começa com
+            # 'Falha na chamada ao LLM ...' -> tenta o próximo provedor.
+            if resultado.reasoning.startswith("Falha na chamada ao LLM"):
+                ultimo_erro = resultado.reasoning
+                _llm_logger.warning(
+                    "Provedor %s falhou: %s. Tentando fallback para %s...",
+                    nome,
+                    resultado.reasoning,
+                    self._providers[indice + 1][0]
+                    if indice + 1 < len(self._providers)
+                    else "nenhum (último)",
+                )
+                ultimo_resultado = resultado
+                continue
+
+            # Sucesso: retorna o resultado imediatamente.
+            return resultado
+
+        # Todos os provedores falharam: retornar o último resultado de erro.
+        if ultimo_resultado is not None:
+            return ultimo_resultado
+        # Caso teoricamente impossível (pelo menos um provedor existe), mas
+        # mantido para satisfazer o type checker.
+        return ClassificationResult(
+            grande_area="",
+            area_basica="",
+            tipo="Outros",
+            authors=[],
+            title="",
+            subtitle="",
+            year=None,
+            confidence_score=0.0,
+            reasoning=(
+                f"Falha na chamada ao LLM: {ultimo_erro or 'provedor desconhecido'}"
+            ),
+            used_ocr=used_ocr,
+        )
+
+
+def create_provider_chain(
+    config: AppConfig,
+    *,
+    cli_provider: str | None = None,
+    cli_model: str | None = None,
+    cli_api_key: str | None = None,
+) -> LLMProvider:
+    """Criar uma cadeia de provedores LLM com fallback automático.
+
+    Parâmetros:
+        config: configuração ativa (AppConfig).
+        cli_provider: provedor solicitado via CLI (sobrescreve config).
+        cli_model: modelo solicitado via CLI (sobrescreve config).
+        cli_api_key: chave de API via CLI (sobrescreve config e env).
+
+    A cadeia usa o provedor especificado pelo usuário como primário e inclui
+    como fallback os demais provedores que tiverem chave de API configurada.
+    Se o primário não tiver chave, o primeiro com chave válida torna-se o
+    primário efetivo.
+
+    Suporta: "gemini", "nvidia", "deepseek", "claude".
+    """
+    provedores_disponiveis: dict[str, dict[str, Any]] = {
+        "gemini": {
+            "classe": GeminiProvider,
+            "chave": config.api_keys.gemini_api_key,
+            "modelo_padrao": "gemini-3.8-flash",
+            "chave_env": ("BIBLIOTEC_GEMINI_API_KEY", "GEMINI_API_KEY"),
+        },
+        "nvidia": {
+            "classe": NvidiaProvider,
+            "chave": config.api_keys.nvidia_api_key,
+            "modelo_padrao": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+            "chave_env": ("BIBLIOTEC_NVIDIA_API_KEY", "NVIDIA_API_KEY"),
+        },
+        "deepseek": {
+            "classe": DeepSeekProvider,
+            "chave": config.api_keys.deepseek_api_key,
+            "modelo_padrao": "deepseek-chat",
+            "chave_env": ("BIBLIOTEC_DEEPSEEK_API_KEY", "DEEPSEEK_API_KEY"),
+        },
+        "claude": {
+            "classe": ClaudeProvider,
+            "chave": config.api_keys.claude_api_key,
+            "modelo_padrao": "claude-3-5-haiku-20241022",
+            "chave_env": (
+                "BIBLIOTEC_CLAUDE_API_KEY",
+                "CLAUDE_API_KEY",
+                "ANTHROPIC_API_KEY",
+            ),
+        },
+    }
+
+    def _resolver_chave(nome_provedor: str, cli_key: str | None) -> str | None:
+        """Resolver a chave de API: CLI > env > config."""
+        if cli_key:
+            return cli_key
+        info = provedores_disponiveis[nome_provedor]
+        for env_var in info["chave_env"]:
+            valor = os.environ.get(env_var, "")
+            if valor:
+                return valor
+        return info["chave"] or None
+
+    def _resolver_modelo(nome_provedor: str, cli_model_val: str | None) -> str:
+        """Resolver o modelo: CLI > config.llm.model > padrão do provedor."""
+        if cli_model_val:
+            return cli_model_val
+        if config.llm.provider == nome_provedor and config.llm.model:
+            return config.llm.model
+        return provedores_disponiveis[nome_provedor]["modelo_padrao"]
+
+    # Determinar provedor primário: CLI > config.llm.provider > "gemini".
+    provedor_solicitado = cli_provider or config.llm.provider or "gemini"
+    if provedor_solicitado not in provedores_disponiveis:
+        provedor_solicitado = "gemini"
+
+    # Construir cadeia: começar com o solicitado, depois os demais com chave.
+    cadeia: list[tuple[str, object]] = []
+    nomes_vistos: set[str] = set()
+
+    def _adicionar_provedor(nome: str, usar_cli_key: bool, usar_cli_model: bool) -> None:
+        if nome in nomes_vistos:
+            return
+        info = provedores_disponiveis[nome]
+        chave = _resolver_chave(
+            nome, cli_api_key if usar_cli_key else None
+        )
+        if not chave:
+            return  # sem chave: não adicionar
+        modelo = _resolver_modelo(
+            nome, cli_model if usar_cli_model else None
+        )
+        instancia = info["classe"](api_key=chave, model=modelo)
+        cadeia.append((nome, instancia))
+        nomes_vistos.add(nome)
+
+    # Primeiro: o provedor solicitado pelo usuário (se tiver chave).
+    _adicionar_provedor(
+        provedor_solicitado,
+        usar_cli_key=(cli_provider is not None),
+        usar_cli_model=(cli_model is not None),
+    )
+
+    # Depois: os demais da cadeia de fallback do config (se houver chave).
+    for nome in config.llm.fallback_chain:
+        if nome != provedor_solicitado:
+            _adicionar_provedor(nome, usar_cli_key=False, usar_cli_model=False)
+
+    # Se o solicitado não teve chave, garantir pelo menos um com chave.
+    if not cadeia:
+        for nome in ("gemini", "nvidia", "deepseek", "claude"):
+            _adicionar_provedor(nome, usar_cli_key=False, usar_cli_model=False)
+            if cadeia:
+                break
+
+    if not cadeia:
+        raise ValueError(
+            "Nenhum provedor de LLM tem chave de API configurada. "
+            "Defina gemini_api_key, nvidia_api_key, deepseek_api_key ou "
+            "claude_api_key no config.toml ou variáveis de ambiente."
+        )
+
+    return FallbackLLMDispatcher(cadeia)
+
+
+def _is_deepseek_retryable(exc: BaseException) -> bool:
+    """Verificar se uma exceção httpx é HTTP 429 ou 503 (retryable na DeepSeek)."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code in (429, 503)
+    return False
+
+
+def _is_claude_retryable(exc: BaseException) -> bool:
+    """Verificar se uma exceção httpx é HTTP 429, 529 ou 503 (retryable na Anthropic)."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code in (429, 529, 503)
+    return False
+
+
+class DeepSeekProvider:
+    """Provedor DeepSeek usando httpx diretamente.
+
+    Chama a API DeepSeek em POST /chat/completions e aplica travas
+    determinísticas de confiança idênticas às do NvidiaProvider.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "deepseek-chat",
+        base_url: str = "https://api.deepseek.com/v1",
+        max_sampled_chars: int = 15_000,
+    ) -> None:
+        self._client = httpx.Client(
+            base_url=base_url,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            timeout=60.0,
+        )
+        self._model = model
+        self._max_sampled_chars = max_sampled_chars
+
+    @retry(
+        retry=retry_if_exception(_is_deepseek_retryable),
+        stop=stop_after_attempt(4),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        reraise=True,
+    )
+    def _call_deepseek(self, system_prompt: str, context_payload: str) -> str:
+        """Chamar a API DeepSeek /chat/completions com retry em 429/503."""
+        payload = {
+            "model": self._model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": system_prompt
+                    + "\n\nResponda APENAS com um objeto JSON válido estritamente no schema solicitado, sem marcação markdown adicional.",
+                },
+                {"role": "user", "content": context_payload},
+            ],
+            "temperature": 0.1,
+            "max_tokens": 2048,
+        }
+        resp = self._client.post("/chat/completions", json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["choices"][0]["message"]["content"]
+
+    def classify(
+        self,
+        sampled_text: str,
+        cip_text: str,
+        external_metadata: ExternalMetadata | None,
+        used_ocr: bool = False,
+    ) -> ClassificationResult:
+        """Classificar via DeepSeek aplicando travas determinísticas de confiança."""
+        # Short-circuit: texto útil insuficiente e sem metadado externo.
+        useful_chars = _alphanumeric_count(sampled_text) + _alphanumeric_count(cip_text)
+        has_external = external_metadata is not None and bool(
+            external_metadata.title or external_metadata.authors
+        )
+        if useful_chars < MIN_USEFUL_CHARS and not has_external:
+            return ClassificationResult(
+                grande_area="",
+                area_basica="",
+                tipo="Outros",
+                authors=[],
+                title="",
+                subtitle="",
+                year=None,
+                confidence_score=0.0,
+                reasoning=(
+                    "Texto alfanumérico útil inferior a 50 caracteres e sem "
+                    "metadados externos; classificação não realizada."
+                ),
+                used_ocr=used_ocr,
+            )
+
+        system_prompt = build_system_prompt()
+        context_payload = build_context_payload(sampled_text, cip_text, external_metadata)
+
+        try:
+            content = self._call_deepseek(system_prompt, context_payload)
+        except Exception as exc:  # falha de rede / API / parse
+            return ClassificationResult(
+                grande_area="",
+                area_basica="",
+                tipo="Outros",
+                authors=[],
+                title="",
+                subtitle="",
+                year=None,
+                confidence_score=0.0,
+                reasoning=f"Falha na chamada ao LLM DeepSeek: {exc}",
+                used_ocr=used_ocr,
+            )
+
+        # Remover marcação markdown e validar JSON de saída.
+        json_text = NvidiaProvider._strip_markdown_json(content)
+        try:
+            output = LLMClassificationOutput.model_validate_json(json_text)
+        except Exception:
+            output = LLMClassificationOutput.model_validate(json.loads(json_text))
+
+        # Validar/reparar par (grande_area, area_basica) contra o catálogo.
+        reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
+        if reparado is None:
+            return ClassificationResult(
+                grande_area=output.grande_area,
+                area_basica=output.area_basica,
+                tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
+                authors=list(output.authors),
+                title=output.title,
+                subtitle=output.subtitle,
+                year=output.year,
+                confidence_score=0.0,
+                reasoning=(
+                    f"{output.reasoning} Par (grande_area, area_basica) irreparável "
+                    f"contra o catálogo CAPES/CNPq."
+                ),
+                used_ocr=used_ocr,
+            )
+        grande_area, area_basica = reparado
+
+        # Teto de confiança para título vazio/genérico sem autor identificável.
+        confidence = float(output.confidence_score)
+        title = output.title or ""
+        has_authors = bool(output.authors)
+        if is_generic_title(title) and not has_authors:
+            confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
+
+        return ClassificationResult(
+            grande_area=grande_area,
+            area_basica=area_basica,
+            tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
+            authors=list(output.authors),
+            title=title,
+            subtitle=output.subtitle,
+            year=output.year,
+            confidence_score=confidence,
+            reasoning=output.reasoning,
+            used_ocr=used_ocr,
+        )
+
+
+# --------------------------------------------------------------------------- #
+# FallbackLLMDispatcher e fábrica de cadeia de provedores
+# --------------------------------------------------------------------------- #
+import logging  # noqa: E402
+
+_llm_logger = logging.getLogger("bibliotec.llm")
+
+
+class FallbackLLMDispatcher:
+    """Despachante de provedores LLM com fallback automático.
+
+    Implementa o protocolo :class:`LLMProvider`. Recebe uma cadeia ordenada de
+    tuplas ``(nome_provedor, instancia_provedor)``. O primeiro é o provedor
+    primário; os demais são fallbacks tentados em ordem quando o anterior
+    falha (exceção ou resultado com reasoning contendo 'Falha na chamada ao
+    LLM').
+
+    Quando todos os provedores falham, retorna o último resultado de falha.
+    """
+
+    def __init__(
+        self,
+        providers: list[tuple[str, object]],
+    ) -> None:
+        if not providers:
+            raise ValueError("FallbackLLMDispatcher requer pelo menos um provedor.")
+        self._providers: list[tuple[str, object]] = providers
+
+    @property
+    def primary_name(self) -> str:
+        """Retornar o nome do provedor primário."""
+        return self._providers[0][0]
+
+    @property
+    def provider_names(self) -> list[str]:
+        """Retornar a lista ordenada de nomes dos provedores na cadeia."""
+        return [nome for nome, _ in self._providers]
+
+    def classify(
+        self,
+        sampled_text: str,
+        cip_text: str,
+        external_metadata: ExternalMetadata | None,
+        used_ocr: bool = False,
+    ) -> ClassificationResult:
+        """Classificar tentando os provedores em ordem até obter sucesso.
+
+        Se um provedor levantar exceção ou retornar resultado com
+        reasoning contendo 'Falha na chamada ao LLM', loga um warning e
+        tenta o próximo da cadeia.
+        """
+        ultimo_resultado: ClassificationResult | None = None
+        ultimo_erro: str | None = None
+
+        for indice, (nome, provedor) in enumerate(self._providers):
+            try:
+                resultado = provedor.classify(
+                    sampled_text=sampled_text,
+                    cip_text=cip_text,
+                    external_metadata=external_metadata,
+                    used_ocr=used_ocr,
+                )
+            except Exception as exc:
+                ultimo_erro = str(exc)
+                _llm_logger.warning(
+                    "Provedor %s falhou: %s. Tentando fallback para %s...",
+                    nome,
+                    exc,
+                    self._providers[indice + 1][0]
+                    if indice + 1 < len(self._providers)
+                    else "nenhum (último)",
+                )
+                ultimo_resultado = ClassificationResult(
+                    grande_area="",
+                    area_basica="",
+                    tipo="Outros",
+                    authors=[],
+                    title="",
+                    subtitle="",
+                    year=None,
+                    confidence_score=0.0,
+                    reasoning=f"Falha na chamada ao LLM {nome}: {exc}",
+                    used_ocr=used_ocr,
+                )
+                continue
+
+            # Resultado de erro de rede/API: reasoning começa com
+            # 'Falha na chamada ao LLM ...' -> tenta o próximo provedor.
+            if resultado.reasoning.startswith("Falha na chamada ao LLM"):
+                ultimo_erro = resultado.reasoning
+                _llm_logger.warning(
+                    "Provedor %s falhou: %s. Tentando fallback para %s...",
+                    nome,
+                    resultado.reasoning,
+                    self._providers[indice + 1][0]
+                    if indice + 1 < len(self._providers)
+                    else "nenhum (último)",
+                )
+                ultimo_resultado = resultado
+                continue
+
+            # Sucesso: retorna o resultado imediatamente.
+            return resultado
+
+        # Todos os provedores falharam: retornar o último resultado de erro.
+        if ultimo_resultado is not None:
+            return ultimo_resultado
+        # Caso teoricamente impossível (pelo menos um provedor existe), mas
+        # mantido para satisfazer o type checker.
+        return ClassificationResult(
+            grande_area="",
+            area_basica="",
+            tipo="Outros",
+            authors=[],
+            title="",
+            subtitle="",
+            year=None,
+            confidence_score=0.0,
+            reasoning=(
+                f"Falha na chamada ao LLM: {ultimo_erro or 'provedor desconhecido'}"
+            ),
+            used_ocr=used_ocr,
+        )
+
+
+def create_provider_chain(
+    config: AppConfig,
+    *,
+    cli_provider: str | None = None,
+    cli_model: str | None = None,
+    cli_api_key: str | None = None,
+) -> LLMProvider:
+    """Criar uma cadeia de provedores LLM com fallback automático.
+
+    Parâmetros:
+        config: configuração ativa (AppConfig).
+        cli_provider: provedor solicitado via CLI (sobrescreve config).
+        cli_model: modelo solicitado via CLI (sobrescreve config).
+        cli_api_key: chave de API via CLI (sobrescreve config e env).
+
+    A cadeia usa o provedor especificado pelo usuário como primário e inclui
+    como fallback os demais provedores que tiverem chave de API configurada.
+    Se o primário não tiver chave, o primeiro com chave válida torna-se o
+    primário efetivo.
+
+    Suporta: "gemini", "nvidia", "deepseek", "claude".
+    """
+    provedores_disponiveis: dict[str, dict[str, Any]] = {
+        "gemini": {
+            "classe": GeminiProvider,
+            "chave": config.api_keys.gemini_api_key,
+            "modelo_padrao": "gemini-3.8-flash",
+            "chave_env": ("BIBLIOTEC_GEMINI_API_KEY", "GEMINI_API_KEY"),
+        },
+        "nvidia": {
+            "classe": NvidiaProvider,
+            "chave": config.api_keys.nvidia_api_key,
+            "modelo_padrao": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+            "chave_env": ("BIBLIOTEC_NVIDIA_API_KEY", "NVIDIA_API_KEY"),
+        },
+        "deepseek": {
+            "classe": DeepSeekProvider,
+            "chave": config.api_keys.deepseek_api_key,
+            "modelo_padrao": "deepseek-chat",
+            "chave_env": ("BIBLIOTEC_DEEPSEEK_API_KEY", "DEEPSEEK_API_KEY"),
+        },
+        "claude": {
+            "classe": ClaudeProvider,
+            "chave": config.api_keys.claude_api_key,
+            "modelo_padrao": "claude-3-5-haiku-20241022",
+            "chave_env": (
+                "BIBLIOTEC_CLAUDE_API_KEY",
+                "CLAUDE_API_KEY",
+                "ANTHROPIC_API_KEY",
+            ),
+        },
+    }
+
+    def _resolver_chave(nome_provedor: str, cli_key: str | None) -> str | None:
+        """Resolver a chave de API: CLI > env > config."""
+        if cli_key:
+            return cli_key
+        info = provedores_disponiveis[nome_provedor]
+        for env_var in info["chave_env"]:
+            valor = os.environ.get(env_var, "")
+            if valor:
+                return valor
+        return info["chave"] or None
+
+    def _resolver_modelo(nome_provedor: str, cli_model_val: str | None) -> str:
+        """Resolver o modelo: CLI > config.llm.model > padrão do provedor."""
+        if cli_model_val:
+            return cli_model_val
+        if config.llm.provider == nome_provedor and config.llm.model:
+            return config.llm.model
+        return provedores_disponiveis[nome_provedor]["modelo_padrao"]
+
+    # Determinar provedor primário: CLI > config.llm.provider > "gemini".
+    provedor_solicitado = cli_provider or config.llm.provider or "gemini"
+    if provedor_solicitado not in provedores_disponiveis:
+        provedor_solicitado = "gemini"
+
+    # Construir cadeia: começar com o solicitado, depois os demais com chave.
+    cadeia: list[tuple[str, object]] = []
+    nomes_vistos: set[str] = set()
+
+    def _adicionar_provedor(nome: str, usar_cli_key: bool, usar_cli_model: bool) -> None:
+        if nome in nomes_vistos:
+            return
+        info = provedores_disponiveis[nome]
+        chave = _resolver_chave(
+            nome, cli_api_key if usar_cli_key else None
+        )
+        if not chave:
+            return  # sem chave: não adicionar
+        modelo = _resolver_modelo(
+            nome, cli_model if usar_cli_model else None
+        )
+        instancia = info["classe"](api_key=chave, model=modelo)
+        cadeia.append((nome, instancia))
+        nomes_vistos.add(nome)
+
+    # Primeiro: o provedor solicitado pelo usuário (se tiver chave).
+    _adicionar_provedor(
+        provedor_solicitado,
+        usar_cli_key=(cli_provider is not None),
+        usar_cli_model=(cli_model is not None),
+    )
+
+    # Depois: os demais da cadeia de fallback do config (se houver chave).
+    for nome in config.llm.fallback_chain:
+        if nome != provedor_solicitado:
+            _adicionar_provedor(nome, usar_cli_key=False, usar_cli_model=False)
+
+    # Se o solicitado não teve chave, garantir pelo menos um com chave.
+    if not cadeia:
+        for nome in ("gemini", "nvidia", "deepseek", "claude"):
+            _adicionar_provedor(nome, usar_cli_key=False, usar_cli_model=False)
+            if cadeia:
+                break
+
+    if not cadeia:
+        raise ValueError(
+            "Nenhum provedor de LLM tem chave de API configurada. "
+            "Defina gemini_api_key, nvidia_api_key, deepseek_api_key ou "
+            "claude_api_key no config.toml ou variáveis de ambiente."
+        )
+
+    return FallbackLLMDispatcher(cadeia)
+
+
+class ClaudeProvider:
+    """Provedor Anthropic Claude usando httpx diretamente.
+
+    Chama a API Anthropic em POST /messages e aplica travas determinísticas
+    de confiança idênticas às dos demais provedores.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "claude-3-5-haiku-20241022",
+        base_url: str = "https://api.anthropic.com/v1",
+        max_sampled_chars: int = 15_000,
+    ) -> None:
+        self._client = httpx.Client(
+            base_url=base_url,
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            timeout=60.0,
+        )
+        self._model = model
+        self._max_sampled_chars = max_sampled_chars
+
+    @retry(
+        retry=retry_if_exception(_is_claude_retryable),
+        stop=stop_after_attempt(4),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        reraise=True,
+    )
+    def _call_claude(self, system_prompt: str, context_payload: str) -> str:
+        """Chamar a API Anthropic /messages com retry em 429/529/503."""
+        payload = {
+            "model": self._model,
+            "max_tokens": 2048,
+            "system": system_prompt
+            + "\nResponda APENAS com um objeto JSON válido estritamente no schema solicitado, sem marcação markdown adicional.",
+            "messages": [{"role": "user", "content": context_payload}],
+        }
+        resp = self._client.post("/messages", json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["content"][0]["text"]
+
+    def classify(
+        self,
+        sampled_text: str,
+        cip_text: str,
+        external_metadata: ExternalMetadata | None,
+        used_ocr: bool = False,
+    ) -> ClassificationResult:
+        """Classificar via Anthropic Claude aplicando travas determinísticas de confiança."""
+        # Short-circuit: texto útil insuficiente e sem metadado externo.
+        useful_chars = _alphanumeric_count(sampled_text) + _alphanumeric_count(cip_text)
+        has_external = external_metadata is not None and bool(
+            external_metadata.title or external_metadata.authors
+        )
+        if useful_chars < MIN_USEFUL_CHARS and not has_external:
+            return ClassificationResult(
+                grande_area="",
+                area_basica="",
+                tipo="Outros",
+                authors=[],
+                title="",
+                subtitle="",
+                year=None,
+                confidence_score=0.0,
+                reasoning=(
+                    "Texto alfanumérico útil inferior a 50 caracteres e sem "
+                    "metadados externos; classificação não realizada."
+                ),
+                used_ocr=used_ocr,
+            )
+
+        system_prompt = build_system_prompt()
+        context_payload = build_context_payload(sampled_text, cip_text, external_metadata)
+
+        try:
+            content = self._call_claude(system_prompt, context_payload)
+        except Exception as exc:  # falha de rede / API / parse
+            return ClassificationResult(
+                grande_area="",
+                area_basica="",
+                tipo="Outros",
+                authors=[],
+                title="",
+                subtitle="",
+                year=None,
+                confidence_score=0.0,
+                reasoning=f"Falha na chamada ao LLM Claude: {exc}",
+                used_ocr=used_ocr,
+            )
+
+        # Remover marcação markdown e validar JSON de saída.
+        json_text = NvidiaProvider._strip_markdown_json(content)
+        try:
+            output = LLMClassificationOutput.model_validate_json(json_text)
+        except Exception:
+            output = LLMClassificationOutput.model_validate(json.loads(json_text))
+
+        # Validar/reparar par (grande_area, area_basica) contra o catálogo.
+        reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
+        if reparado is None:
+            return ClassificationResult(
+                grande_area=output.grande_area,
+                area_basica=output.area_basica,
+                tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
+                authors=list(output.authors),
+                title=output.title,
+                subtitle=output.subtitle,
+                year=output.year,
+                confidence_score=0.0,
+                reasoning=(
+                    f"{output.reasoning} Par (grande_area, area_basica) irreparável "
+                    f"contra o catálogo CAPES/CNPq."
+                ),
+                used_ocr=used_ocr,
+            )
+        grande_area, area_basica = reparado
+
+        # Teto de confiança para título vazio/genérico sem autor identificável.
+        confidence = float(output.confidence_score)
+        title = output.title or ""
+        has_authors = bool(output.authors)
+        if is_generic_title(title) and not has_authors:
+            confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
+
+        return ClassificationResult(
+            grande_area=grande_area,
+            area_basica=area_basica,
+            tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
+            authors=list(output.authors),
+            title=title,
+            subtitle=output.subtitle,
+            year=output.year,
+            confidence_score=confidence,
+            reasoning=output.reasoning,
+            used_ocr=used_ocr,
+        )
+
+
+
+# --------------------------------------------------------------------------- #
+# FallbackLLMDispatcher e fábrica de cadeia de provedores
+# --------------------------------------------------------------------------- #
+import logging  # noqa: E402
+
+_llm_logger = logging.getLogger("bibliotec.llm")
+
+
+class FallbackLLMDispatcher:
+    """Despachante de provedores LLM com fallback automático.
+
+    Implementa o protocolo :class:`LLMProvider`. Recebe uma cadeia ordenada de
+    tuplas ``(nome_provedor, instancia_provedor)``. O primeiro é o provedor
+    primário; os demais são fallbacks tentados em ordem quando o anterior
+    falha (exceção ou resultado com reasoning contendo 'Falha na chamada ao
+    LLM').
+
+    Quando todos os provedores falham, retorna o último resultado de falha.
+    """
+
+    def __init__(self, providers: list[tuple[str, object]]) -> None:
+        if not providers:
+            raise ValueError("FallbackLLMDispatcher requer pelo menos um provedor.")
+        self._providers: list[tuple[str, object]] = providers
+
+    @property
+    def primary_name(self) -> str:
+        """Retornar o nome do provedor primário."""
+        return self._providers[0][0]
+
+    @property
+    def provider_names(self) -> list[str]:
+        """Retornar a lista ordenada de nomes dos provedores na cadeia."""
+        return [nome for nome, _ in self._providers]
+
+    def classify(
+        self,
+        sampled_text: str,
+        cip_text: str,
+        external_metadata: ExternalMetadata | None,
+        used_ocr: bool = False,
+    ) -> ClassificationResult:
+        """Classificar tentando os provedores em ordem até obter sucesso.
+
+        Se um provedor levantar exceção ou retornar resultado com
+        reasoning contendo 'Falha na chamada ao LLM', loga um warning e
+        tenta o próximo da cadeia.
+        """
+        ultimo_resultado: ClassificationResult | None = None
+        ultimo_erro: str | None = None
+
+        for indice, (nome, provedor) in enumerate(self._providers):
+            try:
+                resultado = provedor.classify(
+                    sampled_text=sampled_text,
+                    cip_text=cip_text,
+                    external_metadata=external_metadata,
+                    used_ocr=used_ocr,
+                )
+            except Exception as exc:
+                ultimo_erro = str(exc)
+                proximo = (
+                    self._providers[indice + 1][0]
+                    if indice + 1 < len(self._providers)
+                    else "nenhum (último)"
+                )
+                _llm_logger.warning(
+                    "Provedor %s falhou: %s. Tentando fallback para %s...",
+                    nome,
+                    exc,
+                    proximo,
+                )
+                ultimo_resultado = ClassificationResult(
+                    grande_area="",
+                    area_basica="",
+                    tipo="Outros",
+                    authors=[],
+                    title="",
+                    subtitle="",
+                    year=None,
+                    confidence_score=0.0,
+                    reasoning=f"Falha na chamada ao LLM {nome}: {exc}",
+                    used_ocr=used_ocr,
+                )
+                continue
+
+            # Resultado de erro de rede/API: reasoning começa com
+            # 'Falha na chamada ao LLM ...' -> tenta o próximo provedor.
+            if resultado.reasoning.startswith("Falha na chamada ao LLM"):
+                ultimo_erro = resultado.reasoning
+                proximo = (
+                    self._providers[indice + 1][0]
+                    if indice + 1 < len(self._providers)
+                    else "nenhum (último)"
+                )
+                _llm_logger.warning(
+                    "Provedor %s falhou: %s. Tentando fallback para %s...",
+                    nome,
+                    resultado.reasoning,
+                    proximo,
+                )
+                ultimo_resultado = resultado
+                continue
+
+            # Sucesso: retorna o resultado imediatamente.
+            return resultado
+
+        # Todos os provedores falharam: retornar o último resultado de erro.
+        if ultimo_resultado is not None:
+            return ultimo_resultado
+        return ClassificationResult(
+            grande_area="",
+            area_basica="",
+            tipo="Outros",
+            authors=[],
+            title="",
+            subtitle="",
+            year=None,
+            confidence_score=0.0,
+            reasoning=f"Falha na chamada ao LLM: {ultimo_erro or 'provedor desconhecido'}",
+            used_ocr=used_ocr,
+        )
+
+
+def create_provider_chain(
+    config: AppConfig,
+    *,
+    cli_provider: str | None = None,
+    cli_model: str | None = None,
+    cli_api_key: str | None = None,
+) -> LLMProvider:
+    """Criar uma cadeia de provedores LLM com fallback automático.
+
+    Parâmetros:
+        config: configuração ativa (AppConfig).
+        cli_provider: provedor solicitado via CLI (sobrescreve config).
+        cli_model: modelo solicitado via CLI (sobrescreve config).
+        cli_api_key: chave de API via CLI (sobrescreve config e env).
+
+    A cadeia usa o provedor especificado pelo usuário como primário e inclui
+    como fallback os demais provedores que tiverem chave de API configurada.
+    Se o primário não tiver chave, o primeiro com chave válida torna-se o
+    primário efetivo.
+
+    Suporta: "gemini", "nvidia", "deepseek", "claude".
+    """
+    provedores_disponiveis: dict[str, dict[str, Any]] = {
+        "gemini": {
+            "classe": GeminiProvider,
+            "chave": config.api_keys.gemini_api_key,
+            "modelo_padrao": "gemini-3.8-flash",
+            "chave_env": ("BIBLIOTEC_GEMINI_API_KEY", "GEMINI_API_KEY"),
+        },
+        "nvidia": {
+            "classe": NvidiaProvider,
+            "chave": config.api_keys.nvidia_api_key,
+            "modelo_padrao": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+            "chave_env": ("BIBLIOTEC_NVIDIA_API_KEY", "NVIDIA_API_KEY"),
+        },
+        "deepseek": {
+            "classe": DeepSeekProvider,
+            "chave": config.api_keys.deepseek_api_key,
+            "modelo_padrao": "deepseek-chat",
+            "chave_env": ("BIBLIOTEC_DEEPSEEK_API_KEY", "DEEPSEEK_API_KEY"),
+        },
+        "claude": {
+            "classe": ClaudeProvider,
+            "chave": config.api_keys.claude_api_key,
+            "modelo_padrao": "claude-3-5-haiku-20241022",
+            "chave_env": (
+                "BIBLIOTEC_CLAUDE_API_KEY",
+                "CLAUDE_API_KEY",
+                "ANTHROPIC_API_KEY",
+            ),
+        },
+    }
+
+    def _resolver_chave(nome_provedor: str, cli_key: str | None) -> str | None:
+        """Resolver a chave de API: CLI > env > config."""
+        if cli_key:
+            return cli_key
+        info = provedores_disponiveis[nome_provedor]
+        for env_var in info["chave_env"]:
+            valor = os.environ.get(env_var, "")
+            if valor:
+                return valor
+        return info["chave"] or None
+
+    def _resolver_modelo(nome_provedor: str, cli_model_val: str | None) -> str:
+        """Resolver o modelo: CLI > config.llm.model > padrão do provedor."""
+        if cli_model_val:
+            return cli_model_val
+        if config.llm.provider == nome_provedor and config.llm.model:
+            return config.llm.model
+        return provedores_disponiveis[nome_provedor]["modelo_padrao"]
+
+    # Determinar provedor primário: CLI > config.llm.provider > "gemini".
+    provedor_solicitado = cli_provider or config.llm.provider or "gemini"
+    if provedor_solicitado not in provedores_disponiveis:
+        provedor_solicitado = "gemini"
+
+    # Construir cadeia: começar com o solicitado, depois os demais com chave.
+    cadeia: list[tuple[str, object]] = []
+    nomes_vistos: set[str] = set()
+
+    def _adicionar_provedor(
+        nome: str, usar_cli_key: bool, usar_cli_model: bool
+    ) -> None:
+        if nome in nomes_vistos:
+            return
+        info = provedores_disponiveis[nome]
+        chave = _resolver_chave(nome, cli_api_key if usar_cli_key else None)
+        if not chave:
+            return  # sem chave: não adicionar
+        modelo = _resolver_modelo(nome, cli_model if usar_cli_model else None)
+        instancia = info["classe"](api_key=chave, model=modelo)
+        cadeia.append((nome, instancia))
+        nomes_vistos.add(nome)
+
+    # Primeiro: o provedor solicitado pelo usuário (se tiver chave).
+    _adicionar_provedor(
+        provedor_solicitado,
+        usar_cli_key=(cli_provider is not None),
+        usar_cli_model=(cli_model is not None),
+    )
+
+    # Depois: os demais da cadeia de fallback do config (se houver chave).
+    for nome in config.llm.fallback_chain:
+        if nome != provedor_solicitado:
+            _adicionar_provedor(nome, usar_cli_key=False, usar_cli_model=False)
+
+    # Se o solicitado não teve chave, garantir pelo menos um com chave.
+    if not cadeia:
+        for nome in ("gemini", "nvidia", "deepseek", "claude"):
+            _adicionar_provedor(nome, usar_cli_key=False, usar_cli_model=False)
+            if cadeia:
+                break
+
+    if not cadeia:
+        raise ValueError(
+            "Nenhum provedor de LLM tem chave de API configurada. "
+            "Defina gemini_api_key, nvidia_api_key, deepseek_api_key ou "
+            "claude_api_key no config.toml ou variáveis de ambiente."
+        )
+
+    return FallbackLLMDispatcher(cadeia)

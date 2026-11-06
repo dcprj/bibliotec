@@ -59,7 +59,15 @@ from bibliotec.core.logging import setup_logging
 from bibliotec.core.models import ProcessStatus
 from bibliotec.core.pipeline import run_pipeline
 from bibliotec.core.cache import CACHE_DB_PATH, FileCache
-from bibliotec.core.llm import GeminiProvider, MockLLMProvider, NvidiaProvider
+from bibliotec.core.llm import (
+    GeminiProvider,
+    MockLLMProvider,
+    NvidiaProvider,
+    DeepSeekProvider,
+    ClaudeProvider,
+    FallbackLLMDispatcher,
+    create_provider_chain,
+)
 from bibliotec.core.session import SessionState, clear_session, load_session, save_session
 from bibliotec.core.scanner import scan_directory
 from bibliotec.storage.organizer import LibraryOrganizer
@@ -111,38 +119,18 @@ def _resolve_api_key(config: AppConfig, cli_key: Optional[str]) -> str:
 
 
 def _build_provider(config: AppConfig, api_key: Optional[str],
-                    model: Optional[str], provider: str = "gemini") -> object | None:
-    """Construir o provedor de LLM conforme o provedor solicitado."""
-    resolved_provider = provider or config.llm.provider or "gemini"
+                    model: Optional[str], provider: str = "gemini") -> LLMProvider:
+    """Construir cadeia de provedores LLM com fallback automático.
 
-    if resolved_provider == "nvidia":
-        # Resolver chave NVIDIA: CLI > env > config.
-        resolved_key = api_key or os.environ.get(
-            "BIBLIOTEC_NVIDIA_API_KEY"
-        ) or os.environ.get("NVIDIA_API_KEY") or config.api_keys.nvidia_api_key
-        if not resolved_key:
-            console.print("[red]Erro:[/red] Nenhuma chave de API da NVIDIA configurada.")
-            console.print(
-                "Defina nvidia_api_key no bibliotec.toml (ou ~/.config/bibliotec/config.toml) "
-                "ou defina a variável de ambiente BIBLIOTEC_NVIDIA_API_KEY / NVIDIA_API_KEY "
-                "ou passe --api-key na linha de comando."
-            )
-            raise typer.Exit(code=1)
-        resolved_model = model or (
-            config.llm.model if config.llm.provider == "nvidia"
-            else "nvidia/nemotron-3.5-super-vl-120b-a12b"
-        )
-        return NvidiaProvider(api_key=resolved_key, model=resolved_model)
-
-    # provider == "gemini" (padrão)
-    resolved_key = _resolve_api_key(config, api_key)
-    resolved_model = model or (
-        config.llm.model if config.llm.provider == "gemini" else "gemini-3.8-flash"
+    Usa create_provider_chain para montar a cadeia com o provedor
+    solicitado como primário e os demais com chave como fallback.
+    """
+    return create_provider_chain(
+        config,
+        cli_provider=provider,
+        cli_model=model,
+        cli_api_key=api_key,
     )
-    if resolved_key:
-        return GeminiProvider(api_key=resolved_key, model=resolved_model)
-    # Sem chave de API: não usar MockLLMProvider silenciosamente na CLI real.
-    return None
 
 
 def _aplicar_overrides(
@@ -218,13 +206,10 @@ def _executar_organize(
         google_books_key=google_books_key,
     )
 
-    provider_inst = _build_provider(cfg, api_key, model, provider=provider)
-    if provider_inst is None:
-        console.print("[red]Erro:[/red] Nenhuma chave de API do Gemini configurada.")
-        console.print(
-            "Defina gemini_api_key no bibliotec.toml (ou ~/.config/bibliotec/config.toml) "
-            "ou passe --api-key na linha de comando."
-        )
+    try:
+        provider_inst = _build_provider(cfg, api_key, model, provider=provider)
+    except ValueError as exc:
+        console.print(f"[red]Erro:[/red] {exc}")
         raise typer.Exit(code=1)
 
     target_dir = target_dir.resolve()
@@ -410,7 +395,7 @@ def _root_callback(
     ),
     provider: str = Option(
         "gemini", "--provider", "-p",
-        help="Provedor de LLM (gemini ou nvidia).",
+        help="Provedor de LLM (gemini, nvidia, deepseek, claude).",
     ),
 ) -> None:
     """Ponto de entrada único do BiblioTEC.
@@ -509,7 +494,7 @@ def organize(
     ),
     provider: str = Option(
         "gemini", "--provider", "-p",
-        help="Provedor de LLM (gemini ou nvidia).",
+        help="Provedor de LLM (gemini, nvidia, deepseek, claude).",
     ),
 ) -> None:
     """Organizar uma biblioteca de PDFs (5 estágios).
@@ -584,10 +569,14 @@ def config_show(
     table.add_row("general.use_cache", str(g.use_cache))
     table.add_row("llm.provider", cfg.llm.provider)
     table.add_row("llm.model", cfg.llm.model)
+    table.add_row("llm.default_provider", cfg.llm.provider)
+    table.add_row("llm.fallback_chain", ", ".join(cfg.llm.fallback_chain))
     table.add_row("api_keys.gemini_api_key", mask_key(cfg.api_keys.gemini_api_key) or "(não definida)")
     table.add_row("api_keys.google_books_api_key", mask_key(cfg.api_keys.google_books_api_key) or "(não definida)")
     table.add_row("api_keys.openalex_polite_email", cfg.api_keys.openalex_polite_email or "(não definida)")
     table.add_row("api_keys.nvidia_api_key", mask_key(cfg.api_keys.nvidia_api_key) or "(não definida)")
+    table.add_row("api_keys.deepseek_api_key", mask_key(cfg.api_keys.deepseek_api_key) or "(não definida)")
+    table.add_row("api_keys.claude_api_key", mask_key(cfg.api_keys.claude_api_key) or "(não definida)")
     console.print(table)
 
 

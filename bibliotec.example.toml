@@ -18,8 +18,28 @@ use_cache = true
 [llm]
 # Provedor de classificação (MVP implementa "gemini")
 provider = "gemini"
+# Alias para provider (retrocompatibilidade)
+default_provider = "gemini"
+# Cadeia de fallback de provedores quando o padrão falha
+fallback_chain = ["gemini", "nvidia", "claude"]
 # Modelo padrão do provedor
 model = "gemini-3.8-flash"
+
+# Configurações específicas por provedor (exemplos comentados)
+#[llm.providers.deepseek]
+#model = "deepseek-chat"
+#base_url = "https://api.deepseek.com"
+#max_tokens = 4096
+
+#[llm.providers.nvidia]
+#model = "nemotron-3.5-super-vl-120b-a12b"
+#base_url = "https://integrate.api.nvidia.com/v1"
+#max_tokens = 4096
+
+#[llm.providers.claude]
+#model = "claude-3-5-sonnet-20241022"
+#base_url = "https://api.anthropic.com"
+#max_tokens = 4096
 
 [api_keys]
 # Chave de API do provedor de LLM (Gemini) - OBTENHA em https://aistudio.google.com/
@@ -30,3 +50,7 @@ google_books_api_key = ""
 openalex_polite_email = ""
 # Chave da API da NVIDIA (NVIDIA NIM / build.nvidia.com)
 nvidia_api_key = ""
+# Chave de API do DeepSeek
+deepseek_api_key = ""
+# Chave de API da Anthropic Claude (também aceita ANTHROPIC_API_KEY via env)
+claude_api_key = ""

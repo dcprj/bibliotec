@@ -47,7 +47,7 @@ def test_app_config_reads_local_toml_without_validation_error(tmp_path, monkeypa
     assert config.general.workers == 1
     assert config.general.use_cache is True
     assert config.llm.provider == "gemini"
-    assert config.llm.model == "gemini-2.5-flash"
+    assert config.llm.model == "gemini-3.8-flash"
     assert config.api_keys.gemini_api_key == ""
     assert config.api_keys.google_books_api_key == ""
     assert config.api_keys.openalex_polite_email == ""
@@ -96,3 +96,127 @@ chave_inexistente = "deve ser ignorada"
     # Não deve levantar ValidationError por causa da chave extra
     config = AppConfig()
     assert config.general.recursive is True
+
+
+def test_llm_config_default_provider_alias(tmp_path, monkeypatch):
+    """default_provider é um alias para provider (retrocompatibilidade)."""
+    monkeypatch.chdir(tmp_path)
+    toml_path = tmp_path / "bibliotec.toml"
+    toml_path.write_text(
+        """
+[llm]
+default_provider = "nvidia"
+model = "nemotron-3.5-super-vl-120b-a12b"
+fallback_chain = ["nvidia", "gemini", "claude"]
+
+[api_keys]
+gemini_api_key = ""
+google_books_api_key = ""
+openalex_polite_email = ""
+nvidia_api_key = ""
+deepseek_api_key = ""
+claude_api_key = ""
+""",
+        encoding="utf-8",
+    )
+    config = AppConfig()
+    assert config.llm.provider == "nvidia"
+    # default_provider é um validation_alias: mapeia para provider na leitura do TOML
+    assert config.llm.fallback_chain == ["nvidia", "gemini", "claude"]
+    assert config.llm.model == "nemotron-3.5-super-vl-120b-a12b"
+
+
+def test_llm_config_providers_dict(tmp_path, monkeypatch):
+    """providers aceita dicionário de configurações específicas por provedor."""
+    monkeypatch.chdir(tmp_path)
+    toml_path = tmp_path / "bibliotec.toml"
+    toml_path.write_text(
+        """
+[llm]
+provider = "gemini"
+model = "gemini-3.8-flash"
+fallback_chain = ["gemini", "nvidia", "claude"]
+
+[llm.providers.deepseek]
+model = "deepseek-chat"
+base_url = "https://api.deepseek.com"
+max_tokens = 4096
+
+[llm.providers.nvidia]
+model = "nemotron-3.5-super-vl-120b-a12b"
+base_url = "https://integrate.api.nvidia.com/v1"
+max_tokens = 4096
+
+[api_keys]
+gemini_api_key = ""
+google_books_api_key = ""
+openalex_polite_email = ""
+nvidia_api_key = ""
+deepseek_api_key = ""
+claude_api_key = ""
+""",
+        encoding="utf-8",
+    )
+    config = AppConfig()
+    assert config.llm.providers["deepseek"]["model"] == "deepseek-chat"
+    assert config.llm.providers["deepseek"]["base_url"] == "https://api.deepseek.com"
+    assert config.llm.providers["deepseek"]["max_tokens"] == 4096
+    assert config.llm.providers["nvidia"]["model"] == "nemotron-3.5-super-vl-120b-a12b"
+    assert config.llm.providers["nvidia"]["base_url"] == "https://integrate.api.nvidia.com/v1"
+
+
+def test_api_keys_deepseek_and_claude_env(tmp_path, monkeypatch):
+    """Variáveis de ambiente diretas são lidas para deepseek e claude."""
+    monkeypatch.chdir(tmp_path)
+    init_config_file(local=True)
+
+    monkeypatch.setenv("BIBLIOTEC_DEEPSEEK_API_KEY", "ds-key-1234")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "claude-key-5678")
+
+    config = AppConfig()
+    assert config.api_keys.deepseek_api_key == "ds-key-1234"
+    assert config.api_keys.claude_api_key == "claude-key-5678"
+
+
+def test_mask_key_mascarar_novas_chaves():
+    """mask_key deve mascarar corretamente as novas chaves de API."""
+    from bibliotec.core.config import mask_key
+
+    # Chave vazia
+    assert mask_key("") == ""
+
+    # Chave curta (<= 4 caracteres)
+    assert mask_key("abc") == "****"
+
+    # Chave longa (mostra apenas os últimos 4)
+    assert mask_key("sk-1234567890abcdef") == "****cdef"
+    assert mask_key("nvapi-abcdef1234567890") == "****7890"
+    assert mask_key("sk-ant-1234567890abcdef") == "****cdef"
+
+
+def test_template_contem_novas_secoes():
+    """O template gerado deve conter as novas seções e chaves."""
+    from bibliotec.core.config import generate_config_template
+
+    template = generate_config_template()
+    assert "default_provider" in template
+    assert "fallback_chain" in template
+    assert "deepseek_api_key" in template
+    assert "claude_api_key" in template
+    assert "nvidia_api_key" in template
+    # Seções de provedor comentadas
+    assert "providers.deepseek" in template
+    assert "providers.nvidia" in template
+    assert "providers.claude" in template
+
+
+def test_llm_config_valores_padrao():
+    """LLMConfig deve ter valores padrão corretos."""
+    from bibliotec.core.config import LLMConfig
+
+    config = LLMConfig()
+    assert config.provider == "gemini"
+    # default_provider é um validation_alias: acessível apenas na leitura do TOML/env
+    assert config.fallback_chain == ["gemini", "nvidia", "claude"]
+    assert config.model == "gemini-3.8-flash"
+    assert config.providers == {}

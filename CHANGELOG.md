@@ -5,6 +5,38 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adota versionamento semântico ([Semantic Versioning](https://semver.org/lang/pt-BR/)).
 
+## [0.2.0] - 2026-11-06
+
+### Entregas da Sprint v0.2.0
+
+#### [FAL-04] Múltiplos provedores LLM com fallback automático (`src/bibliotec/core/llm.py`)
+* `FallbackLLMDispatcher`: implementa o protocolo `LLMProvider` com cadeia ordenada de provedores.
+  Tenta o primário; em caso de exceção ou resultado com reasoning 'Falha na chamada ao LLM',
+  loga warning no logger `bibliotec.llm` e despacha para o próximo da cadeia.
+* `create_provider_chain()`: fábrica que monta a cadeia a partir da `AppConfig` e flags CLI.
+  Suporta provedores: `gemini`, `nvidia`, `deepseek`, `claude`.
+  Resolução de chave: CLI > variável de ambiente > config.toml.
+  Se o provedor primário não tiver chave, o primeiro com chave válida torna-se primário efetivo.
+* Novos provedores: `DeepSeekProvider` (API DeepSeek /chat/completions) e
+  `ClaudeProvider` (API Anthropic /messages), ambos com retry em 429/503/529 e
+  travas determinísticas de confiança idênticas aos demais provedores.
+
+#### [CLI-04] Novos provedores na CLI e `config show` expandido (`src/bibliotec/cli/main.py`)
+* Flag `--provider` / `-p` aceita: `gemini`, `nvidia`, `deepseek`, `claude`.
+* `_build_provider` agora usa `create_provider_chain()` para montar a cadeia com fallback.
+* `config show` exibe: `llm.default_provider`, `llm.fallback_chain`,
+  `api_keys.deepseek_api_key` e `api_keys.claude_api_key` (mascarados).
+* Erro amigável quando nenhum provedor tem chave de API configurada.
+
+#### [TST-05] Testes de múltiplos provedores (`tests/test_multi_provider.py`)
+* Instanciação de `DeepSeekProvider` e `ClaudeProvider`.
+* Mock de chamada com sucesso para DeepSeek (formato OpenAI) e Claude (formato Anthropic).
+* `FallbackLLMDispatcher`: falha no primário (exceção / erro de rede) → chaveamento para o fallback.
+* `FallbackLLMDispatcher`: primário retorna erro de rede → fallback responde com sucesso.
+* `FallbackLLMDispatcher`: todos falham → retorna último erro.
+
+---
+
 ## [0.1.0] - 2026-11-05
 
 ### Entregas da Release Minor v0.1.0

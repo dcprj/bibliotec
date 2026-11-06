@@ -76,11 +76,20 @@ class LLMConfig(BaseSettings):
 
     provider: str = Field(
         default="gemini",
-        description="Provedor de classificação (MVP implementa 'gemini').",
+        validation_alias=AliasChoices("provider", "default_provider"),
+        description="Provedor de classificação padrão (MVP implementa 'gemini').",
+    )
+    fallback_chain: list[str] = Field(
+        default_factory=lambda: ["gemini", "nvidia", "claude"],
+        description="Cadeia de fallback de provedores quando o padrão falha.",
     )
     model: str = Field(
         default="gemini-3.8-flash",
         description="Modelo padrão do provedor.",
+    )
+    providers: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Configurações específicas por provedor (ex: providers.deepseek.model).",
     )
 
 
@@ -114,6 +123,20 @@ class ApiKeysConfig(BaseSettings):
             "nvidia_api_key", "BIBLIOTEC_NVIDIA_API_KEY", "NVIDIA_API_KEY"
         ),
         description="Chave de API da NVIDIA (NVIDIA NIM / build.nvidia.com).",
+    )
+    deepseek_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "deepseek_api_key", "BIBLIOTEC_DEEPSEEK_API_KEY", "DEEPSEEK_API_KEY"
+        ),
+        description="Chave de API do DeepSeek.",
+    )
+    claude_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "claude_api_key", "BIBLIOTEC_CLAUDE_API_KEY", "CLAUDE_API_KEY", "ANTHROPIC_API_KEY"
+        ),
+        description="Chave de API da Anthropic Claude.",
     )
 
 
@@ -218,8 +241,28 @@ use_cache = true
 [llm]
 # Provedor de classificação (MVP implementa "gemini")
 provider = "gemini"
+# Alias para provider (retrocompatibilidade)
+default_provider = "gemini"
+# Cadeia de fallback de provedores quando o padrão falha
+fallback_chain = ["gemini", "nvidia", "claude"]
 # Modelo padrão do provedor
-model = "gemini-2.5-flash"
+model = "gemini-3.8-flash"
+
+# Configurações específicas por provedor (exemplo comentado)
+#[llm.providers.deepseek]
+#model = "deepseek-chat"
+#base_url = "https://api.deepseek.com"
+#max_tokens = 4096
+
+#[llm.providers.nvidia]
+#model = "nemotron-3.5-super-vl-120b-a12b"
+#base_url = "https://integrate.api.nvidia.com/v1"
+#max_tokens = 4096
+
+#[llm.providers.claude]
+#model = "claude-3-5-sonnet-20241022"
+#base_url = "https://api.anthropic.com"
+#max_tokens = 4096
 
 [api_keys]
 # Chaves de API do provedor de LLM e serviços de busca acadêmica
@@ -229,6 +272,10 @@ google_books_api_key = ""
 openalex_polite_email = ""
 # Chave da API da NVIDIA (NVIDIA NIM / build.nvidia.com)
 nvidia_api_key = ""
+# Chave de API do DeepSeek
+deepseek_api_key = ""
+# Chave de API da Anthropic Claude (também aceita ANTHROPIC_API_KEY via env)
+claude_api_key = ""
 """
 
 
