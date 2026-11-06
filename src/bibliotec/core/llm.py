@@ -325,7 +325,7 @@ class NvidiaProvider:
     def __init__(
         self,
         api_key: str,
-        model: str = "nvidia/nemotron-3.5-super-vl-120b-a12b",
+        model: str = "nvidia/nemotron-3.5-lightning-30b-a3b",
         base_url: str = "https://integrate.api.nvidia.com/v1",
         max_sampled_chars: int = 15_000,
     ) -> None:
@@ -359,15 +359,20 @@ class NvidiaProvider:
                 {"role": "user", "content": context_payload},
             ],
             "temperature": 0.1,
-            "max_tokens": 2048,
+            "max_tokens": 4096,
         }
         resp = self._client.post("/chat/completions", json=payload)
         resp.raise_for_status()
         data = resp.json()
         choice = data.get("choices", [{}])[0]
-        content = choice.get("message", {}).get("content")
+        msg = choice.get("message", {})
+        content = msg.get("content")
         if not content or not str(content).strip():
-            raise ValueError("Resposta do LLM NVIDIA veio vazia")
+            reasoning = msg.get("reasoning_content")
+            if reasoning and "{" in reasoning and "}" in reasoning:
+                content = reasoning
+            else:
+                raise ValueError("Resposta do LLM NVIDIA veio vazia")
         return str(content)
 
     def classify(
@@ -755,7 +760,7 @@ class GroqProvider:
     def __init__(
         self,
         api_key: str,
-        model: str = "openai/gpt-oss-120b",
+        model: str = "openai/gpt-oss-20b",
         base_url: str = "https://api.groq.com/openai/v1",
         max_sampled_chars: int = 15_000,
     ) -> None:
@@ -1199,13 +1204,13 @@ def create_provider_chain(
         "groq": {
             "classe": GroqProvider,
             "chave": config.api_keys.groq_api_key,
-            "modelo_padrao": "openai/gpt-oss-120b",
+            "modelo_padrao": "openai/gpt-oss-20b",
             "chave_env": ("BIBLIOTEC_GROQ_API_KEY", "GROQ_API_KEY"),
         },
         "nvidia": {
             "classe": NvidiaProvider,
             "chave": config.api_keys.nvidia_api_key,
-            "modelo_padrao": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+            "modelo_padrao": "nvidia/nemotron-3.5-lightning-30b-a3b",
             "chave_env": ("BIBLIOTEC_NVIDIA_API_KEY", "NVIDIA_API_KEY"),
         },
         "deepseek": {

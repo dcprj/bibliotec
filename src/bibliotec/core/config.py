@@ -267,10 +267,10 @@ model = "gemini-3.5-flash"
 #model = "gemini-3.5-flash"
 
 #[llm.providers.groq]
-#model = "openai/gpt-oss-120b"
+#model = "openai/gpt-oss-20b"
 
 #[llm.providers.nvidia]
-#model = "nvidia/nemotron-3.5-super-vl-120b-a12b"
+#model = "nvidia/nemotron-3.5-lightning-30b-a3b"
 
 #[llm.providers.deepseek]
 #model = "deepseek-flash"
