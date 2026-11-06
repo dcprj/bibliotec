@@ -108,6 +108,13 @@ class ApiKeysConfig(BaseSettings):
         ),
         description="E-mail opcional para uso do Polite Pool do OpenAlex.",
     )
+    nvidia_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "nvidia_api_key", "BIBLIOTEC_NVIDIA_API_KEY", "NVIDIA_API_KEY"
+        ),
+        description="Chave de API da NVIDIA (NVIDIA NIM / build.nvidia.com).",
+    )
 
 
 class AppConfig(BaseSettings):
@@ -220,6 +227,8 @@ gemini_api_key = ""
 google_books_api_key = ""
 # E-mail opcional para uso do Polite Pool do OpenAlex (até 10 req/s)
 openalex_polite_email = ""
+# Chave da API da NVIDIA (NVIDIA NIM / build.nvidia.com)
+nvidia_api_key = ""
 """
 
 

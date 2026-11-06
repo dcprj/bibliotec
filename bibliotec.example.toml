@@ -28,3 +28,5 @@ gemini_api_key = ""
 google_books_api_key = ""
 # E-mail opcional para uso do Polite Pool do OpenAlex (até 10 req/s)
 openalex_polite_email = ""
+# Chave da API da NVIDIA (NVIDIA NIM / build.nvidia.com)
+nvidia_api_key = ""

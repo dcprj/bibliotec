@@ -520,6 +520,7 @@ def config_show(
     table.add_row("api_keys.gemini_api_key", mask_key(cfg.api_keys.gemini_api_key) or "(não definida)")
     table.add_row("api_keys.google_books_api_key", mask_key(cfg.api_keys.google_books_api_key) or "(não definida)")
     table.add_row("api_keys.openalex_polite_email", cfg.api_keys.openalex_polite_email or "(não definida)")
+    table.add_row("api_keys.nvidia_api_key", mask_key(cfg.api_keys.nvidia_api_key) or "(não definida)")
     console.print(table)
 
 
