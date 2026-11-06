@@ -69,9 +69,9 @@ def _mock_success_claude(route, payload):
 # 1. Instanciação de DeepSeekProvider e ClaudeProvider
 # --------------------------------------------------------------------------- #
 def test_deepseek_provider_instancia():
-    provider = DeepSeekProvider(api_key="test-key", model="deepseek-chat")
+    provider = DeepSeekProvider(api_key="test-key", model="deepseek-flash")
     assert provider is not None
-    assert provider._model == "deepseek-chat"
+    assert provider._model == "deepseek-flash"
 
 
 def test_claude_provider_instancia():
@@ -127,9 +127,9 @@ def test_claude_chamada_sucesso():
 # 2b. Instanciação de GroqProvider e GitHubModelsProvider
 # --------------------------------------------------------------------------- #
 def test_groq_provider_instancia():
-    provider = GroqProvider(api_key="test-key", model="llama-3.3-70b-versatile")
+    provider = GroqProvider(api_key="test-key", model="openai/gpt-oss-120b")
     assert provider is not None
-    assert provider._model == "llama-3.3-70b-versatile"
+    assert provider._model == "openai/gpt-oss-120b"
 
 
 def test_github_models_provider_instancia():

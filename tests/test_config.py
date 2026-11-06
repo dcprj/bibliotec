@@ -47,7 +47,7 @@ def test_app_config_reads_local_toml_without_validation_error(tmp_path, monkeypa
     assert config.general.workers == 1
     assert config.general.use_cache is True
     assert config.llm.provider == "gemini"
-    assert config.llm.model == "gemini-3.8-flash"
+    assert config.llm.model == "gemini-3.5-flash"
     assert config.api_keys.gemini_api_key == ""
     assert config.api_keys.google_books_api_key == ""
     assert config.api_keys.openalex_polite_email == ""
@@ -82,7 +82,7 @@ use_cache = true
 
 [llm]
 provider = "gemini"
-model = "gemini-2.5-flash"
+model = "gemini-3.5-flash"
 
 [api_keys]
 gemini_api_key = ""
@@ -107,7 +107,7 @@ def test_llm_config_default_provider_alias(tmp_path, monkeypatch):
 [llm]
 default_provider = "nvidia"
 model = "nemotron-3.5-super-vl-120b-a12b"
-fallback_chain = ["nvidia", "gemini", "claude"]
+fallback_chain = ["groq", "nvidia", "deepseek"]
 
 [api_keys]
 gemini_api_key = ""
@@ -122,7 +122,7 @@ claude_api_key = ""
     config = AppConfig()
     assert config.llm.provider == "nvidia"
     # default_provider é um validation_alias: mapeia para provider na leitura do TOML
-    assert config.llm.fallback_chain == ["nvidia", "gemini", "claude"]
+    assert config.llm.fallback_chain == ["groq", "nvidia", "deepseek"]
     assert config.llm.model == "nemotron-3.5-super-vl-120b-a12b"
 
 
@@ -134,11 +134,11 @@ def test_llm_config_providers_dict(tmp_path, monkeypatch):
         """
 [llm]
 provider = "gemini"
-model = "gemini-3.8-flash"
-fallback_chain = ["gemini", "nvidia", "claude"]
+model = "gemini-3.5-flash"
+fallback_chain = ["groq", "nvidia", "deepseek"]
 
 [llm.providers.deepseek]
-model = "deepseek-chat"
+model = "deepseek-flash"
 base_url = "https://api.deepseek.com"
 max_tokens = 4096
 
@@ -158,7 +158,7 @@ claude_api_key = ""
         encoding="utf-8",
     )
     config = AppConfig()
-    assert config.llm.providers["deepseek"]["model"] == "deepseek-chat"
+    assert config.llm.providers["deepseek"]["model"] == "deepseek-flash"
     assert config.llm.providers["deepseek"]["base_url"] == "https://api.deepseek.com"
     assert config.llm.providers["deepseek"]["max_tokens"] == 4096
     assert config.llm.providers["nvidia"]["model"] == "nemotron-3.5-super-vl-120b-a12b"
@@ -207,7 +207,7 @@ def test_template_contem_novas_secoes():
     # Seções de provedor comentadas
     assert "providers.deepseek" in template
     assert "providers.nvidia" in template
-    assert "providers.claude" in template
+    assert "providers.groq" in template
 
 
 def test_llm_config_valores_padrao():
@@ -217,6 +217,6 @@ def test_llm_config_valores_padrao():
     config = LLMConfig()
     assert config.provider == "gemini"
     # default_provider é um validation_alias: acessível apenas na leitura do TOML/env
-    assert config.fallback_chain == ["gemini", "nvidia", "claude"]
-    assert config.model == "gemini-3.8-flash"
+    assert config.fallback_chain == ["groq", "nvidia", "deepseek"]
+    assert config.model == "gemini-3.5-flash"
     assert config.providers == {}

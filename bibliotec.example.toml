@@ -21,35 +21,22 @@ provider = "gemini"
 # Alias para provider (retrocompatibilidade)
 default_provider = "gemini"
 # Cadeia de fallback de provedores quando o padrão falha
-fallback_chain = ["gemini", "nvidia", "claude"]
+fallback_chain = ["groq", "nvidia", "deepseek"]
 # Modelo padrão do provedor
-model = "gemini-3.8-flash"
+model = "gemini-3.5-flash"
 
 # Configurações específicas por provedor (exemplos comentados)
-#[llm.providers.deepseek]
-#model = "deepseek-chat"
-#base_url = "https://api.deepseek.com"
-#max_tokens = 4096
-
-#[llm.providers.nvidia]
-#model = "nemotron-3.5-super-vl-120b-a12b"
-#base_url = "https://integrate.api.nvidia.com/v1"
-#max_tokens = 4096
-
-#[llm.providers.claude]
-#model = "claude-3-5-sonnet-20241022"
-#base_url = "https://api.anthropic.com"
-#max_tokens = 4096
+#[llm.providers.gemini]
+#model = "gemini-3.5-flash"
 
 #[llm.providers.groq]
-#model = "llama-3.1-8b-instant"
-#base_url = "https://api.groq.com/openai/v1"
-#max_tokens = 4096
+#model = "openai/gpt-oss-120b"
 
-#[llm.providers.github]
-#model = "gpt-4o"
-#base_url = "https://models.github.ai/inference"
-#max_tokens = 4096
+#[llm.providers.nvidia]
+#model = "nvidia/nemotron-3.5-super-vl-120b-a12b"
+
+#[llm.providers.deepseek]
+#model = "deepseek-flash"
 
 [api_keys]
 # Chave de API do provedor de LLM (Gemini) - OBTENHA em https://aistudio.google.com/

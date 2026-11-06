@@ -80,11 +80,11 @@ class LLMConfig(BaseSettings):
         description="Provedor de classificação padrão (MVP implementa 'gemini').",
     )
     fallback_chain: list[str] = Field(
-        default_factory=lambda: ["gemini", "nvidia", "claude"],
+        default_factory=lambda: ["groq", "nvidia", "deepseek"],
         description="Cadeia de fallback de provedores quando o padrão falha.",
     )
     model: str = Field(
-        default="gemini-3.8-flash",
+        default="gemini-3.5-flash",
         description="Modelo padrão do provedor.",
     )
     providers: dict[str, dict[str, Any]] = Field(
@@ -258,35 +258,22 @@ provider = "gemini"
 # Alias para provider (retrocompatibilidade)
 default_provider = "gemini"
 # Cadeia de fallback de provedores quando o padrão falha
-fallback_chain = ["gemini", "nvidia", "claude"]
+fallback_chain = ["groq", "nvidia", "deepseek"]
 # Modelo padrão do provedor
-model = "gemini-3.8-flash"
+model = "gemini-3.5-flash"
 
 # Configurações específicas por provedor (exemplo comentado)
-#[llm.providers.deepseek]
-#model = "deepseek-chat"
-#base_url = "https://api.deepseek.com"
-#max_tokens = 4096
-
-#[llm.providers.nvidia]
-#model = "nemotron-3.5-super-vl-120b-a12b"
-#base_url = "https://integrate.api.nvidia.com/v1"
-#max_tokens = 4096
-
-#[llm.providers.claude]
-#model = "claude-3-5-sonnet-20241022"
-#base_url = "https://api.anthropic.com"
-#max_tokens = 4096
+#[llm.providers.gemini]
+#model = "gemini-3.5-flash"
 
 #[llm.providers.groq]
-#model = "llama-3.1-8b-instant"
-#base_url = "https://api.groq.com/openai/v1"
-#max_tokens = 4096
+#model = "openai/gpt-oss-120b"
 
-#[llm.providers.github]
-#model = "gpt-4o"  # ou qualquer modelo suportado pelo GitHub Models
-#base_url = "https://models.github.ai/inference"
-#max_tokens = 4096
+#[llm.providers.nvidia]
+#model = "nvidia/nemotron-3.5-super-vl-120b-a12b"
+
+#[llm.providers.deepseek]
+#model = "deepseek-flash"
 
 [api_keys]
 # Chaves de API do provedor de LLM e serviços de busca acadêmica
