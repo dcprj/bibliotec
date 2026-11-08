@@ -65,8 +65,15 @@ jobs:
       - name: Instalar dependências Python
         run: |
           pip install --upgrade pip
-          pip install -e ".[dev]"
-          pip install pyinstaller
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            # No Linux, instalar apenas o essencial para o build (economiza espaço em disco)
+            # Dependências dev (pytest, respx, ruff) não são necessárias para gerar o AppImage
+            pip install pyinstaller
+            pip install -e . --no-deps --no-cache-dir
+          else
+            pip install -e ".[dev]"
+            pip install pyinstaller
+          fi
           pip cache purge
 
       - name: Executar testes (exclui GUI - validada localmente em offscreen)
