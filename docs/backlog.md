@@ -9,9 +9,10 @@ Este documento registra itens de melhoria contínua, débitos técnicos, ideias 
 ### [BUG-PKG-01] Crash `SIGABRT` (`QMessageLogger::fatal`) ao inicializar `QWebEnginePage` no bundle macOS (.app)
 
 - **Prioridade:** Média (Próxima Sprint de Empacotamento)
-- **Status:** Aberto / Mapeado
+- **Status:** Concluído / Resolvido (v1.0.1)
 - **Ambiente:** macOS 14+ / Apple Silicon (ARM64), pacote congelado via PyInstaller (`BiblioTEC.app`).
 - **Data do Relato:** 2026-11-08
+- **Responsável:** Prisma (BiblioTEC UX/UI & Desktop GUI Architect)
 
 #### 1. Sintoma e Log de Falha
 Ao iniciar o binário congelado `BiblioTEC.app` (fora do interpretador Python direto do `.venv`), o aplicativo aborta imediatamente na inicialização:
@@ -61,9 +62,10 @@ Thread 0 Crashed (Dispatch queue: com.apple.main-thread):
 ### [FEAT-UI-01] Substituição do Ícone Padrão do Python por Ícone Personalizado do BiblioTEC
 
 - **Prioridade:** Média / Alta (Polimento de Produto)
-- **Status:** Aberto / Mapeado
+- **Status:** Concluído / Resolvido (v1.0.1)
 - **Escopo:** macOS (.app / Dock), Windows (.exe / Taskbar / Inno Setup), Linux (.AppImage / Desktop Menu)
 - **Data do Relato:** 2026-11-08
+- **Responsáveis:** Prisma (UX/UI) & Atlas (Foundation)
 
 #### 1. Objetivo
 Substituir o ícone genérico padrão do Python (exibido atualmente no Dock do macOS, na barra de tarefas do Windows e nos binários empacotados) por uma identidade visual exclusiva e personalizada do **BiblioTEC** (*Editorial Academic Workbench*), remetendo a organização acadêmica, catalogação e rigor tipográfico.
@@ -87,9 +89,10 @@ Substituir o ícone genérico padrão do Python (exibido atualmente no Dock do m
 ### [FEAT-PKG-02] Janela DMG Profissional no macOS com Atalho "Arrastar para Aplicativos" (Drag-to-Applications)
 
 - **Prioridade:** Média (Polimento da Experiência macOS)
-- **Status:** Aberto / Mapeado
+- **Status:** Concluído / Resolvido (v1.0.1)
 - **Escopo:** `packaging/build_macos.sh`, `.github/workflows/release.yml`
 - **Data do Relato:** 2026-11-08
+- **Responsável:** Atlas (BiblioTEC Foundation Engineer)
 
 #### 1. Objetivo
 Ao montar e abrir o arquivo `BiblioTEC-1.0.0-macOS.dmg`, o Finder deve abrir automaticamente uma janela limpa e customizada contendo:

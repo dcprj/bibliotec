@@ -6,10 +6,17 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-VERSION="1.0.0"
 APP_NAME="BiblioTEC"
 DIST_DIR="${PROJECT_ROOT}/dist"
 BUILD_DIR="${PROJECT_ROOT}/build"
+
+# Ler a versão do pyproject.toml
+if command -v python3 &> /dev/null; then
+    VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('${PROJECT_ROOT}/pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || python3 -c "import tomli; print(tomli.load(open('${PROJECT_ROOT}/pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || echo "1.0.0")
+else
+    VERSION="1.0.0"
+fi
+
 DMG_NAME="${APP_NAME}-${VERSION}-macOS.dmg"
 
 echo "=========================================================="
@@ -64,13 +71,32 @@ cp -R "${APP_PATH}" "${DMG_TEMP_DIR}/"
 # Criar atalho simbólico para /Applications
 ln -s /Applications "${DMG_TEMP_DIR}/Applications"
 
-# Gerar arquivo .dmg final via hdiutil nativo do macOS
-hdiutil create \
-    -volname "${APP_NAME} Installer" \
-    -srcfolder "${DMG_TEMP_DIR}" \
-    -ov \
-    -format UDZO \
-    "${DIST_DIR}/${DMG_NAME}"
+# Gerar arquivo .dmg final: tentar create-dmg primeiro (melhor UX), senão hdiutil
+if command -v create-dmg &> /dev/null; then
+    echo "🎨 Usando create-dmg para DMG com layout profissional..."
+    create-dmg \
+        --volname "${APP_NAME} Installer" \
+        --volicon "${SCRIPT_DIR}/icons/icon.icns" \
+        --window-pos 200 120 \
+        --window-size 600 400 \
+        --icon-size 100 \
+        --icon "${APP_NAME}.app" 150 150 \
+        --hide-extension "${APP_NAME}.app" \
+        --app-drop-link 450 150 \
+        "${DIST_DIR}/${DMG_NAME}" \
+        "${DMG_TEMP_DIR}/" > /dev/null 2>&1 || true
+fi
+
+# Se create-dmg não criou ou não está disponível, usar hdiutil nativo
+if [ ! -f "${DIST_DIR}/${DMG_NAME}" ]; then
+    echo "💿 Usando hdiutil nativo do macOS..."
+    hdiutil create \
+        -volname "${APP_NAME} Installer" \
+        -srcfolder "${DMG_TEMP_DIR}" \
+        -ov \
+        -format UDZO \
+        "${DIST_DIR}/${DMG_NAME}"
+fi
 
 rm -rf "${DMG_TEMP_DIR}"
 

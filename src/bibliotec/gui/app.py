@@ -5,16 +5,46 @@ Implementa ``launch_gui()`` e ``main()`` (registro em ``pyproject.toml`` como
 
 A importação de PySide6 ocorre apenas quando a GUI é invocada, preservando a
 execução headless do motor (CLI sem depender de Qt).
+
+Inclui proteções defensivas para inicialização do ``QWebEnginePage`` em
+bundles macOS (.app) via ``sys.frozen`` (evita crash SIGABRT no sandbox do
+QtWebEngine) e define o ícone oficial da aplicação.
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 from bibliotec.core.config import AppConfig
 
 __all__ = ["launch_gui", "main"]
+
+# Caminho do ícone oficial da aplicação (SVG vetorial).
+ICON_PATH = Path(__file__).parent / "resources" / "bibliotec_icon.svg"
+
+
+def _apply_webengine_defenses() -> None:
+    """Aplicar variáveis de ambiente defensivas para QWebEnginePage em bundle macOS.
+
+    Quando o aplicativo está empacotado (``sys.frozen`` é True, típico de
+    pyinstaller/briefcase no macOS), o QtWebEngine pode falhar com SIGABRT
+    devido ao sandbox do processo auxiliar. Definir
+    ``QTWEBENGINE_DISABLE_SANDBOX=1`` desativa o sandbox, e apontar
+    ``QTWEBENGINE_PROCESS_PATH`` para o binário do processo dentro do bundle
+    (``sys._MEIPASS``) garante que o processo auxiliar seja encontrado.
+
+    Chamado *antes* de qualquer instância de QApplication / QWebEnginePage.
+    """
+    if getattr(sys, "frozen", False):
+        os.environ.setdefault("QTWEBENGINE_DISABLE_SANDBOX", "1")
+
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            webengine_process = Path(meipass) / "QtWebEngineProcess"
+            if webengine_process.exists():
+                os.environ.setdefault("QTWEBENGINE_PROCESS_PATH", str(webengine_process))
 
 
 def launch_gui(
@@ -29,8 +59,12 @@ def launch_gui(
     :param target_dir: diretório de destino pré-preenchido (opcional).
     :returns: código de saída da aplicação Qt.
     """
+    # Aplicar proteções defensivas do WebEngine ANTES de importar/criar qualquer
+    # objeto Qt (especialmente QWebEnginePage usado pela visualização de PDF).
+    _apply_webengine_defenses()
+
     from PySide6.QtCore import Qt
-    from PySide6.QtGui import QColor, QPalette
+    from PySide6.QtGui import QColor, QIcon, QPalette
     from PySide6.QtWidgets import QApplication
 
     from bibliotec.gui.main_window import BiblioTECMainWindow
@@ -43,6 +77,11 @@ def launch_gui(
     app.setStyle("Fusion")
     app.setApplicationName("BiblioTEC")
     app.setApplicationDisplayName("BiblioTEC — Organizador Acadêmico de PDFs")
+
+    # --- Ícone oficial da aplicação (substitui o genérico do Python) ---
+    if ICON_PATH.exists():
+        app_icon = QIcon(str(ICON_PATH))
+        app.setWindowIcon(app_icon)
 
     # Forçar paleta clara contra herança de tema escuro do OS
     palette = QPalette()
@@ -94,6 +133,11 @@ def launch_gui(
         source_dir=source_dir,
         target_dir=target_dir,
     )
+
+    # Definir ícone também na janela principal (redundância por segurança).
+    if ICON_PATH.exists():
+        window.setWindowIcon(QIcon(str(ICON_PATH)))
+
     window.show()
     return app.exec()
 

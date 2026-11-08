@@ -22,6 +22,7 @@ except NameError:
 
 ROOT_DIR = SPEC_DIR.parent
 SRC_DIR = ROOT_DIR / "src"
+ICONS_DIR = ROOT_DIR / "packaging" / "icons"
 
 # Dados estáticos obrigatórios
 datas = [
@@ -48,6 +49,8 @@ hiddenimports = [
     "typer",
     "pydantic",
     "pydantic_settings",
+    "google.genai",
+    "httpx",
 ]
 
 # Tentar coletar dados adicionais de pacotes se instalados no ambiente
@@ -80,8 +83,8 @@ a = Analysis(
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 # Configuração de Ícone (se presente)
-icon_macos = str(ROOT_DIR / "packaging" / "icons" / "icon.icns")
-icon_win = str(ROOT_DIR / "packaging" / "icons" / "icon.ico")
+icon_macos = str(ICONS_DIR / "icon.icns")
+icon_win = str(ICONS_DIR / "icon.ico")
 
 icon_target = None
 if sys.platform == "darwin" and os.path.exists(icon_macos):

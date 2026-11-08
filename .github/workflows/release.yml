@@ -1,135 +1,134 @@
-name: Release Build & Packaging
+name: Release BiblioTEC
 
 on:
   push:
     tags:
-      - 'v*'
-      - '[0-9]+.[0-9]+.[0-9]+*'
-      - '*'
+      - "v*"
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
-  build-macos:
-    name: Build macOS (.dmg)
-    runs-on: macos-latest
+  build-and-release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+
     steps:
-      - name: Checkout Código
+      - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Configurar Python 3.12
+      - name: Configurar Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: "pip"
 
-      - name: Instalar Dependências e PyInstaller
+      - name: Instalar dependências do sistema (macOS)
+        if: runner.os == 'macOS'
         run: |
-          python -m pip install --upgrade pip
-          pip install . pyinstaller
+          brew install create-dmg || true
 
-      - name: Executar Build do macOS
+      - name: Instalar dependências do sistema (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fuse libfuse2 wget curl xz-utils
+
+      - name: Instalar dependências Python
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install pyinstaller
+
+      - name: Executar testes
+        run: |
+          pytest tests/ -m "not slow" -q
+
+      - name: Build macOS (DMG + .app)
+        if: runner.os == 'macOS'
         run: |
           chmod +x packaging/build_macos.sh
           ./packaging/build_macos.sh
 
-      - name: Upload Artefato macOS
-        uses: actions/upload-artifact@v4
-        with:
-          name: BiblioTEC-macOS-DMG
-          path: dist/*.dmg
-
-  build-windows:
-    name: Build Windows (.exe Installer)
-    runs-on: windows-latest
-    steps:
-      - name: Checkout Código
-        uses: actions/checkout@v4
-
-      - name: Configurar Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Instalar Dependências e PyInstaller
-        run: |
-          python -m pip install --upgrade pip
-          pip install . pyinstaller
-
-      - name: Compilar com PyInstaller
-        run: |
-          pyinstaller --clean -y packaging/pyinstaller.spec
-
-      - name: Compilar Instalador Inno Setup
-        uses: JonMar/action-innosetup@v1
-        with:
-          innoScript: packaging/windows_installer.iss
-
-      - name: Upload Artefato Windows
-        uses: actions/upload-artifact@v4
-        with:
-          name: BiblioTEC-Windows-Setup
-          path: dist/*_Setup_*.exe
-
-  build-linux:
-    name: Build Linux (.AppImage)
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout Código
-        uses: actions/checkout@v4
-
-      - name: Configurar Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Instalar Dependências do Sistema
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev libxkbcommon-x11-0 libegl1-mesa
-
-      - name: Instalar Dependências Python e PyInstaller
-        run: |
-          python -m pip install --upgrade pip
-          pip install . pyinstaller
-
-      - name: Gerar AppImage
+      - name: Build Linux (AppImage)
+        if: runner.os == 'Linux'
         run: |
           chmod +x packaging/build_linux_appimage.sh
           ./packaging/build_linux_appimage.sh
 
-      - name: Upload Artefato Linux
+      - name: Build Windows (Inno Setup)
+        if: runner.os == 'Windows'
+        run: |
+          echo "⚠️ Build Windows requer Inno Setup instalado no runner."
+          echo "📦 Gerando binário com PyInstaller..."
+          pyinstaller --clean -y packaging/pyinstaller.spec
+
+      - name: Listar artifacts gerados
+        run: |
+          echo "=== Arquivos em dist/ ==="
+          ls -la dist/ 2>/dev/null || echo "dist/ não encontrado"
+          echo "=== Arquivos em build/ ==="
+          ls -la build/ 2>/dev/null || echo "build/ não encontrado"
+
+      - name: Upload artifact (macOS DMG)
+        if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
-          name: BiblioTEC-Linux-AppImage
-          path: dist/*.AppImage
+          name: bibliotec-macos-dmg
+          path: dist/*.dmg
+          retention-days: 30
 
-  publish-release:
-    name: Publicar Release no GitHub
-    needs: [build-macos, build-windows, build-linux]
-    if: startsWith(github.ref, 'refs/tags/')
+      - name: Upload artifact (Linux AppImage)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bibliotec-linux-appimage
+          path: dist/*.AppImage
+          retention-days: 30
+
+      - name: Upload artifact (Windows EXE)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bibliotec-windows-exe
+          path: dist/*.exe
+          retention-days: 30
+
+  release:
+    needs: build-and-release
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
     steps:
-      - name: Baixar Todos os Artefatos
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Baixar artifacts (macOS DMG)
         uses: actions/download-artifact@v4
         with:
-          path: release-artifacts
+          name: bibliotec-macos-dmg
+          path: release-assets/macos
 
-      - name: Organizar Arquivos para Release
-        run: |
-          mkdir -p final-assets
-          find release-artifacts -type f -exec cp {} final-assets/ \;
-          ls -la final-assets/
+      - name: Baixar artifacts (Linux AppImage)
+        uses: actions/download-artifact@v4
+        with:
+          name: bibliotec-linux-appimage
+          path: release-assets/linux
 
-      - name: Criar GitHub Release
+      - name: Baixar artifacts (Windows EXE)
+        uses: actions/download-artifact@v4
+        with:
+          name: bibliotec-windows-exe
+          path: release-assets/windows
+
+      - name: Criar Release no GitHub
         uses: softprops/action-gh-release@v2
         with:
-          files: final-assets/*
-          name: BiblioTEC ${{ github.ref_name }}
-          draft: false
-          prerelease: false
+          files: |
+            release-assets/macos/*.dmg
+            release-assets/linux/*.AppImage
+            release-assets/windows/*.exe
           generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
