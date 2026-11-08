@@ -76,7 +76,6 @@ Foram disponibilizadas as artes oficiais em alta resolução:
 1. **Ícones Multiplataforma:**
    - `packaging/icons/icon.icns`: Pacote Apple Silicon / Retina multi-camada (16x16 até 1024x1024) com transparência de cantos gerado via `iconutil`.
    - `packaging/icons/icon.ico`: Pacote multi-resolução para Windows (16, 32, 48, 64, 128, 256) integrado no instalador Inno Setup (`packaging/windows_installer.iss`).
-   - `packaging/icons/icon.png`: Resolução 512x512 para o AppImage e menu `.desktop` Linux.
    - `src/bibliotec/gui/resources/bibliotec_icon.png`: Bitmap oficial 256x256 injetado no `app.setWindowIcon` e `window.setWindowIcon`.
 2. **Logo e Web GUI:**
    - Cópias em `src/bibliotec/gui/resources/` e `src/bibliotec/gui/web/logo.png`.
@@ -88,7 +87,7 @@ Foram disponibilizadas as artes oficiais em alta resolução:
 
 - **Prioridade:** Média / Alta (Polimento de Produto)
 - **Status:** Concluído / Resolvido (v1.0.1)
-- **Escopo:** macOS (.app / Dock), Windows (.exe / Taskbar / Inno Setup), Linux (.AppImage / Desktop Menu)
+- **Escopo:** macOS (.app / Dock), Windows (.exe / Taskbar / Inno Setup)
 - **Data do Relato:** 2026-11-08
 - **Responsáveis:** Prisma (UX/UI) & Atlas (Foundation)
 
@@ -99,7 +98,6 @@ Substituir o ícone genérico padrão do Python (exibido atualmente no Dock do m
 1. **Arte e Formatos Multiplataforma:**
    - **macOS (`.icns`):** Arquivo multi-resolução com camadas de 16x16 até 1024x1024 (Retina @2x), integrado em `Contents/Resources/icon.icns` do `.app`.
    - **Windows (`.ico`):** Arquivo contendo resoluções de 16x16, 32x32, 48x48, 64x64, 128x128 e 256x256 incorporado ao `BiblioTEC.exe` e ao instalador Inno Setup (`SetupIconFile`).
-   - **Linux (`.png` e `.svg`):** Ícone vetorial e bitmap 512x512 instalado em `usr/share/icons/hicolor/512x512/apps/bibliotec.png` no `AppDir` do AppImage.
 2. **Runtime do Aplicativo (`src/bibliotec/gui/app.py`):**
    - Configurar `app.setWindowIcon(QIcon(icon_path))` no `QApplication` e em `MainWindow` para que janelas secundárias e diálogos modais herdem o ícone oficial.
    - Definir `AppUserModelID` no Windows (`ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID`) para garantir que o Windows agrupe a janela corretamente na barra de tarefas com o ícone customizado.
@@ -155,21 +153,19 @@ Conforme decisão de produto, o lançamento inicial foca na estabilização dos 
 1. **macOS**: Imagem DMG com suporte a Apple Silicon / Intel e atalho Finder para `/Applications`.
 2. **Windows**: Instalador `.exe` profissional com assistente moderno Inno Setup, criação de atalhos e desinstalador limpo.
 
-O pacote **Linux (.AppImage)** será priorizado na Sprint **v1.1.0**, logo após a consolidação e estabilização das versões macOS e Windows.
-
 #### 2. Requisitos de Entrega
 1. **Compilação do Instalador Windows:**
    - Executar o workflow de CI em runner Windows (`windows-latest`).
    - Gerar o bundle via PyInstaller e compilar o instalador Inno Setup (`packaging/windows_installer.iss`).
    - Validar que o instalador crie atalhos no Menu Iniciar, Área de Trabalho e suporte desinstalação limpa.
-   - Gerar o arquivo final `BiblioTEC_Setup_v1.0.0_Windows_x64.exe` (ou v1.0.1).
-2. **Compilação do Executável Linux AppImage:**
-   - Executar o workflow de CI em runner Linux (`ubuntu-22.04`).
-   - Configurar `appimagetool` com as bibliotecas essenciais (`fuse`, `libfuse2`, Qt6 dependencies).
-   - Gerar o arquivo universal portátil `BiblioTEC-1.0.0-x86_64.AppImage` (ou v1.0.1).
+   - Gerar o arquivo final `BiblioTEC_Setup_v1.0.0_Windows_x64.exe`.
+2. **Compilação do Instalador macOS:**
+   - Executar o workflow de CI em runner macOS (`macos-latest`).
+   - Gerar o bundle via PyInstaller e compilar a imagem DMG com Finder layout (`packaging/build_macos.sh`).
+   - Gerar o arquivo final `BiblioTEC-1.0.0-macOS.dmg`.
 3. **Publicação Consolidada na Seção Assets:**
-   - Anexar ambos os arquivos (`.exe` e `.AppImage`) à página de releases do repositório `dcprj/bibliotec`.
-   - Garantir que todos os 3 instaladores (macOS, Windows, Linux) apareçam listados com seus hashes SHA-256 e tamanhos.
+   - Anexar ambos os arquivos (`.dmg` e `.exe`) à página de releases do repositório `dcprj/bibliotec`.
+   - Garantir que ambos os instaladores oficiais (macOS e Windows) apareçam listados com seus hashes SHA-256 e tamanhos.
 
 
 

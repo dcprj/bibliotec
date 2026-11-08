@@ -10,7 +10,6 @@ O **BiblioTEC** é uma aplicação desktop acadêmica livre e 100% gratuita proj
 | :--- | :--- | :--- | :--- |
 | **macOS** (Apple Silicon / Intel) | [`BiblioTEC-1.0.0-macOS.dmg`](https://github.com/dcprj/bibliotec/releases/download/v1.0.0/BiblioTEC-1.0.0-macOS.dmg) | ~515 MB | `2c02d8b61d26e4771bd93993142c7f58995451a50a525d79a8482c8600317ca7` |
 | **Windows** (10 / 11 64-bit) | [`BiblioTEC_Setup_v1.0.0_Windows_x64.exe`](https://github.com/dcprj/bibliotec/releases/download/v1.0.0/BiblioTEC_Setup_v1.0.0_Windows_x64.exe) | ~368 MB | `c40d8877ca410eb7a7e79a0d005fdb1f3dfb4cd381a0e6106c4b3c32568ab2ce` |
-| **Linux** (AppImage) | *Planejado para a versão v1.1.0* | — | *(CLI disponível via `pip install .`)* |
 
 ---
 

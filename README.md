@@ -5,7 +5,7 @@
 # BiblioTEC — Organizador Acadêmico Inteligente de PDFs
 
 [![Licença MIT](https://img.shields.io/badge/Licen%C3%A7a-MIT-blue.svg)](LICENSE)
-[![Plataformas](https://img.shields.io/badge/Plataformas-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg)](#como-baixar-e-instalar)
+[![Plataformas](https://img.shields.io/badge/Plataformas-macOS%20%7C%20Windows-brightgreen.svg)](#como-baixar-e-instalar)
 [![100% Gratuito](https://img.shields.io/badge/Software-100%25%20Gratuito-orange.svg)](#-apoie-o-projeto-doação-voluntária)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 
@@ -27,7 +27,6 @@ Você não precisa instalar Python nem configurar ambientes complexos para usar 
 | :--- | :--- | :--- |
 | **macOS** (Apple Silicon / Intel) | `.dmg` (Arrastar para `/Applications`) | [Baixar BiblioTEC para macOS (.dmg)](https://github.com/dcprj/bibliotec/releases/latest) |
 | **Windows** (10 / 11 64-bit) | `.exe` (Instalador completo Inno Setup) | [Baixar BiblioTEC para Windows (.exe)](https://github.com/dcprj/bibliotec/releases/latest) |
-| **Linux** (Ubuntu, Debian, Fedora, Arch) | `.AppImage` | *(Disponível a partir da versão v1.1.0)* |
 
 ---
 
@@ -60,23 +59,7 @@ Você não precisa instalar Python nem configurar ambientes complexos para usar 
 
 ---
 
-### 🐧 3. Instalação no Linux
-
-O BiblioTEC é disponibilizado no formato universal **AppImage**, que funciona em qualquer distribuição Linux moderna sem necessidade de instalar bibliotecas extras.
-
-1. Baixe o arquivo `BiblioTEC-1.0.0-x86_64.AppImage`.
-2. Abra o terminal na pasta onde o arquivo foi baixado e conceda permissão de execução:
-   ```bash
-   chmod +x BiblioTEC-1.0.0-x86_64.AppImage
-   ```
-3. Execute com duplo clique no gerenciador de arquivos ou diretamente no terminal:
-   ```bash
-   ./BiblioTEC-1.0.0-x86_64.AppImage
-   ```
-
----
-
-### 💻 4. Instalação via Python / Terminal (Desenvolvedores)
+### 💻 3. Instalação via Python / Terminal (Desenvolvedores)
 
 Se você é desenvolvedor ou prefere executar o BiblioTEC via ambiente Python:
 
