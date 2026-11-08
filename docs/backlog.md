@@ -80,3 +80,34 @@ Substituir o ícone genérico padrão do Python (exibido atualmente no Dock do m
    - No `packaging/pyinstaller.spec`: adicionar parâmetro `icon='assets/icons/bibliotec.icns'` no bloco `BNDL` (macOS) e `icon='assets/icons/bibliotec.ico'` no bloco `EXE` (Windows).
    - No `packaging/windows_installer.iss`: configurar `SetupIconFile=..\assets\icons\bibliotec.ico` e `UninstallDisplayIcon={app}\BiblioTEC.exe`.
 
+---
+
+## 📦 Empacotamento e Distribuição macOS
+
+### [FEAT-PKG-02] Janela DMG Profissional no macOS com Atalho "Arrastar para Aplicativos" (Drag-to-Applications)
+
+- **Prioridade:** Média (Polimento da Experiência macOS)
+- **Status:** Aberto / Mapeado
+- **Escopo:** `packaging/build_macos.sh`, `.github/workflows/release.yml`
+- **Data do Relato:** 2026-11-08
+
+#### 1. Objetivo
+Ao montar e abrir o arquivo `BiblioTEC-1.0.0-macOS.dmg`, o Finder deve abrir automaticamente uma janela limpa e customizada contendo:
+- O ícone do aplicativo **`BiblioTEC.app`** à esquerda.
+- Um atalho simbólico nativo para a pasta **`Applications` (Aplicativos)** à direita.
+- (Opcional) Fundo ilustrativo com seta discreta e texto instrucional orientando a arrastar o aplicativo para instalar.
+
+#### 2. Requisitos Técnicos
+1. **Estrutura do Volume DMG:**
+   - Criar link simbólico `ln -s /Applications "${DMG_TEMP_DIR}/Applications"` no diretório base da imagem.
+2. **Posicionamento e Propriedades do Finder:**
+   - Utilizar ferramenta automatizada como `create-dmg` ou script AppleScript / `dmgbuild` para configurar:
+     - Dimensão da janela (ex.: 540x380 px).
+     - Tamanho dos ícones (ex.: 100px ou 128px).
+     - Coordenadas exatas dos ícones (ex.: `BiblioTEC.app` em `(140, 190)` e `Applications` em `(400, 190)`).
+     - Ocultação da barra lateral e barra de status do Finder no volume montado.
+3. **Automação no CI/CD e Script Local:**
+   - Atualizar `packaging/build_macos.sh` para suportar `create-dmg` (instalável via Homebrew ou GitHub Actions `brew install create-dmg`).
+   - Atualizar a etapa `build-macos` no `.github/workflows/release.yml` para gerar o `.dmg` com o layout padronizado.
+
+
