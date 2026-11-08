@@ -62,7 +62,7 @@ Thread 0 Crashed (Dispatch queue: com.apple.main-thread):
 ### [FEAT-BRAND-01] Aplicação da Identidade Visual Oficial (Logo e Ícone de /logo_e_icone)
 
 - **Prioridade:** Alta (Identidade Oficial do Aplicativo)
-- **Status:** Em andamento / Pré-configurado (Pausado para atualização de SO)
+- **Status:** Concluído / Resolvido (v1.0.0)
 - **Escopo:** `logo_e_icone/`, `packaging/icons/`, `src/bibliotec/gui/resources/`, `src/bibliotec/gui/web/`
 - **Data do Relato:** 2026-11-08
 - **Responsável:** Prisma (UX/UI) & Chefe
@@ -145,7 +145,7 @@ Ao montar e abrir o arquivo `BiblioTEC-1.0.0-macOS.dmg`, o Finder deve abrir aut
 ### [FEAT-PKG-03] Empacotamento Oficial Multiplataforma (macOS .dmg e Windows .exe)
 
 - **Prioridade:** Alta (Lançamento Oficial v1.0.0)
-- **Status:** Em andamento (macOS concluído; Windows em pipeline)
+- **Status:** Concluído / Resolvido (v1.0.0)
 - **Escopo:** `.github/workflows/release.yml`, `packaging/windows_installer.iss`, GitHub Releases
 - **Data do Relato:** 2026-11-08
 - **Responsável:** Farol (Release & GitOps Manager) & Atlas (Foundation Engineer)
