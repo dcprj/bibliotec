@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo_e_icone/Logo.png" alt="BiblioTEC Logo" width="380">
+</p>
+
 # BiblioTEC — Organizador Acadêmico Inteligente de PDFs
 
 [![Licença MIT](https://img.shields.io/badge/Licen%C3%A7a-MIT-blue.svg)](LICENSE)
