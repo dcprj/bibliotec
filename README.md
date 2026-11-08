@@ -17,13 +17,13 @@ Ele organiza seus documentos diretamente em seu computador conforme a taxonomia 
 
 ## 📥 Como Baixar e Instalar
 
-Você não precisa instalar Python nem configurar ambientes complexos para usar o BiblioTEC. Baixe o instalador pronto para o seu sistema operacional na seção de **[Releases](https://github.com/dario/bibliotec/releases)**:
+Você não precisa instalar Python nem configurar ambientes complexos para usar o BiblioTEC. Baixe o instalador pronto para o seu sistema operacional na seção de **[Releases](https://github.com/dcprj/bibliotec/releases)**:
 
 | Sistema Operacional | Formato do Pacote | Link de Download Direto |
 | :--- | :--- | :--- |
-| **macOS** (Apple Silicon / Intel) | `.dmg` (Arrastar para `/Applications`) | [Baixar BiblioTEC para macOS (.dmg)](https://github.com/dario/bibliotec/releases/latest) |
-| **Windows** (10 / 11 64-bit) | `.exe` (Instalador completo Inno Setup) | [Baixar BiblioTEC para Windows (.exe)](https://github.com/dario/bibliotec/releases/latest) |
-| **Linux** (Ubuntu, Debian, Fedora, Arch) | `.AppImage` (Executável universal portátil) | [Baixar BiblioTEC para Linux (.AppImage)](https://github.com/dario/bibliotec/releases/latest) |
+| **macOS** (Apple Silicon / Intel) | `.dmg` (Arrastar para `/Applications`) | [Baixar BiblioTEC para macOS (.dmg)](https://github.com/dcprj/bibliotec/releases/latest) |
+| **Windows** (10 / 11 64-bit) | `.exe` (Instalador completo Inno Setup) | [Baixar BiblioTEC para Windows (.exe)](https://github.com/dcprj/bibliotec/releases/latest) |
+| **Linux** (Ubuntu, Debian, Fedora, Arch) | `.AppImage` (Executável universal portátil) | [Baixar BiblioTEC para Linux (.AppImage)](https://github.com/dcprj/bibliotec/releases/latest) |
 
 ---
 
@@ -78,7 +78,7 @@ Se você é desenvolvedor ou prefere executar o BiblioTEC via ambiente Python:
 
 ```bash
 # Clonar o repositório
-git clone https://github.com/dario/bibliotec.git
+git clone https://github.com/dcprj/bibliotec.git
 cd bibliotec
 
 # Criar e ativar ambiente virtual
@@ -124,7 +124,7 @@ O **BiblioTEC** é uma iniciativa independente, de código aberto e **100% gratu
 Se o BiblioTEC foi útil para sua dissertação, tese ou organização bibliográfica e você deseja demonstrar sua gratidão e incentivar a manutenção e novas funcionalidades, você pode fazer uma **contribuição espontânea de qualquer valor**:
 
 * **Chave Pix (Brasil):** `dpinheiro+bibliotec@gmail.com`
-* **Apoio Internacional / GitHub Sponsors:** [GitHub Sponsors BiblioTEC](https://github.com/dario/bibliotec)
+* **Código-fonte no GitHub:** [Repositório Oficial dcprj/bibliotec](https://github.com/dcprj/bibliotec)
 
 > [!NOTE]
 > **Esclarecimento Jurídico (Doação Pura):**  

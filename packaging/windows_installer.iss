@@ -4,7 +4,7 @@
 #define MyAppName "BiblioTEC"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "BiblioTEC Open Source Community"
-#define MyAppURL "https://github.com/dario/bibliotec"
+#define MyAppURL "https://github.com/dcprj/bibliotec"
 #define MyAppExeName "BiblioTEC.exe"
 
 [Setup]

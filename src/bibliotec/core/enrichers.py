@@ -33,7 +33,7 @@ _SIMILARITY_THRESHOLD = 88.0
 _REQUEST_TIMEOUT = 8.0
 _RETRY_ATTEMPTS = 3
 
-_USER_AGENT = f"BiblioTEC/{__version__} (https://github.com/dario/bibliotec)"
+_USER_AGENT = f"BiblioTEC/{__version__} (https://github.com/dcprj/bibliotec)"
 
 
 # ---------------------------------------------------------------------------
