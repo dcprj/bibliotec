@@ -113,4 +113,35 @@ Ao montar e abrir o arquivo `BiblioTEC-1.0.0-macOS.dmg`, o Finder deve abrir aut
    - Atualizar `packaging/build_macos.sh` para suportar `create-dmg` (instalável via Homebrew ou GitHub Actions `brew install create-dmg`).
    - Atualizar a etapa `build-macos` no `.github/workflows/release.yml` para gerar o `.dmg` com o layout padronizado.
 
+---
+
+## 📦 Distribuição Multiplataforma e Assets no GitHub Releases
+
+### [FEAT-PKG-03] Revisão e Empacotamento Completo dos Assets de Windows (.exe) e Linux (.AppImage) no GitHub Releases
+
+- **Prioridade:** Alta (Completude do Catálogo de Lançamento)
+- **Status:** Aberto / Mapeado
+- **Escopo:** `.github/workflows/release.yml`, `packaging/windows_installer.iss`, `packaging/build_linux_appimage.sh`, GitHub Releases
+- **Data do Relato:** 2026-11-08
+- **Responsável:** Farol (Release & GitOps Manager) & Atlas (Foundation Engineer)
+
+#### 1. Sintoma e Diagnóstico
+Na página oficial de releases ([https://github.com/dcprj/bibliotec/releases](https://github.com/dcprj/bibliotec/releases)), apenas o pacote para macOS (`BiblioTEC-1.0.0-macOS.dmg`) está disponível na seção de **Assets** para download.
+Os instaladores de Windows (`BiblioTEC_Setup_v1.0.0_Windows_x64.exe`) e Linux (`BiblioTEC-1.0.0-x86_64.AppImage`) ainda não foram compilados e anexados à release.
+
+#### 2. Requisitos de Entrega
+1. **Compilação do Instalador Windows:**
+   - Executar o workflow de CI em runner Windows (`windows-latest`).
+   - Gerar o bundle via PyInstaller e compilar o instalador Inno Setup (`packaging/windows_installer.iss`).
+   - Validar que o instalador crie atalhos no Menu Iniciar, Área de Trabalho e suporte desinstalação limpa.
+   - Gerar o arquivo final `BiblioTEC_Setup_v1.0.0_Windows_x64.exe` (ou v1.0.1).
+2. **Compilação do Executável Linux AppImage:**
+   - Executar o workflow de CI em runner Linux (`ubuntu-22.04`).
+   - Configurar `appimagetool` com as bibliotecas essenciais (`fuse`, `libfuse2`, Qt6 dependencies).
+   - Gerar o arquivo universal portátil `BiblioTEC-1.0.0-x86_64.AppImage` (ou v1.0.1).
+3. **Publicação Consolidada na Seção Assets:**
+   - Anexar ambos os arquivos (`.exe` e `.AppImage`) à página de releases do repositório `dcprj/bibliotec`.
+   - Garantir que todos os 3 instaladores (macOS, Windows, Linux) apareçam listados com seus hashes SHA-256 e tamanhos.
+
+
 
