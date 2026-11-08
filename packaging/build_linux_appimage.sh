@@ -6,8 +6,14 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-VERSION="1.0.0"
 APP_NAME="BiblioTEC"
+
+# Ler a versão do pyproject.toml (mesma abordagem do build_macos.sh)
+if command -v python3 &> /dev/null; then
+    VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('${PROJECT_ROOT}/pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || python3 -c "import tomli; print(tomli.load(open('${PROJECT_ROOT}/pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || echo "1.0.0")
+else
+    VERSION="1.0.0"
+fi
 DIST_DIR="${PROJECT_ROOT}/dist"
 BUILD_DIR="${PROJECT_ROOT}/build"
 APP_DIR="${BUILD_DIR}/AppDir"
@@ -71,11 +77,12 @@ exec "${HERE}/usr/bin/BiblioTEC" "$@"
 EOF
 chmod +x "${APP_DIR}/AppRun"
 
-# 4. Baixar appimagetool se não existir
+# 4. Baixar appimagetool se não existir (versão estável 13)
 APPIMAGETOOL="${BUILD_DIR}/appimagetool"
+APPIMAGETOOL_VERSION="13"
 if [ ! -f "${APPIMAGETOOL}" ]; then
-    echo "⬇️ Baixando appimagetool..."
-    curl -sLo "${APPIMAGETOOL}" "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+    echo "⬇️ Baixando appimagetool v${APPIMAGETOOL_VERSION}..."
+    curl -sLo "${APPIMAGETOOL}" "https://github.com/AppImage/appimagetool/releases/download/${APPIMAGETOOL_VERSION}/appimagetool-x86_64.AppImage"
     chmod +x "${APPIMAGETOOL}"
 fi
 

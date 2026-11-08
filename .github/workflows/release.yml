@@ -35,6 +35,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fuse libfuse2 wget curl xz-utils
 
+      - name: Instalar dependências do sistema (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install innosetup --yes
+
       - name: Instalar dependências Python
         run: |
           pip install --upgrade pip
@@ -57,12 +62,13 @@ jobs:
           chmod +x packaging/build_linux_appimage.sh
           ./packaging/build_linux_appimage.sh
 
-      - name: Build Windows (Inno Setup)
+      - name: Build Windows (Inno Setup instalador .exe)
         if: runner.os == 'Windows'
         run: |
-          echo "⚠️ Build Windows requer Inno Setup instalado no runner."
           echo "📦 Gerando binário com PyInstaller..."
           pyinstaller --clean -y packaging/pyinstaller.spec
+          echo "🔧 Gerando instalador Windows com Inno Setup..."
+          iscc packaging/windows_installer.iss
 
       - name: Listar artifacts gerados
         run: |
@@ -87,12 +93,12 @@ jobs:
           path: dist/*.AppImage
           retention-days: 30
 
-      - name: Upload artifact (Windows EXE)
+      - name: Upload artifact (Windows EXE instalador Inno Setup)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: bibliotec-windows-exe
-          path: dist/*.exe
+          path: dist/*Setup*.exe
           retention-days: 30
 
   release:
