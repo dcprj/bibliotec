@@ -68,14 +68,11 @@ mkdir -p "${DMG_TEMP_DIR}"
 # Copiar .app para a pasta temporária do DMG
 cp -R "${APP_PATH}" "${DMG_TEMP_DIR}/"
 
-# Criar atalho simbólico para /Applications
-ln -s /Applications "${DMG_TEMP_DIR}/Applications"
-
 # Gerar arquivo .dmg final: tentar create-dmg primeiro (melhor UX), senão hdiutil
 if command -v create-dmg &> /dev/null; then
     echo "🎨 Usando create-dmg para DMG com layout profissional..."
     create-dmg \
-        --volname "${APP_NAME} Installer" \
+        --volname "${APP_NAME}" \
         --volicon "${SCRIPT_DIR}/icons/icon.icns" \
         --window-pos 200 120 \
         --window-size 600 400 \
@@ -83,15 +80,19 @@ if command -v create-dmg &> /dev/null; then
         --icon "${APP_NAME}.app" 150 150 \
         --hide-extension "${APP_NAME}.app" \
         --app-drop-link 450 150 \
+        --overwrite \
         "${DIST_DIR}/${DMG_NAME}" \
-        "${DMG_TEMP_DIR}/" > /dev/null 2>&1 || true
+        "${DMG_TEMP_DIR}/" || true
 fi
 
-# Se create-dmg não criou ou não está disponível, usar hdiutil nativo
+# Se create-dmg não criou ou não está disponível, usar hdiutil nativo com link simbólico manual
 if [ ! -f "${DIST_DIR}/${DMG_NAME}" ]; then
     echo "💿 Usando hdiutil nativo do macOS..."
+    if [ ! -L "${DMG_TEMP_DIR}/Applications" ]; then
+        ln -s /Applications "${DMG_TEMP_DIR}/Applications"
+    fi
     hdiutil create \
-        -volname "${APP_NAME} Installer" \
+        -volname "${APP_NAME}" \
         -srcfolder "${DMG_TEMP_DIR}" \
         -ov \
         -format UDZO \
