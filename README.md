@@ -27,7 +27,7 @@ Você não precisa instalar Python nem configurar ambientes complexos para usar 
 | :--- | :--- | :--- |
 | **macOS** (Apple Silicon / Intel) | `.dmg` (Arrastar para `/Applications`) | [Baixar BiblioTEC para macOS (.dmg)](https://github.com/dcprj/bibliotec/releases/latest) |
 | **Windows** (10 / 11 64-bit) | `.exe` (Instalador completo Inno Setup) | [Baixar BiblioTEC para Windows (.exe)](https://github.com/dcprj/bibliotec/releases/latest) |
-| **Linux** (Ubuntu, Debian, Fedora, Arch) | `.AppImage` (Executável universal portátil) | [Baixar BiblioTEC para Linux (.AppImage)](https://github.com/dcprj/bibliotec/releases/latest) |
+| **Linux** (Ubuntu, Debian, Fedora, Arch) | `.AppImage` | *(Disponível a partir da versão v1.1.0)* |
 
 ---
 

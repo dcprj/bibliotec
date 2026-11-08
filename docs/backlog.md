@@ -142,17 +142,20 @@ Ao montar e abrir o arquivo `BiblioTEC-1.0.0-macOS.dmg`, o Finder deve abrir aut
 
 ## 📦 Distribuição Multiplataforma e Assets no GitHub Releases
 
-### [FEAT-PKG-03] Revisão e Empacotamento Completo dos Assets de Windows (.exe) e Linux (.AppImage) no GitHub Releases
+### [FEAT-PKG-03] Empacotamento Oficial Multiplataforma (macOS .dmg e Windows .exe)
 
-- **Prioridade:** Alta (Completude do Catálogo de Lançamento)
-- **Status:** Aberto / Mapeado
-- **Escopo:** `.github/workflows/release.yml`, `packaging/windows_installer.iss`, `packaging/build_linux_appimage.sh`, GitHub Releases
+- **Prioridade:** Alta (Lançamento Oficial v1.0.0)
+- **Status:** Em andamento (macOS concluído; Windows em pipeline)
+- **Escopo:** `.github/workflows/release.yml`, `packaging/windows_installer.iss`, GitHub Releases
 - **Data do Relato:** 2026-11-08
 - **Responsável:** Farol (Release & GitOps Manager) & Atlas (Foundation Engineer)
 
-#### 1. Sintoma e Diagnóstico
-Na página oficial de releases ([https://github.com/dcprj/bibliotec/releases](https://github.com/dcprj/bibliotec/releases)), apenas o pacote para macOS (`BiblioTEC-1.0.0-macOS.dmg`) está disponível na seção de **Assets** para download.
-Os instaladores de Windows (`BiblioTEC_Setup_v1.0.0_Windows_x64.exe`) e Linux (`BiblioTEC-1.0.0-x86_64.AppImage`) ainda não foram compilados e anexados à release.
+#### 1. Diretriz Estratégica de Lançamento
+Conforme decisão de produto, o lançamento inicial foca na estabilização dos dois maiores ecossistemas desktop acadêmicos:
+1. **macOS**: Imagem DMG com suporte a Apple Silicon / Intel e atalho Finder para `/Applications`.
+2. **Windows**: Instalador `.exe` profissional com assistente moderno Inno Setup, criação de atalhos e desinstalador limpo.
+
+O pacote **Linux (.AppImage)** será priorizado na Sprint **v1.1.0**, logo após a consolidação e estabilização das versões macOS e Windows.
 
 #### 2. Requisitos de Entrega
 1. **Compilação do Instalador Windows:**

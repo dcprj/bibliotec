@@ -9,11 +9,13 @@ on:
 jobs:
   build-and-release:
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, windows-latest]
 
     steps:
       - name: Checkout do código
@@ -25,37 +27,10 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Liberar espaço em disco (antes dos builds)
-        continue-on-error: true
-        run: |
-          echo "=== Espaço em disco antes ==="
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            Get-PSDrive C | Select-Object Used, Free 2>/dev/null || true
-          else
-            df -h
-          fi
-          pip cache purge 2>/dev/null || true
-          if [ "${{ runner.os }}" = "Linux" ]; then
-            sudo apt-get clean
-            sudo rm -rf /var/cache/apt/archives/* 2>/dev/null || true
-          fi
-          echo "=== Espaço em disco após limpeza ==="
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            Get-PSDrive C | Select-Object Used, Free 2>/dev/null || true
-          else
-            df -h
-          fi
-
       - name: Instalar dependências do sistema (macOS)
         if: runner.os == 'macOS'
         run: |
           brew install create-dmg || true
-
-      - name: Instalar dependências do sistema (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y fuse libfuse2 wget curl xz-utils libgl1 libegl1 libxkbcommon-x11-0 libdbus-1-3 xvfb
 
       - name: Instalar dependências do sistema (Windows)
         if: runner.os == 'Windows'
@@ -64,17 +39,9 @@ jobs:
 
       - name: Instalar dependências Python
         run: |
-          pip install --upgrade pip
-          if [ "${{ runner.os }}" = "Linux" ]; then
-            # No Linux, instalar apenas o essencial para o build (economiza espaço em disco)
-            # Dependências dev (pytest, respx, ruff) não são necessárias para gerar o AppImage
-            pip install pyinstaller
-            pip install -e . --no-deps --no-cache-dir
-          else
-            pip install -e ".[dev]"
-            pip install pyinstaller
-          fi
-          pip cache purge
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install pyinstaller
 
       - name: Executar testes (exclui GUI - validada localmente em offscreen)
         env:
@@ -93,27 +60,25 @@ jobs:
           chmod +x packaging/build_macos.sh
           ./packaging/build_macos.sh
 
-      - name: Build Linux (AppImage)
-        if: runner.os == 'Linux'
-        run: |
-          chmod +x packaging/build_linux_appimage.sh
-          ./packaging/build_linux_appimage.sh
-
       - name: Build Windows (Inno Setup instalador .exe)
         if: runner.os == 'Windows'
         run: |
           echo "📦 Gerando binário com PyInstaller..."
           pyinstaller --clean -y packaging/pyinstaller.spec
           echo "🔧 Gerando instalador Windows com Inno Setup..."
-          iscc packaging/windows_installer.iss
+          if [ -f "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" ]; then
+            "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" packaging/windows_installer.iss
+          elif command -v iscc >/dev/null 2>&1; then
+            iscc packaging/windows_installer.iss
+          else
+            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging/windows_installer.iss
+          fi
 
       - name: Listar artifacts gerados
         continue-on-error: true
         run: |
           echo "=== Arquivos em dist/ ==="
           ls -la dist/ 2>/dev/null || echo "dist/ não encontrado"
-          echo "=== Arquivos em build/ ==="
-          ls -la build/ 2>/dev/null || echo "build/ não encontrado"
 
       - name: Upload artifact (macOS DMG)
         if: runner.os == 'macOS'
@@ -121,14 +86,6 @@ jobs:
         with:
           name: bibliotec-macos-dmg
           path: dist/*.dmg
-          retention-days: 30
-
-      - name: Upload artifact (Linux AppImage)
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: bibliotec-linux-appimage
-          path: dist/*.AppImage
           retention-days: 30
 
       - name: Upload artifact (Windows EXE instalador Inno Setup)
@@ -157,13 +114,6 @@ jobs:
           name: bibliotec-macos-dmg
           path: release-assets/macos
 
-      - name: Baixar artifacts (Linux AppImage)
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: bibliotec-linux-appimage
-          path: release-assets/linux
-
       - name: Baixar artifacts (Windows EXE)
         continue-on-error: true
         uses: actions/download-artifact@v4
@@ -177,16 +127,14 @@ jobs:
           echo "=== Assets disponíveis ==="
           find release-assets -type f 2>/dev/null || echo "Nenhum asset encontrado"
           ls -la release-assets/macos/ 2>/dev/null || true
-          ls -la release-assets/linux/ 2>/dev/null || true
           ls -la release-assets/windows/ 2>/dev/null || true
 
-      - name: Criar Release no GitHub
+      - name: Criar ou Atualizar Release no GitHub
         continue-on-error: true
         uses: softprops/action-gh-release@v2
         with:
           files: |
             release-assets/macos/*.dmg
-            release-assets/linux/*.AppImage
             release-assets/windows/*.exe
           generate_release_notes: true
         env:
