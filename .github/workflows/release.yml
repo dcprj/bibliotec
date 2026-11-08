@@ -29,14 +29,22 @@ jobs:
         continue-on-error: true
         run: |
           echo "=== Espaço em disco antes ==="
-          df -h
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            Get-PSDrive C | Select-Object Used, Free 2>/dev/null || true
+          else
+            df -h
+          fi
           pip cache purge 2>/dev/null || true
           if [ "${{ runner.os }}" = "Linux" ]; then
             sudo apt-get clean
             sudo rm -rf /var/cache/apt/archives/* 2>/dev/null || true
           fi
           echo "=== Espaço em disco após limpeza ==="
-          df -h
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            Get-PSDrive C | Select-Object Used, Free 2>/dev/null || true
+          else
+            df -h
+          fi
 
       - name: Instalar dependências do sistema (macOS)
         if: runner.os == 'macOS'
