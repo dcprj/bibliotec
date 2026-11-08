@@ -39,22 +39,6 @@ GENERIC_TITLE_CONFIDENCE_CAP = 0.50
 # Limiar de confiança para organização automática.
 CONFIDENCE_MIN = 0.70
 
-# Prefixos que indicam título genérico de exportação de escritório.
-_GENERIC_PREFIXES = ("microsoft powerpoint -", "microsoft word -")
-_GENERIC_TITLES = {
-    "sem título",
-    "sem titulo",
-    "untitled",
-    "unknown",
-    "desconhecido",
-    "documento",
-    "pdf",
-    "artigo",
-    "livro",
-    "slide",
-}
-
-
 def _alphanumeric_count(text: str) -> int:
     """Contar caracteres alfanuméricos úteis em um texto."""
     return sum(1 for ch in text if ch.isalnum())
@@ -84,9 +68,11 @@ def _retry_on_retryable_http():
 
 
 def _is_generic_openai_retryable(exc: BaseException) -> bool:
-    """Verificar se uma exceção httpx é HTTP 429 ou 503 (retryable em APIs OpenAI-compatíveis)."""
+    """Verificar se uma exceção httpx é transitória (429/503/529 ou falha de transporte/timeout)."""
+    if isinstance(exc, (httpx.TimeoutException, httpx.TransportError)):
+        return True
     if isinstance(exc, httpx.HTTPStatusError):
-        return exc.response.status_code in (429, 503)
+        return exc.response.status_code in (429, 503, 529)
     return False
 
 
@@ -117,6 +103,120 @@ class ClassificationResult:
     confidence_score: float
     reasoning: str
     used_ocr: bool = False
+    provider_name: str = ""
+    model_name: str = ""
+    publisher: str | None = None
+    city: str | None = None
+    edition: str | None = None
+    journal_name: str | None = None
+    volume: str | None = None
+    number: str | None = None
+    pages: str | None = None
+    doi: str | None = None
+    isbn: str | None = None
+
+
+def _check_short_circuit(
+    sampled_text: str,
+    cip_text: str,
+    external_metadata: ExternalMetadata | None,
+    used_ocr: bool,
+    provider_name: str = "",
+    model_name: str = "",
+) -> ClassificationResult | None:
+    """Retornar ClassificationResult de short-circuit se texto útil < 50 chars e sem metadados externos."""
+    useful_chars = _alphanumeric_count(sampled_text) + _alphanumeric_count(cip_text)
+    has_external = external_metadata is not None and bool(
+        external_metadata.title or external_metadata.authors
+    )
+    if useful_chars < MIN_USEFUL_CHARS and not has_external:
+        return ClassificationResult(
+            grande_area="",
+            area_basica="",
+            tipo="Outros",
+            authors=[],
+            title="",
+            subtitle="",
+            year=None,
+            confidence_score=0.0,
+            reasoning=(
+                "Texto alfanumérico útil inferior a 50 caracteres e sem "
+                "metadados externos; classificação não realizada."
+            ),
+            used_ocr=used_ocr,
+            provider_name=provider_name,
+            model_name=model_name,
+        )
+    return None
+
+
+def _finalize_classification(
+    output: LLMClassificationOutput,
+    used_ocr: bool,
+    provider_name: str = "",
+    model_name: str = "",
+) -> ClassificationResult:
+    """Aplicar validação/reparo CAPES e trava determinística de título genérico."""
+    reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
+    tipo_str = output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo)
+    if reparado is None:
+        return ClassificationResult(
+            grande_area=output.grande_area,
+            area_basica=output.area_basica,
+            tipo=tipo_str,
+            authors=list(output.authors),
+            title=output.title,
+            subtitle=output.subtitle,
+            year=output.year,
+            publisher=output.publisher,
+            city=output.city,
+            edition=output.edition,
+            journal_name=output.journal_name,
+            volume=output.volume,
+            number=output.number,
+            pages=output.pages,
+            doi=output.doi,
+            isbn=output.isbn,
+            confidence_score=0.0,
+            reasoning=(
+                f"{output.reasoning} Par (grande_area, area_basica) irreparável "
+                f"contra o catálogo CAPES/CNPq."
+            ),
+            used_ocr=used_ocr,
+            provider_name=provider_name,
+            model_name=model_name,
+        )
+    grande_area, area_basica = reparado
+
+    confidence = float(output.confidence_score)
+    title = output.title or ""
+    has_authors = bool(output.authors)
+    if is_generic_title(title) and not has_authors:
+        confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
+
+    return ClassificationResult(
+        grande_area=grande_area,
+        area_basica=area_basica,
+        tipo=tipo_str,
+        authors=list(output.authors),
+        title=title,
+        subtitle=output.subtitle,
+        year=output.year,
+        publisher=output.publisher,
+        city=output.city,
+        edition=output.edition,
+        journal_name=output.journal_name,
+        volume=output.volume,
+        number=output.number,
+        pages=output.pages,
+        doi=output.doi,
+        isbn=output.isbn,
+        confidence_score=confidence,
+        reasoning=output.reasoning,
+        used_ocr=used_ocr,
+        provider_name=provider_name,
+        model_name=model_name,
+    )
 
 
 @runtime_checkable
@@ -189,8 +289,6 @@ class GeminiProvider:
                     contents=context_payload,
                     config=config,
                 )
-                if modelo != self._model:
-                    self._model = modelo
                 parsed = response.parsed
                 if parsed is None:
                     raise ValueError("Resposta do Gemini não pôde ser interpretada como JSON")
@@ -214,26 +312,11 @@ class GeminiProvider:
         used_ocr: bool = False,
     ) -> ClassificationResult:
         """Classificar via Gemini aplicando travas determinísticas de confiança."""
-        useful_chars = _alphanumeric_count(sampled_text) + _alphanumeric_count(cip_text)
-        has_external = external_metadata is not None and bool(
-            external_metadata.title or external_metadata.authors
+        short = _check_short_circuit(
+            sampled_text, cip_text, external_metadata, used_ocr, "gemini", self._model
         )
-        if useful_chars < MIN_USEFUL_CHARS and not has_external:
-            return ClassificationResult(
-                grande_area="",
-                area_basica="",
-                tipo="Outros",
-                authors=[],
-                title="",
-                subtitle="",
-                year=None,
-                confidence_score=0.0,
-                reasoning=(
-                    "Texto alfanumérico útil inferior a 50 caracteres e sem "
-                    "metadados externos; classificação não realizada."
-                ),
-                used_ocr=used_ocr,
-            )
+        if short is not None:
+            return short
 
         system_prompt = build_system_prompt()
         context_payload = build_context_payload(sampled_text, cip_text, external_metadata)
@@ -252,45 +335,11 @@ class GeminiProvider:
                 confidence_score=0.0,
                 reasoning=f"Falha na chamada ao LLM: {exc}",
                 used_ocr=used_ocr,
+                provider_name="gemini",
+                model_name=self._model,
             )
 
-        reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
-        if reparado is None:
-            return ClassificationResult(
-                grande_area=output.grande_area,
-                area_basica=output.area_basica,
-                tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-                authors=list(output.authors),
-                title=output.title,
-                subtitle=output.subtitle,
-                year=output.year,
-                confidence_score=0.0,
-                reasoning=(
-                    f"{output.reasoning} Par (grande_area, area_basica) irreparável "
-                    f"contra o catálogo CAPES/CNPq."
-                ),
-                used_ocr=used_ocr,
-            )
-        grande_area, area_basica = reparado
-
-        confidence = float(output.confidence_score)
-        title = output.title or ""
-        has_authors = bool(output.authors)
-        if is_generic_title(title) and not has_authors:
-            confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
-
-        return ClassificationResult(
-            grande_area=grande_area,
-            area_basica=area_basica,
-            tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-            authors=list(output.authors),
-            title=title,
-            subtitle=output.subtitle,
-            year=output.year,
-            confidence_score=confidence,
-            reasoning=output.reasoning,
-            used_ocr=used_ocr,
-        )
+        return _finalize_classification(output, used_ocr, "gemini", self._model)
 
 
 class MockLLMProvider:
@@ -429,43 +478,7 @@ class NvidiaProvider:
         except Exception:
             output = LLMClassificationOutput.model_validate(json.loads(json_text))
 
-        reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
-        if reparado is None:
-            return ClassificationResult(
-                grande_area=output.grande_area,
-                area_basica=output.area_basica,
-                tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-                authors=list(output.authors),
-                title=output.title,
-                subtitle=output.subtitle,
-                year=output.year,
-                confidence_score=0.0,
-                reasoning=(
-                    f"{output.reasoning} Par (grande_area, area_basica) irreparável "
-                    f"contra o catálogo CAPES/CNPq."
-                ),
-                used_ocr=used_ocr,
-            )
-        grande_area, area_basica = reparado
-
-        confidence = float(output.confidence_score)
-        title = output.title or ""
-        has_authors = bool(output.authors)
-        if is_generic_title(title) and not has_authors:
-            confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
-
-        return ClassificationResult(
-            grande_area=grande_area,
-            area_basica=area_basica,
-            tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-            authors=list(output.authors),
-            title=title,
-            subtitle=output.subtitle,
-            year=output.year,
-            confidence_score=confidence,
-            reasoning=output.reasoning,
-            used_ocr=used_ocr,
-        )
+        return _finalize_classification(output, used_ocr, "nvidia", self._model)
 
 
 class DeepSeekProvider:
@@ -577,43 +590,7 @@ class DeepSeekProvider:
         except Exception:
             output = LLMClassificationOutput.model_validate(json.loads(json_text))
 
-        reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
-        if reparado is None:
-            return ClassificationResult(
-                grande_area=output.grande_area,
-                area_basica=output.area_basica,
-                tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-                authors=list(output.authors),
-                title=output.title,
-                subtitle=output.subtitle,
-                year=output.year,
-                confidence_score=0.0,
-                reasoning=(
-                    f"{output.reasoning} Par (grande_area, area_basica) irreparável "
-                    f"contra o catálogo CAPES/CNPq."
-                ),
-                used_ocr=used_ocr,
-            )
-        grande_area, area_basica = reparado
-
-        confidence = float(output.confidence_score)
-        title = output.title or ""
-        has_authors = bool(output.authors)
-        if is_generic_title(title) and not has_authors:
-            confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
-
-        return ClassificationResult(
-            grande_area=grande_area,
-            area_basica=area_basica,
-            tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-            authors=list(output.authors),
-            title=title,
-            subtitle=output.subtitle,
-            year=output.year,
-            confidence_score=confidence,
-            reasoning=output.reasoning,
-            used_ocr=used_ocr,
-        )
+        return _finalize_classification(output, used_ocr, "deepseek", self._model)
 
 class ClaudeProvider:
     """Provedor Anthropic Claude usando httpx diretamente."""
@@ -711,43 +688,7 @@ class ClaudeProvider:
         except Exception:
             output = LLMClassificationOutput.model_validate(json.loads(json_text))
 
-        reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
-        if reparado is None:
-            return ClassificationResult(
-                grande_area=output.grande_area,
-                area_basica=output.area_basica,
-                tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-                authors=list(output.authors),
-                title=output.title,
-                subtitle=output.subtitle,
-                year=output.year,
-                confidence_score=0.0,
-                reasoning=(
-                    f"{output.reasoning} Par (grande_area, area_basica) irreparável "
-                    f"contra o catálogo CAPES/CNPq."
-                ),
-                used_ocr=used_ocr,
-            )
-        grande_area, area_basica = reparado
-
-        confidence = float(output.confidence_score)
-        title = output.title or ""
-        has_authors = bool(output.authors)
-        if is_generic_title(title) and not has_authors:
-            confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
-
-        return ClassificationResult(
-            grande_area=grande_area,
-            area_basica=area_basica,
-            tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-            authors=list(output.authors),
-            title=title,
-            subtitle=output.subtitle,
-            year=output.year,
-            confidence_score=confidence,
-            reasoning=output.reasoning,
-            used_ocr=used_ocr,
-        )
+        return _finalize_classification(output, used_ocr, "claude", self._model)
 
 
 class GroqProvider:
@@ -860,43 +801,7 @@ class GroqProvider:
         except Exception:
             output = LLMClassificationOutput.model_validate(json.loads(json_text))
 
-        reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
-        if reparado is None:
-            return ClassificationResult(
-                grande_area=output.grande_area,
-                area_basica=output.area_basica,
-                tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-                authors=list(output.authors),
-                title=output.title,
-                subtitle=output.subtitle,
-                year=output.year,
-                confidence_score=0.0,
-                reasoning=(
-                    f"{output.reasoning} Par (grande_area, area_basica) irreparável "
-                    f"contra o catálogo CAPES/CNPq."
-                ),
-                used_ocr=used_ocr,
-            )
-        grande_area, area_basica = reparado
-
-        confidence = float(output.confidence_score)
-        title = output.title or ""
-        has_authors = bool(output.authors)
-        if is_generic_title(title) and not has_authors:
-            confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
-
-        return ClassificationResult(
-            grande_area=grande_area,
-            area_basica=area_basica,
-            tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-            authors=list(output.authors),
-            title=title,
-            subtitle=output.subtitle,
-            year=output.year,
-            confidence_score=confidence,
-            reasoning=output.reasoning,
-            used_ocr=used_ocr,
-        )
+        return _finalize_classification(output, used_ocr, "groq", self._model)
 
 
 class GitHubModelsProvider:
@@ -1009,43 +914,7 @@ class GitHubModelsProvider:
         except Exception:
             output = LLMClassificationOutput.model_validate(json.loads(json_text))
 
-        reparado = validate_or_repair_pair(output.grande_area, output.area_basica)
-        if reparado is None:
-            return ClassificationResult(
-                grande_area=output.grande_area,
-                area_basica=output.area_basica,
-                tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-                authors=list(output.authors),
-                title=output.title,
-                subtitle=output.subtitle,
-                year=output.year,
-                confidence_score=0.0,
-                reasoning=(
-                    f"{output.reasoning} Par (grande_area, area_basica) irreparável "
-                    f"contra o catálogo CAPES/CNPq."
-                ),
-                used_ocr=used_ocr,
-            )
-        grande_area, area_basica = reparado
-
-        confidence = float(output.confidence_score)
-        title = output.title or ""
-        has_authors = bool(output.authors)
-        if is_generic_title(title) and not has_authors:
-            confidence = min(confidence, GENERIC_TITLE_CONFIDENCE_CAP)
-
-        return ClassificationResult(
-            grande_area=grande_area,
-            area_basica=area_basica,
-            tipo=output.tipo.value if hasattr(output.tipo, "value") else str(output.tipo),
-            authors=list(output.authors),
-            title=title,
-            subtitle=output.subtitle,
-            year=output.year,
-            confidence_score=confidence,
-            reasoning=output.reasoning,
-            used_ocr=used_ocr,
-        )
+        return _finalize_classification(output, used_ocr, "github", self._model)
 
 
 # --------------------------------------------------------------------------- #
@@ -1152,7 +1021,11 @@ class FallbackLLMDispatcher:
                 ultimo_resultado = resultado
                 continue
 
-            # Sucesso: retorna o resultado imediatamente.
+            # Sucesso: preenche provider/model efetivos se ausentes e retorna.
+            if not resultado.provider_name:
+                resultado.provider_name = nome
+            if not resultado.model_name:
+                resultado.model_name = str(getattr(provedor, "_model", ""))
             return resultado
 
         # Todos os provedores falharam: retornar o último resultado de erro.
@@ -1249,9 +1122,12 @@ def create_provider_chain(
         return info["chave"] or None
 
     def _resolver_modelo(nome_provedor: str, cli_model_val: str | None) -> str:
-        """Resolver o modelo: CLI > config.llm.model > padrão do provedor."""
+        """Resolver o modelo: CLI > [llm.providers.<nome>].model > config.llm.model > padrão."""
         if cli_model_val:
             return cli_model_val
+        prov_cfg = (config.llm.providers or {}).get(nome_provedor, {})
+        if isinstance(prov_cfg, dict) and prov_cfg.get("model"):
+            return str(prov_cfg["model"])
         if config.llm.provider == nome_provedor and config.llm.model:
             return config.llm.model
         return provedores_disponiveis[nome_provedor]["modelo_padrao"]

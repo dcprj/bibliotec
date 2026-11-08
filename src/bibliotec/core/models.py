@@ -62,6 +62,15 @@ class ExternalMetadata(BaseModel):
     subtitle: str = ""
     authors: list[str] = Field(default_factory=list)
     publication_year: Optional[int] = None
+    publisher: Optional[str] = None
+    city: Optional[str] = None
+    edition: Optional[str] = None
+    journal_name: Optional[str] = None
+    volume: Optional[str] = None
+    number: Optional[str] = None
+    pages: Optional[str] = None
+    doi: Optional[str] = None
+    isbn: Optional[str] = None
     document_type_hint: Optional[str] = None
     concepts: list[str] = Field(default_factory=list)
     match_score: float = 0.0
@@ -77,6 +86,15 @@ class LLMClassificationOutput(BaseModel):
     title: str = ""
     subtitle: str = ""
     year: Optional[int] = None
+    publisher: Optional[str] = None
+    city: Optional[str] = None
+    edition: Optional[str] = None
+    journal_name: Optional[str] = None
+    volume: Optional[str] = None
+    number: Optional[str] = None
+    pages: Optional[str] = None
+    doi: Optional[str] = None
+    isbn: Optional[str] = None
     confidence_score: float = Field(default=0.0, ge=0.0, le=1.0)
     reasoning: str = ""
 
@@ -112,8 +130,11 @@ class PipelineEvent(BaseModel):
 
     stage: str
     source_path: str
+    destination_path: Optional[str] = None
+    sha256: Optional[str] = None
     status: str
     message: str
     total_files: int | None = None
     completed_files: int | None = None
+    classification: dict[str, Any] | None = None
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())

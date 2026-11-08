@@ -456,3 +456,56 @@ def test_organizer_ignored_non_pdf_diagnostics(tmp_path: Path):
     assert "Atalho de internet macOS (.webloc)" in conteudo
     assert "livro.epub" in conteudo
     assert "E-book não-PDF (.epub)" in conteudo
+
+
+def test_abnt_reference_artigo_periodico():
+    """Valida formatação ABNT NBR 6023 para artigos de periódicos sem pontos duplicados."""
+    classificacao = {
+        "authors": ["Bulamah, Lucas Charafeddine", "Kupermann, Daniel"],
+        "title": "A dupla volta da subjetivação em Winnicott",
+        "tipo": "Artigo",
+        "journal_name": "Tempo Psicanalítico",
+        "city": "Rio de Janeiro",
+        "volume": "54.1",
+        "pages": "134-155",
+        "year": 2022,
+        "doi": "10.1590/tempo.v54i1.1234",
+    }
+    ref = format_abnt_reference(classificacao)
+    # Autores sem ponto duplicado 'Daniel..'
+    assert "KUPERMANN, Daniel. A dupla" in ref
+    assert ".." not in ref
+    # Nome da revista em negrito
+    assert "**Tempo Psicanalítico**" in ref
+    assert "Rio de Janeiro, v. 54.1, p. 134-155, 2022." in ref
+    assert "Disponível em: https://doi.org/10.1590/tempo.v54i1.1234." in ref
+
+
+def test_companion_frontmatter_campos_completos(tmp_path: Path):
+    """Valida inclusão de todos os campos bibliográficos no YAML frontmatter e metadados."""
+    classificacao = {
+        "authors": ["Carneiro, Sueli"],
+        "title": "Escritos de uma vida",
+        "tipo": "Livro",
+        "publisher": "Pólen Livros",
+        "city": "São Paulo",
+        "edition": "1. ed.",
+        "pages": "288 p.",
+        "year": 2018,
+        "isbn": "9786557826669",
+        "grande_area": "Ciências Humanas",
+        "area_basica": "Sociologia",
+    }
+    dest = tmp_path / "livro.md"
+    src = tmp_path / "origem.pdf"
+    content = generate_companion_markdown(dest, src, "sha123", classificacao)
+
+    assert "publisher: 'Pólen Livros'" in content
+    assert "city: 'São Paulo'" in content
+    assert "edition: '1. ed.'" in content
+    assert "isbn: '9786557826669'" in content
+    assert "- **Editora / Publicador:** Pólen Livros" in content
+    assert "- **Local de Publicação:** São Paulo" in content
+    assert "CARNEIRO, Sueli. **Escritos de uma vida**" in content
+    assert ".." not in content
+

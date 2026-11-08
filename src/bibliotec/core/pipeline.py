@@ -45,6 +45,7 @@ from bibliotec.core.llm import (
     GeminiProvider,
     LLMProvider,
     MockLLMProvider,
+    create_provider_chain,
 )
 
 EventCallback = Callable[[PipelineEvent], None]
@@ -53,17 +54,23 @@ EventCallback = Callable[[PipelineEvent], None]
 def _emit(callback: EventCallback | None, stage: str, source_path: Path,
           status: str, message: str,
           total_files: int | None = None,
-          completed_files: int | None = None) -> None:
+          completed_files: int | None = None,
+          classification: dict[str, Any] | None = None,
+          destination_path: Path | str | None = None,
+          sha256: str | None = None) -> None:
     if callback is None:
         return
     try:
         callback(PipelineEvent(
             stage=stage,
             source_path=str(source_path),
+            destination_path=str(destination_path) if destination_path else None,
+            sha256=sha256,
             status=status,
             message=message,
             total_files=total_files,
             completed_files=completed_files,
+            classification=classification,
         ))
     except Exception:
         pass
@@ -78,6 +85,15 @@ def _classification_to_dict(result: ClassificationResult) -> dict[str, Any]:
         "title": result.title,
         "subtitle": result.subtitle,
         "year": result.year,
+        "publisher": getattr(result, "publisher", None),
+        "city": getattr(result, "city", None),
+        "edition": getattr(result, "edition", None),
+        "journal_name": getattr(result, "journal_name", None),
+        "volume": getattr(result, "volume", None),
+        "number": getattr(result, "number", None),
+        "pages": getattr(result, "pages", None),
+        "doi": getattr(result, "doi", None),
+        "isbn": getattr(result, "isbn", None),
         "confidence_score": result.confidence_score,
         "reasoning": result.reasoning,
     }
@@ -108,7 +124,9 @@ def _process_one(
     source_path = scanned.path
     sha256 = scanned.sha256
 
-    def _emit_terminal(stage: str, status: str, message: str) -> None:
+    def _emit_terminal(stage: str, status: str, message: str,
+                       classification: dict[str, Any] | None = None,
+                       destination_path: Path | str | None = None) -> None:
         """Emitir evento terminal de conclusão com incremento thread-safe do contador."""
         comp = None
         if completed_count is not None and completed_count_lock is not None:
@@ -116,7 +134,10 @@ def _process_one(
                 completed_count[0] += 1
                 comp = completed_count[0]
         _emit(emit, stage, source_path, status, message,
-              completed_files=comp, total_files=total_files)
+              completed_files=comp, total_files=total_files,
+              classification=classification,
+              destination_path=destination_path,
+              sha256=sha256)
 
     _emit(emit, "scanner", source_path, "started", "Iniciando processamento",
           completed_files=completed_count[0] if completed_count else None,
@@ -125,12 +146,13 @@ def _process_one(
     # Short-circuit: PDF sem assinatura %PDF- (arquivo .pdf corrompido/inválido).
     if not scanned.is_valid_pdf:
         with finalize_lock:
-            organizer.add_error(
+            entry = organizer.add_error(
                 source_path,
                 sha256,
                 "Assinatura %PDF- ausente ou arquivo corrompido",
             )
-        _emit_terminal("pipeline", "error", "PDF inválido -> revisao_manual")
+        _emit_terminal("pipeline", "error", "PDF inválido -> revisao_manual",
+                       destination_path=entry.destination_path)
         return organizer.entries[-1]
 
     # --- Cache hit (leitura serializada no lock) ---
@@ -146,7 +168,7 @@ def _process_one(
         if confidence >= config.general.confidence_min:
             filename = _organizer_filename(classification)
             with finalize_lock:
-                organizer.add_organized(
+                entry = organizer.add_organized(
                     source_path=source_path,
                     grande_area=classification.get("grande_area", ""),
                     area_basica=classification.get("area_basica", ""),
@@ -156,17 +178,21 @@ def _process_one(
                     used_ocr=used_ocr,
                     classification=classification,
                 )
-            _emit_terminal("pipeline", "organized", "Cache hit aprovado")
+            _emit_terminal("pipeline", entry.status.value, "Cache hit aprovado",
+                           classification=classification,
+                           destination_path=entry.destination_path)
             return organizer.entries[-1]
         with finalize_lock:
-            organizer.add_manual_review(
+            entry = organizer.add_manual_review(
                 source_path=source_path,
                 sha256=sha256,
                 reason=f"Cache hit abaixo do limiar ({confidence:.2f})",
                 used_ocr=used_ocr,
                 classification=classification,
             )
-        _emit_terminal("pipeline", "manual_review", "Cache hit abaixo do limiar")
+        _emit_terminal("pipeline", "manual_review", "Cache hit abaixo do limiar",
+                       classification=classification,
+                       destination_path=entry.destination_path)
         return organizer.entries[-1]
 
     # --- Stage 2: Extração (inclui OCR seletivo — serializado via lock) ---
@@ -182,8 +208,9 @@ def _process_one(
               completed_files=completed_count[0] if completed_count else None,
               total_files=total_files)
         with finalize_lock:
-            organizer.add_error(source_path, sha256, f"Extração falhou: {exc}")
-        _emit_terminal("organizer", "error", f"Extração falhou: {exc}")
+            entry = organizer.add_error(source_path, sha256, f"Extração falhou: {exc}")
+        _emit_terminal("organizer", "error", f"Extração falhou: {exc}",
+                       destination_path=entry.destination_path)
         return organizer.entries[-1]
 
     _emit(emit, "extractor", source_path, "completed",
@@ -220,11 +247,40 @@ def _process_one(
               completed_files=completed_count[0] if completed_count else None,
               total_files=total_files)
         with finalize_lock:
-            organizer.add_error(source_path, sha256, f"LLM falhou: {exc}", used_ocr=doc.used_ocr)
-        _emit_terminal("organizer", "error", f"LLM falhou: {exc}")
+            entry = organizer.add_error(source_path, sha256, f"LLM falhou: {exc}", used_ocr=doc.used_ocr)
+        _emit_terminal("organizer", "error", f"LLM falhou: {exc}",
+                       destination_path=entry.destination_path)
         return organizer.entries[-1]
 
     classification = _classification_to_dict(result)
+
+    # Preencher dados bibliográficos detectados pelo extrator se ausentes
+    if not classification.get("doi") and doc.detected_doi:
+        classification["doi"] = doc.detected_doi
+    if not classification.get("isbn") and doc.detected_isbn:
+        classification["isbn"] = doc.detected_isbn
+
+    # Preencher com metadados do enriquecimento externo se ausentes
+    if external_metadata is not None:
+        if not classification.get("publisher") and getattr(external_metadata, "publisher", None):
+            classification["publisher"] = external_metadata.publisher
+        if not classification.get("city") and getattr(external_metadata, "city", None):
+            classification["city"] = external_metadata.city
+        if not classification.get("edition") and getattr(external_metadata, "edition", None):
+            classification["edition"] = external_metadata.edition
+        if not classification.get("journal_name") and getattr(external_metadata, "journal_name", None):
+            classification["journal_name"] = external_metadata.journal_name
+        if not classification.get("volume") and getattr(external_metadata, "volume", None):
+            classification["volume"] = external_metadata.volume
+        if not classification.get("number") and getattr(external_metadata, "number", None):
+            classification["number"] = external_metadata.number
+        if not classification.get("pages") and getattr(external_metadata, "pages", None):
+            classification["pages"] = external_metadata.pages
+        if not classification.get("doi") and getattr(external_metadata, "doi", None):
+            classification["doi"] = external_metadata.doi
+        if not classification.get("isbn") and getattr(external_metadata, "isbn", None):
+            classification["isbn"] = external_metadata.isbn
+
     confidence = float(result.confidence_score)
     _emit(emit, "llm", source_path, "completed",
           f"confidence={confidence:.2f} tipo={result.tipo}",
@@ -244,14 +300,17 @@ def _process_one(
                 used_ocr=doc.used_ocr,
                 classification=classification,
             )
-            # Persistir apenas classificações aprovadas no cache.
-            cache.put(sha256, taxonomy_version, model_name, classification,
+            # Persistir apenas classificações aprovadas no cache (usando modelo efetivo).
+            effective_model = result.model_name or model_name
+            cache.put(sha256, taxonomy_version, effective_model, classification,
                       doc.used_ocr, confidence_min=config.general.confidence_min)
             _emit_terminal("organizer", entry.status.value,
-                  f"Arquivo organizado: {filename}")
+                  f"Arquivo organizado: {filename}",
+                  classification=classification,
+                  destination_path=entry.destination_path)
         else:
             reason = result.reasoning or f"Confiança {confidence:.2f} abaixo do limiar"
-            organizer.add_manual_review(
+            entry = organizer.add_manual_review(
                 source_path=source_path,
                 sha256=sha256,
                 reason=reason,
@@ -259,7 +318,9 @@ def _process_one(
                 classification=classification,
             )
             _emit_terminal("organizer", "manual_review",
-                  f"Enviado para revisao_manual ({reason})")
+                  f"Enviado para revisao_manual ({reason})",
+                  classification=classification,
+                  destination_path=entry.destination_path)
 
     return organizer.entries[-1]
 
@@ -288,6 +349,8 @@ def run_pipeline(
     workers: int = 1,
     event_callback: EventCallback | None = None,
     use_cache: bool = True,
+    dry_run: bool = False,
+    cancel_event: threading.Event | None = None,
 ) -> ExecutionSummary:
     """Executar o pipeline completo de 5 estágios.
 
@@ -295,12 +358,14 @@ def run_pipeline(
         source_dir: diretório de origem com os PDFs brutos.
         target_dir: diretório de destino da biblioteca organizada.
         config: configuração ativa (AppConfig).
-        provider: provedor LLM (padrão GeminiProvider se houver API key, senão Mock).
+        provider: provedor LLM (padrão create_provider_chain se houver API key, senão Mock).
         cache: instância de FileCache (criada se None).
         organizer: instância de LibraryOrganizer (criada se None).
         workers: concorrência para etapas de rede (1 = sequencial).
         event_callback: callback para PipelineEvent.
         use_cache: se False, ignora o cache SQLite (--no-cache).
+        dry_run: se True, simula a organização sem copiar/mover PDFs.
+        cancel_event: evento opcional para cancelamento cooperativo (GUI/CLI).
     """
     emit = event_callback
     source_dir = Path(source_dir)
@@ -314,7 +379,7 @@ def run_pipeline(
         organizer = LibraryOrganizer(
             target_dir,
             file_operation=config.general.file_operation,
-            dry_run=False,
+            dry_run=dry_run,
         )
 
     # --- Stage 1: Scanner ---
@@ -336,7 +401,7 @@ def run_pipeline(
     # Registrar não-PDFs ignorados.
     for ignored in scan_result.ignored_non_pdf:
         organizer.add_ignored_non_pdf(ignored.path)
-        _emit(emit, "scanner", ignored.path, "ignored", "Não é um PDF válido")
+        _emit(emit, "scanner", ignored.path, ProcessStatus.IGNORED_NON_PDF.value, "Não é um PDF válido")
 
     valid_pdfs = scan_result.valid_pdfs
     _emit(emit, "scanner", source_dir, "completed",
@@ -352,9 +417,19 @@ def run_pipeline(
 
     # --- Provedor LLM ---
     if provider is None:
-        api_key = config.api_keys.gemini_api_key
-        if api_key:
-            provider = GeminiProvider(api_key=api_key, model=model_name)
+        has_configured_key = any([
+            config.api_keys.gemini_api_key,
+            config.api_keys.groq_api_key,
+            config.api_keys.nvidia_api_key,
+            config.api_keys.deepseek_api_key,
+            config.api_keys.claude_api_key,
+            config.api_keys.github_token,
+        ])
+        if has_configured_key:
+            try:
+                provider = create_provider_chain(config)
+            except ValueError:
+                provider = MockLLMProvider()
         else:
             provider = MockLLMProvider()
 
@@ -377,6 +452,8 @@ def run_pipeline(
         emit(event)
 
     def process_with_lock(scanned: ScannedFile) -> FileManifestEntry | None:
+        if cancel_event is not None and cancel_event.is_set():
+            return None
         return _process_one(
             scanned=scanned,
             config=config,
@@ -399,9 +476,12 @@ def run_pipeline(
         with ThreadPoolExecutor(max_workers=workers) as pool:
             futures = [pool.submit(process_with_lock, s) for s in valid_pdfs]
             for _ in as_completed(futures):
-                pass
+                if cancel_event is not None and cancel_event.is_set():
+                    break
     else:
         for scanned in valid_pdfs:
+            if cancel_event is not None and cancel_event.is_set():
+                break
             process_with_lock(scanned)
 
     # Erros do scanner (ex: arquivo não pôde ser lido).

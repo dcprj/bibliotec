@@ -1,0 +1,59 @@
+MIT License
+
+Copyright (c) 2026 BiblioTEC Contributors and Maintainers.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+TERMOS COMPLEMENTARES E CONDIÇÕES DE USO (BRASIL / JURISDIÇÃO LOCAL)
+================================================================================
+
+1. NATUREZA DA DISTRIBUIÇÃO E GRATUIDADE
+O BiblioTEC é um programa de computador distribuído no modelo de código aberto
+e utilitário freeware (100% gratuito), regido pela Lei Federal nº 9.609/1998
+(Lei do Software) e Lei Federal nº 9.610/1998 (Direitos Autorais). Não há
+qualquer cobrança compulsória para o seu uso ou instalação.
+
+2. CLÁUSULA DE ISENÇÃO DE RESPONSABILIDADE CIVIL POR ARQUIVOS LOCAIS
+O SOFTWARE FOI CONCEBIDO PARA REALIZAR OPERAÇÕES DE LEITURA, CLASSIFICAÇÃO,
+RENOMEAÇÃO E ORGANIZAÇÃO DE ARQUIVOS DIGITAIS DIRETAMENTE NO DISPOSITIVO LOCAL
+DO USUÁRIO. EM NENHUMA HIPÓTESE OS AUTORES, COLABORADORES OU DISTRIBUIDORES
+DO BIBLIOTEC SERÃO RESPONSÁVEIS POR:
+(I) QUAISQUER DANOS DIRETOS, INDIRETOS, INCIDENTAIS OU EMERGENTES,
+(II) CORRUPÇÃO, PERDA, APAGAMENTO INVOLUNTÁRIO OU RENOMEAÇÃO IMPRÓPRIA DE
+     DOCUMENTOS OU DIRETÓRIOS,
+(III) PERDA DE DADOS DE PESQUISA, DISSERTAÇÕES, TESES OU ACERVOS BIBLIOGRÁFICOS,
+(IV) INCOMPATIBILIDADES COM SISTEMAS DE ARQUIVOS (NTFS, APFS, EXT4 ETC.).
+É DEVER EXCLUSIVO DO USUÁRIO MANTER CÓPIAS DE SEGURANÇA (BACKUP) COMPLETAS E
+ATUALIZADAS DE SEUS ARQUIVOS ANTES DE INICIAR QUALQUER PROCESSO EM LOTE.
+
+3. PRIVACIDADE E PROTEÇÃO DE DADOS (LGPD - LEI Nº 13.709/2018)
+O BiblioTEC opera exclusivamente no dispositivo local do usuário. Não há coleta,
+telemetria ou tráfego de dados para servidores dos desenvolvedores. O usuário
+é qualificado como único Controlador perante a LGPD em relação aos dados
+contidos nos arquivos manipulados e às requisições enviadas por meio de suas
+chaves de API pessoais para serviços de terceiros.
+
+4. CONTRIBUIÇÕES ESPONTÂNEAS (DOAÇÃO PURA - ART. 538 DO CÓDIGO CIVIL)
+Quaisquer transferências financeiras voluntárias remetidas aos desenvolvedores
+(via Pix, plataformas de apoio ou financiamento coletivo) configuram Doação
+Pura por mera liberalidade e apreço. Tais atos de mecenato não ensejam relação
+de consumo, não conferem direitos a suporte técnico com SLA garantido, não
+garantem pedidos de funcionalidades exclusivas e não são passíveis de estorno.
+================================================================================

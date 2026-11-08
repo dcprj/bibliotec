@@ -36,3 +36,11 @@ repositorio_de_pdfs_para_testes/
 
 # Logs
 *.log
+
+# Sessão e diretórios de build
+.bibliotec_session.json
+.claude/
+dist/
+build/
+mockups/
+

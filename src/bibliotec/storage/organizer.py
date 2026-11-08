@@ -59,6 +59,7 @@ def _resolve_collision(
     filename: str,
     src_path: Path,
     planned_destinations: dict[Path, str] | None = None,
+    src_sha256: str | None = None,
 ) -> tuple[str, str]:
     """Resolver colisão de nome no destino.
 
@@ -72,24 +73,29 @@ def _resolve_collision(
       - nome com sufixo incremental ' (2).pdf' se o conteúdo for distinto.
     """
     dest_path = dest_dir / filename
+    src_hash = src_sha256 if src_sha256 else _compute_sha256(src_path)
 
     # Verificar contra arquivos já planejados nesta execução (dry-run).
     if planned_destinations is not None and dest_path in planned_destinations:
         planned_hash = planned_destinations[dest_path]
-        src_hash = _compute_sha256(src_path)
         if planned_hash == src_hash:
             return filename, ProcessStatus.DUPLICATE_SKIPPED.value
 
-    if not dest_path.exists():
+    if not dest_path.exists() and (
+        planned_destinations is None or dest_path not in planned_destinations
+    ):
         return filename, ""
 
-    try:
-        dst_hash = _compute_sha256(dest_path)
-    except OSError:
-        dst_hash = ""
-    src_hash = _compute_sha256(src_path)
+    dst_hash = ""
+    if dest_path.exists():
+        try:
+            dst_hash = _compute_sha256(dest_path)
+        except OSError:
+            dst_hash = ""
+    elif planned_destinations is not None and dest_path in planned_destinations:
+        dst_hash = planned_destinations[dest_path]
 
-    if dst_hash == src_hash:
+    if dst_hash and dst_hash == src_hash:
         return filename, ProcessStatus.DUPLICATE_SKIPPED.value
 
     # Conteúdo distinto: sufixo incremental ' (2).pdf', ' (3).pdf', etc.
@@ -202,7 +208,11 @@ class LibraryOrganizer:
         """Registrar um arquivo organizado na árvore temática."""
         dest_dir = self.target_dir / grande_area / area_basica / tipo
         nome_final, colisao_status = _resolve_collision(
-            dest_dir, filename, source_path, self._planned_destinations
+            dest_dir,
+            filename,
+            source_path,
+            self._planned_destinations,
+            src_sha256=sha256,
         )
         destination_path = dest_dir / nome_final
 
@@ -224,8 +234,11 @@ class LibraryOrganizer:
                 # Resolver colisão de nomes dentro da pasta duplicatas.
                 dup_dest_path = duplicatas_dir / source_path.name
                 dup_nome_final, _ = _resolve_collision(
-                    duplicatas_dir, source_path.name, source_path,
+                    duplicatas_dir,
+                    source_path.name,
+                    source_path,
                     self._planned_destinations,
+                    src_sha256=sha256,
                 )
                 dup_dest_path = duplicatas_dir / dup_nome_final
                 self._planned_destinations[dup_dest_path] = sha256
@@ -287,7 +300,16 @@ class LibraryOrganizer:
         classification: dict[str, Any] | None = None,
     ) -> FileManifestEntry:
         """Registrar arquivo enviado para revisao_manual preservando o nome original."""
-        destination_path = self.target_dir / REVISAO_DIR / source_path.name
+        revisao_dir = self.target_dir / REVISAO_DIR
+        nome_final, _ = _resolve_collision(
+            revisao_dir,
+            source_path.name,
+            source_path,
+            self._planned_destinations,
+            src_sha256=sha256,
+        )
+        destination_path = revisao_dir / nome_final
+        self._planned_destinations[destination_path] = sha256
         entry = FileManifestEntry(
             source_path=str(source_path),
             destination_path=str(destination_path),
@@ -310,7 +332,16 @@ class LibraryOrganizer:
         used_ocr: bool = False,
     ) -> FileManifestEntry:
         """Registrar um erro (arquivo corrompido etc.) em revisao_manual."""
-        destination_path = self.target_dir / REVISAO_DIR / source_path.name
+        revisao_dir = self.target_dir / REVISAO_DIR
+        nome_final, _ = _resolve_collision(
+            revisao_dir,
+            source_path.name,
+            source_path,
+            self._planned_destinations,
+            src_sha256=sha256,
+        )
+        destination_path = revisao_dir / nome_final
+        self._planned_destinations[destination_path] = sha256
         entry = FileManifestEntry(
             source_path=str(source_path),
             destination_path=str(destination_path),

@@ -175,3 +175,17 @@ class FileCache:
             return
         self._conn.execute("DELETE FROM processed_files")
         self._conn.commit()
+
+    def count(self) -> int:
+        """Retorna o número total de entradas registradas no cache SQLite."""
+        if not self.enabled or not self.db_path.exists():
+            return 0
+        try:
+            self._ensure_conn()
+            if self._conn is not None:
+                cursor = self._conn.execute("SELECT COUNT(*) FROM processed_files")
+                row = cursor.fetchone()
+                return int(row[0]) if row else 0
+        except Exception:
+            return 0
+        return 0

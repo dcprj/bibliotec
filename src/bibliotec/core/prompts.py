@@ -48,10 +48,10 @@ def _truncate_sampled_text(sampled_text: str, cip_text: str) -> str:
 def build_system_prompt() -> str:
     """Construir o prompt de sistema com regras de classificação fechadas e schema JSON explícito."""
     return (
-        "Você é um classificador acadêmico especializado na tabela CAPES/CNPq.\n"
+        "Você é um classificador acadêmico especializado na tabela CAPES/CNPq e na catalogação ABNT NBR 6023.\n"
         "Sua tarefa é classificar um documento PDF com base no texto amostrado "
         "extraído (páginas iniciais e finais) e na Ficha Catalográfica (CIP) "
-        "quando disponível.\n\n"
+        "quando disponível, extraindo com máximo rigor todos os metadados bibliográficos disponíveis.\n\n"
         "Regras obrigatórias de classificação e extração de metadados:\n"
         "1. Responda SOMENTE em JSON válido estritamente no esquema solicitado.\n"
         "2. 'grande_area' e 'area_basica' devem pertencer ao catálogo fechado "
@@ -59,11 +59,20 @@ def build_system_prompt() -> str:
         "3. 'tipo' deve ser exatamente um dos cinco valores: Livro, "
         "Revista Científica, Artigo, Tese_Dissertacao ou Outros.\n"
         "4. 'authors' deve ser uma lista de strings no formato 'Sobrenome, Nome'. Se desconhecido ou institucional, use ['Autor Desconhecido'].\n"
-        "5. 'title' deve ser o título principal da obra/documento em português ou idioma original (não deixe vazio se o título for identificável no texto ou CIP).\n"
+        "5. 'title' deve ser o título principal da obra/documento em português ou idioma original.\n"
         "6. 'subtitle' deve ser o subtítulo da obra se houver, ou string vazia (\"\") se ausente.\n"
-        "7. 'year' deve ser o ano de publicação como número inteiro de 4 dígitos (ex: 2014) ou null se não puder ser determinado.\n"
-        "8. 'confidence_score' deve estar entre 0.0 e 1.0 representando o grau de certeza na classificação temática.\n"
-        "9. 'reasoning' deve justificar brevemente a escolha da Grande Área e Área Básica com base no texto analisado.\n\n"
+        "7. 'year' deve ser o ano de publicação como número inteiro de 4 dígitos (ex: 2022) ou null se não puder ser determinado.\n"
+        "8. 'publisher' deve ser o nome da editora ou publicador (ex: 'Zahar', 'Companhia das Letras', 'Pólen Livros', 'Editora UnB', 'CEBRAP'), ou null se não constar.\n"
+        "9. 'city' deve ser a cidade / local de publicação (ex: 'São Paulo', 'Rio de Janeiro', 'Brasília'), ou null se não constar.\n"
+        "10. 'edition' deve ser a edição da obra (ex: '2. ed.', '1. ed.'), ou null.\n"
+        "11. 'journal_name' deve ser o título da revista ou periódico científico se o tipo for Artigo (ex: 'Tempo Psicanalítico', 'Novos Estudos CEBRAP', 'Cadernos de Pesquisa'), ou null se livro.\n"
+        "12. 'volume' deve ser o volume do periódico se indicado (ex: '54', 'v. 54' ou '39'), ou null.\n"
+        "13. 'number' deve ser o número ou fascículo do periódico se indicado (ex: '1', 'n. 1'), ou null.\n"
+        "14. 'pages' deve ser a paginação inicial e final do artigo (ex: '134-155') ou total de páginas do livro (ex: '288 p.'), ou null.\n"
+        "15. 'doi' deve ser o identificador DOI (ex: '10.1590/1980-53148425') se presente no texto, ou null.\n"
+        "16. 'isbn' deve ser o ISBN (ex: '978-65-5782-666-9') se presente na ficha catalográfica ou texto, ou null.\n"
+        "17. 'confidence_score' deve estar entre 0.0 e 1.0 representando o grau de certeza na classificação temática.\n"
+        "18. 'reasoning' deve justificar brevemente a escolha da Grande Área e Área Básica com base no texto analisado.\n\n"
         "Formato JSON obrigatório:\n"
         "{\n"
         '  "grande_area": "string (exata da tabela CAPES)",\n'
@@ -72,17 +81,26 @@ def build_system_prompt() -> str:
         '  "authors": ["Sobrenome, Nome"],\n'
         '  "title": "string (título completo)",\n'
         '  "subtitle": "string (subtítulo ou vazio)",\n'
-        '  "year": 2024,\n'
+        '  "year": 2022,\n'
+        '  "publisher": "string ou null",\n'
+        '  "city": "string ou null",\n'
+        '  "edition": "string ou null",\n'
+        '  "journal_name": "string ou null",\n'
+        '  "volume": "string ou null",\n'
+        '  "number": "string ou null",\n'
+        '  "pages": "string ou null",\n'
+        '  "doi": "string ou null",\n'
+        '  "isbn": "string ou null",\n'
         '  "confidence_score": 0.95,\n'
         '  "reasoning": "string (justificativa sucinta)"\n'
         "}\n\n"
         "Distinga os tipos documentais assim:\n"
         "- Livro: obra monográfica completa, livro-texto ou coletânea.\n"
         "- Revista Científica: edição ou fascículo completo de periódico com múltiplos artigos.\n"
-        "- Artigo: artigo científico individual, ensaio acadêmico ou revisão de literatura avulsa.\n"
+        "- Artigo: artigo científico individual, ensaio acadêmico ou revisão de literatura avulsa publicado em revista/periódico ou anais.\n"
         "- Tese_Dissertacao: teses, dissertações, TCCs e monografias acadêmicas.\n"
         "- Outros: slides de aula, apostilas institucionais, cartilhas, relatórios ou ementas.\n\n"
-        "Formate os autores sempre como 'Sobrenome, Nome'. Se o autor for uma instituição ou não for identificável, use 'Autor Desconhecido'."
+        "Extraia cidade, editora, periódico, volume, número e páginas examinando atentamente o cabeçalho, rodapé da primeira página ou ficha catalográfica CIP."
     )
 
 
@@ -121,6 +139,20 @@ def build_context_payload(
         authors = ", ".join(external_metadata.authors) or "(não informado)"
         lines.append(f"Autores: {authors}")
         lines.append(f"Ano: {external_metadata.publication_year or '(não informado)'}")
+        if external_metadata.journal_name:
+            lines.append(f"Periódico / Revista sugerido: {external_metadata.journal_name}")
+        if external_metadata.publisher:
+            lines.append(f"Editora sugerida: {external_metadata.publisher}")
+        if external_metadata.volume or external_metadata.number:
+            vol_str = f"v. {external_metadata.volume}" if external_metadata.volume else ""
+            num_str = f"n. {external_metadata.number}" if external_metadata.number else ""
+            lines.append(f"Volume / Fascículo: {vol_str} {num_str}".strip())
+        if external_metadata.pages:
+            lines.append(f"Páginas: {external_metadata.pages}")
+        if external_metadata.doi:
+            lines.append(f"DOI: {external_metadata.doi}")
+        if external_metadata.isbn:
+            lines.append(f"ISBN: {external_metadata.isbn}")
         lines.append(f"Tipo sugerido: {external_metadata.document_type_hint or '(não informado)'}")
         lines.append(f"Pontuação da correspondência: {external_metadata.match_score}")
         lines.append("")

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bibliotec"
-version = "0.4.0"
+version = "1.0.0"
 description = "Organizador Acadêmico de PDFs baseado na taxonomia CAPES/CNPq"
 requires-python = ">=3.11"
 authors = [
@@ -23,6 +23,7 @@ dependencies = [
     "typer",
     "rich",
     "tomli-w",
+    "pyside6>=6.7.0",
 ]
 
 [project.optional-dependencies]
@@ -34,6 +35,9 @@ dev = [
 
 [project.scripts]
 bibliotec = "bibliotec.cli.main:app"
+
+[project.gui-scripts]
+bibliotec-gui = "bibliotec.gui.app:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/bibliotec"]

@@ -82,42 +82,104 @@ def _primeira_palavra_maiuscula(titulo: str) -> str:
 def format_abnt_reference(classification: dict[str, Any]) -> str:
     """Gerar referência bibliográfica completa segundo ABNT NBR 6023 em Markdown.
 
-    Exemplo: MOREIRA, M. B.; MEDEIROS, C. A. **Princípios Básicos de Análise do Comportamento**. 2007.
+    Exemplos:
+    * Livro: CARNEIRO, Sueli. **Escritos de uma vida**. 1. ed. São Paulo: Pólen Livros, 2018. 288 p. ISBN 9786557826669.
+    * Artigo: BULAMAH, Lucas Charafeddine; KUPERMANN, Daniel. A dupla volta da subjetivação em Winnicott. **Tempo Psicanalítico**, Rio de Janeiro, v. 54.1, p. 134-155, 2022. Disponível em: https://doi.org/...
     """
     authors = classification.get("authors") or []
-    title = classification.get("title") or ""
-    subtitle = classification.get("subtitle") or ""
+    title = (classification.get("title") or "").strip()
+    subtitle = (classification.get("subtitle") or "").strip()
     year = classification.get("year")
+    edition = classification.get("edition")
+    city = classification.get("city")
+    publisher = classification.get("publisher")
+    journal_name = classification.get("journal_name")
+    volume = classification.get("volume")
+    number = classification.get("number")
+    pages = classification.get("pages")
     doi = classification.get("doi")
     isbn = classification.get("isbn")
+    tipo = str(classification.get("tipo") or "")
 
-    autores_texto = format_abnt_authors(authors)
-
-    # Título em itálico (Markdown: **titulo**).
-    titulo_italico = f"**{title}**"
-    if subtitle:
-        titulo_italico = f"**{title}**: {subtitle}"
+    autores_texto = format_abnt_authors(authors).strip().rstrip(".")
 
     partes: list[str] = []
     if autores_texto:
         partes.append(autores_texto)
-        partes.append(titulo_italico)
+
+    # Formatação especializada por Tipo Documental
+    if tipo == "Artigo" and journal_name:
+        # Em artigos: Título do artigo é texto normal; Nome do periódico em negrito
+        art_title = f"{title}: {subtitle}" if subtitle else title
+        if not autores_texto:
+            art_title = _primeira_palavra_maiuscula(art_title)
+        partes.append(art_title.rstrip("."))
+
+        # Detalhes do periódico: **Nome da Revista**, Local, v. X, n. Y, p. xx-yy, ano.
+        j_parts = [f"**{journal_name}**"]
+        if city:
+            j_parts.append(city)
+        if volume:
+            v_str = f"v. {volume}" if not str(volume).lower().startswith("v.") else str(volume)
+            j_parts.append(v_str)
+        if number:
+            n_str = f"n. {number}" if not str(number).lower().startswith("n.") else str(number)
+            j_parts.append(n_str)
+        if pages:
+            p_str = f"p. {pages}" if not str(pages).lower().startswith("p.") else str(pages)
+            j_parts.append(p_str)
+        if year is not None:
+            j_parts.append(str(year))
+
+        partes.append(", ".join(j_parts))
+
     else:
-        # Sem autor: inicia pelo título com a primeira palavra em caixa alta.
-        partes.append(_primeira_palavra_maiuscula(titulo_italico))
+        # Livro, Tese_Dissertacao, Revista Científica ou Outros: Título principal em negrito
+        titulo_formatado = f"**{title}**"
+        if subtitle:
+            titulo_formatado = f"**{title}**: {subtitle}"
 
-    if year is not None:
-        partes.append(str(year))
+        if not autores_texto:
+            titulo_formatado = _primeira_palavra_maiuscula(titulo_formatado)
+        partes.append(titulo_formatado)
 
-    referencia = ". ".join(partes)
-    if not referencia.endswith("."):
-        referencia += "."
+        if edition:
+            ed_str = f"{str(edition).rstrip('.')}." if not str(edition).endswith("ed.") else str(edition)
+            partes.append(ed_str)
 
-    # DOI e ISBN.
+        # Publicação: Cidade: Editora, Ano.
+        imprint_parts: list[str] = []
+        if city and publisher:
+            imprint_parts.append(f"{city}: {publisher}")
+        elif publisher:
+            imprint_parts.append(f"[S.l.]: {publisher}")
+        elif city:
+            imprint_parts.append(f"{city}: [s.n.]")
+
+        if year is not None:
+            if imprint_parts:
+                imprint_parts[0] += f", {year}"
+            else:
+                imprint_parts.append(str(year))
+
+        if imprint_parts:
+            partes.append(imprint_parts[0])
+
+        if pages:
+            p_str = f"{pages} p." if str(pages).isdigit() else str(pages)
+            partes.append(p_str)
+
+    # Limpeza de pontuação duplicada
+    partes_limpas = [p.strip().rstrip(".") for p in partes if p and p.strip()]
+    referencia = ". ".join(partes_limpas) + "."
+
+    # DOI e ISBN
     if doi:
-        referencia += f" Disponível em: https://doi.org/{doi}."
+        doi_clean = str(doi).strip()
+        doi_url = doi_clean if doi_clean.startswith("http") else f"https://doi.org/{doi_clean}"
+        referencia += f" Disponível em: {doi_url}."
     if isbn:
-        referencia += f" ISBN {isbn}."
+        referencia += f" ISBN {str(isbn).strip()}."
 
     return referencia
 
@@ -131,12 +193,19 @@ def generate_companion_markdown(
 ) -> str:
     """Gerar o conteúdo Markdown completo do arquivo companheiro.
 
-    Inclui front matter YAML e corpo com título, referência ABNT e metadados.
+    Inclui front matter YAML completo e corpo com título, referência ABNT e metadados.
     """
     authors = classification.get("authors") or []
     title = classification.get("title") or ""
     subtitle = classification.get("subtitle") or ""
     year = classification.get("year")
+    publisher = classification.get("publisher")
+    city = classification.get("city")
+    edition = classification.get("edition")
+    journal_name = classification.get("journal_name")
+    volume = classification.get("volume")
+    number = classification.get("number")
+    pages = classification.get("pages")
     grande_area = classification.get("grande_area", "")
     area_basica = classification.get("area_basica", "")
     tipo = classification.get("tipo", "")
@@ -160,13 +229,27 @@ def generate_companion_markdown(
             lines.append(f"  - {a!r}")
     if year is not None:
         lines.append(f"year: {year}")
-    lines.append(f"grande_area: {grande_area!r}")
-    lines.append(f"area_basica: {area_basica!r}")
-    lines.append(f"tipo: {tipo!r}")
+    if publisher:
+        lines.append(f"publisher: {publisher!r}")
+    if city:
+        lines.append(f"city: {city!r}")
+    if edition:
+        lines.append(f"edition: {edition!r}")
+    if journal_name:
+        lines.append(f"journal_name: {journal_name!r}")
+    if volume:
+        lines.append(f"volume: {str(volume)!r}")
+    if number:
+        lines.append(f"number: {str(number)!r}")
+    if pages:
+        lines.append(f"pages: {str(pages)!r}")
     if doi:
         lines.append(f"doi: {doi!r}")
     if isbn:
         lines.append(f"isbn: {isbn!r}")
+    lines.append(f"grande_area: {grande_area!r}")
+    lines.append(f"area_basica: {area_basica!r}")
+    lines.append(f"tipo: {tipo!r}")
     lines.append(f"sha256: {sha256}")
     lines.append(f"confidence_score: {confidence_score}")
     lines.append(f"used_ocr: {str(used_ocr).lower()}")
@@ -187,6 +270,27 @@ def generate_companion_markdown(
     lines.append("")
     lines.append(f"- **Área Temática:** {grande_area} / {area_basica}")
     lines.append(f"- **Tipo de Documento:** {tipo}")
+    if journal_name:
+        lines.append(f"- **Periódico / Revista:** {journal_name}")
+    if volume or number:
+        vol_str = f"v. {volume}" if volume and not str(volume).lower().startswith("v.") else (volume or "")
+        num_str = f"n. {number}" if number and not str(number).lower().startswith("n.") else (number or "")
+        vol_num = ", ".join(filter(None, [vol_str, num_str]))
+        lines.append(f"- **Volume / Fascículo:** {vol_num}")
+    if publisher:
+        lines.append(f"- **Editora / Publicador:** {publisher}")
+    if city:
+        lines.append(f"- **Local de Publicação:** {city}")
+    if edition:
+        lines.append(f"- **Edição:** {edition}")
+    if pages:
+        lines.append(f"- **Páginas:** {pages}")
+    if doi:
+        doi_clean = str(doi).strip()
+        doi_url = doi_clean if doi_clean.startswith("http") else f"https://doi.org/{doi_clean}"
+        lines.append(f"- **DOI:** {doi_url}")
+    if isbn:
+        lines.append(f"- **ISBN:** {isbn}")
     lines.append(f"- **Arquivo Original:** {source_path.name}")
     lines.append(f"- **SHA-256:** {sha256}")
     lines.append(f"- **Organizado em:** {data_amigavel}")

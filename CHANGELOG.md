@@ -5,6 +5,18 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adota versionamento semântico ([Semantic Versioning](https://semver.org/lang/pt-BR/)).
 
+## [1.0.0] - 2026-11-07
+
+### Added
+- **Desktop GUI Multiplataforma (`bibliotec.gui`)**: Bancada de trabalho de 3 painéis com identidade visual *Editorial Academic Workbench* inspirada em Zotero 7 e Things 3 (100% Anti-AI-Slop, sem emojis e sem gradientes neon).
+  - Paletas semânticas *Editorial Paper* (Light) e *Technical Graphite* (Dark) com tokens imutáveis e renderização determinística via motor Qt6 `Fusion` + QSS.
+  - Grade de documentos virtualizada a 60fps (`QTableView` + `QAbstractTableModel`) com 8 colunas de alta densidade e busca textual instantânea.
+  - Inspetor documental com renderização tipográfica da referência **ABNT NBR 6023**, cópia rápida de citação e da ficha Markdown (`.md`) companheira.
+  - Triagem manual assistida (`ManualTriageBox`) permitindo aprovar e mover documentos de `revisao_manual/` para a árvore temática CAPES/CNPq com atualização do cache SQLite.
+  - Barra de telemetria ao vivo com monitor do teto de revisão manual (meta $\le 20\%$) e gaveta expansível para logs e inspeção do cache.
+  - Subcomando `bibliotec gui` na CLI e script executável `bibliotec-gui`.
+  - Suíte de 46 testes automatizados de interface rodando em modo offscreen (`test_gui_base.py` e `test_gui_components.py`).
+
 ## [0.4.0] - 2026-11-06
 
 ### Entregas da Sprint v0.4.0
@@ -18,6 +30,12 @@ e este projeto adota versionamento semântico ([Semantic Versioning](https://sem
 * Diagnóstico tipado automático de arquivos não-PDF no scanner e organizador, diferenciando atalhos de internet do macOS (`.webloc`), Windows (`.url`), e-books (`.epub`, `.mobi`), documentos de escritório e mídias.
 * Geração da seção `## Arquivos Não-PDF e Atalhos Ignorados` no relatório `revisao_manual/relatorio_revisao.md`, com caminho de origem e diagnóstico detalhado de cada item ignorado.
 * Notificação contextual amigável na saída de console da CLI (`_print_summary`) discriminando atalhos macOS e arquivos não suportados.
+
+#### [REV-07] Consolidação Arquitetural Pré-GUI (`organizer.py`, `enrichers.py`, `llm.py`, `pipeline.py`, `docs/designs/bibliotec.md`)
+* Resolução de colisão por SHA-256 (`_resolve_collision`) estendida para `revisao_manual/` (`add_manual_review` e `add_error`), prevenindo sobrescrita de arquivos homônimos de subpastas distintas e evitando re-hashing desnecessário em disco.
+* Correção do cabeçalho `User-Agent` (`mailto:` do Polite Pool) nas buscas por título e DOI do OpenAlex, filtro de retry para erros transitórios e extração de candidatos distintos de título/autor em `enrichers.py`.
+* Inclusão de `provider_name` e `model_name` efetivos em `ClassificationResult`, persistência do modelo efetivo no cache SQLite sob fallback e suporte a `cancel_event: threading.Event | None` e `dry_run` diretamente em `run_pipeline` para acoplamento da Desktop GUI (`v1.0.0`).
+* Sincronização integral da especificação de design (`docs/designs/bibliotec.md`) com a arquitetura `v0.4.0`.
 
 ---
 

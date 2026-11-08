@@ -1,89 +1,144 @@
-# Relatório de Prontidão de Implementação — Stage 9 (`implementation_readiness_report.md`)
+# Relatório de Prontidão de Implementação (Stage 9 — Implementation Readiness Test)
 
-**Arquivo Auditado:** [`docs/designs/bibliotec.md`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L211-L321)  
-**Escopo Auditado:** `DetailedRange: 211..321` (com leitura contextual de `1..210`)  
-**Revisores:** `egm-implementation-readiness`, `egm-codebase-details`, `egm-style`
+* **Arquivo Auditado:** [bibliotec.md](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L214-L324)
+* **Escopo (`DetailedRange`):** Linhas 214–324 (`## Detailed Implementation`)
+* **Base de Código de Referência:** `v0.4.0` ([CHANGELOG.md](file:///Users/dario/Projetos-de-aplicativos/bibliotec/CHANGELOG.md), [pyproject.toml](file:///Users/dario/Projetos-de-aplicativos/bibliotec/pyproject.toml))
+* **Personas Revisoras:** Pragmatic Tech Lead (`egm-implementation-readiness`), Pedantic Codebase Auditor (`egm-codebase-details`) e Technical Copy Editor (`egm-style`)
 
 ---
 
 ## Resumo Executivo
 
-* **3 Blockers:**
-  1. **Módulo `stdnum.doi.is_valid` inexistente (`egm-codebase-details`):** A biblioteca `python-stdnum` possui `stdnum.isbn.is_valid` (e `stdnum.issn`), mas **não possui `stdnum.doi`** (pois o padrão DOI ISO 26324 não tem dígito verificador matemático). Tentar importar `stdnum.doi` causará `ModuleNotFoundError`.
-  2. **Esquema SQL (`DDL`), caminho físico e política de persistência do `state.db` ausentes (`egm-implementation-readiness` & `egm-codebase-details`):** O Item 11 (`cache.py`) não especifica o caminho padrão (`~/.cache/bibliotec/state.db`), as colunas exatas do `CREATE TABLE processed_files` nem a regra de só persistir classificações com `confidence_score >= confidence_min`.
-  3. **Contratos de dados incompletos para `ExecutionSummary`, `PipelineEvent` e parsing de `authors` (`egm-implementation-readiness`):** Os modelos `ExecutionSummary` e `PipelineEvent` são citados no Item 7 sem definição de campos, e a regra de extração do sobrenome em `namer.py` a partir de `authors: list[str]` precisa ser explicitada.
-* **4 Majors (`egm-implementation-readiness`):**
-  4. Formato de `taxonomy_capes.json`, cálculo de `taxonomy_version` e fallback para `revisao_manual/` quando o par `(grande_area, area_basica)` for irreparável.
-  5. Condição booleana exata para "título/autor genéricos" e *short-circuit* quando texto $< 50$ caracteres sem metadado externo em `llm.py`.
-  6. Mapeamento entre as tabelas TOML (`[general]`, `[llm]`, `[api_keys]`) e variáveis de ambiente (`AliasChoices`) no `pydantic-settings` em `config.py`.
-  7. Regras explícitas de materialização para `revisao_manual/` (preservar `source_path.name`), modo `--dry-run` (não criar pastas temáticas nem copiar PDFs) e exclusão de `<TARGET_DIR>` na varredura recursiva de `scanner.py`.
-* **5 Nits (`egm-codebase-details` & `egm-style`):**
-  8. Uso do wrapper `DocumentStream(name=..., stream=bytes_io)` de `docling.datamodel.base_models` ao passar `io.BytesIO` para `DocumentConverter.convert()`.
-  9–12. Ajustes de calibração textual no `DetailedRange` (substituir `"Prova matematicamente"`, `"enxuto sem hierarquias... desnecessárias"`, `"sem risco de"` e detalhar `cli/__init__.py`).
+A auditoria detalhada das linhas `214–324` de [bibliotec.md](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L214-L324) consolidou **10 achados deduplicados** (**3 Blockers**, **4 Majors** e **3 Nits**):
+
+1. **Omissão de 3 Módulos de Produção da `v0.4.0`:** A lista unificada de arquivos (`Itens 1–27`) não inclui [`src/bibliotec/core/logging.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/logging.py), [`src/bibliotec/core/session.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/session.py) e [`src/bibliotec/storage/companion.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/storage/companion.py), nem as suítes de teste adicionadas entre a `v0.1.0` e a `v0.4.0`.
+2. **Descompasso entre Contratos Especificados e Módulos Reais:** Os Itens 4 (`__init__.py`), 5 (`core/__init__.py`), 6 (`config.py`), 17 (`prompts.py`), 18 (`llm.py`), 21 (`organizer.py`), 22 (`pipeline.py`) e 24 (`cli/main.py`) descrevem assinaturas e comportamentos da `v0.1.0` e trazem o rótulo `(Criar)` no tempo futuro.
+3. **Prontidão da Fronteira `bibliotec.core` para a Desktop GUI `v1.0.0`:** A especificação e a fronteira do `core` precisam consolidar os campos de progresso de `PipelineEvent` (`total_files`, `completed_files`, `timestamp`), a exportação de `run_pipeline` e `create_provider_chain` em `core/__init__.py` e o desacoplamento do carregamento de configuração/provedores hoje residente em `cli/main.py`.
 
 ---
 
-## Apontamentos Detalhados
+## 🔴 Achados Bloqueantes (Blockers)
 
-### 1. [Blocker] API Inexistente (`stdnum.doi.is_valid`) na Biblioteca `python-stdnum`
-* **Revisor:** `egm-codebase-details`
-* **Escopo Afetado:** Item 13 ([`src/bibliotec/extractors/identifiers.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L263-L265)) e Stage 3 ([linha 87](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L87)).
-* **Descrição e Correção:**
-  O padrão DOI (ISO 26324) não possui dígito verificador matemático e `python-stdnum` não possui o submódulo `stdnum.doi`.
-  * **Correção:** Usar `stdnum.isbn.is_valid` (e `stdnum.isbn.format`) para validar o dígito verificador de ISBN-10/ISBN-13, e validar DOIs via expressão regular estrita (`r"\b10\.\d{4,9}/[-._;()/:A-Za-z0-9]+\b"`, com remoção de pontuação terminal `.` `,` `;` `)`).
+### 1. [IMPL-01] Omissão Completa de Três Módulos de Produção da `v0.4.0` (`logging.py`, `session.py`, `companion.py`)
+* **Severidade:** Blocker
+* **Fontes:** `egm-implementation-readiness` (#1), `egm-codebase-details` (#1), `egm-style` (#1)
+* **Escopo Afetado:** [bibliotec.md](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L216-L324) vs. [`src/bibliotec/core/logging.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/logging.py#L1-L98), [`src/bibliotec/core/session.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/session.py#L1-L62) e [`src/bibliotec/storage/companion.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/storage/companion.py#L1-L255)
+* **Descrição e Orientação Técnica:**
+  A seção `## Detailed Implementation` omite três módulos que integram o fluxo de produção da `v0.4.0`:
+  1. **[`src/bibliotec/core/logging.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/logging.py) (`[LOG-01]`):** Implementa `setup_logging(log_file="bibliotec.log", verbose=False, level=logging.INFO)` e `get_logger(name)`, define variáveis de ambiente defensivas (`GLOG_minloglevel="2"`, `TORCH_CPP_LOG_LEVEL="ERROR"`, `TOKENIZERS_PARALLELISM="false"`, `HF_HUB_DISABLE_PROGRESS_BARS="1"`), redireciona logs de bibliotecas de terceiros (`_THIRD_PARTY_LOGGERS`: `RapidOCR`, `docling`, `docling_core`, `transformers`, `torch`, `urllib3`, `httpx`, `fitz`) para arquivo e só anexa `StreamHandler` ao console quando `verbose=True`.
+  2. **[`src/bibliotec/core/session.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/session.py) (`[RES-02]`):** Define `SESSION_FILE = Path(".bibliotec_session.json")`, o modelo Pydantic `SessionState` (`source_dir`, `target_dir`, `recursive`, `move`, `dry_run`, `provider`, `model`, `confidence_min`, `workers`, `no_cache`, `created_at`) e as funções `save_session`, `load_session` e `clear_session`.
+  3. **[`src/bibliotec/storage/companion.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/storage/companion.py) (`[CMP-01]`, `[CMP-02]`):** Implementa `format_abnt_author`, `format_abnt_authors`, `format_abnt_reference`, `generate_companion_markdown` (gera `.md` com Front Matter YAML, timestamp local humanizado `DD/MM/YYYY HH:MM:SS` e referência ABNT NBR 6023 ao lado de cada PDF organizado) e `generate_duplicate_companion_markdown` (gera `.md` na pasta `duplicatas/` apontando para a obra canônica).
+* **Ação Recomendada:** Incluir `logging.py`, `session.py` e `companion.py` na lista unificada com suas assinaturas e responsabilidades.
 
-### 2. [Blocker] Localização, Esquema SQL (`DDL`) e Política de Persistência do Cache SQLite (`state.db`)
-* **Revisores:** `egm-implementation-readiness` & `egm-codebase-details`
-* **Escopo Afetado:** Item 11 ([`src/bibliotec/core/cache.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L255-L257)) e Stage 1 ([linha 78](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L78)).
-* **Descrição e Correção:**
-  * **Correção:** Especificar:
-    1. Caminho padrão: `~/.cache/bibliotec/state.db`.
-    2. Esquema SQL: `CREATE TABLE IF NOT EXISTS processed_files (sha256 TEXT NOT NULL, taxonomy_version TEXT NOT NULL, model_name TEXT NOT NULL, classification_json TEXT NOT NULL, used_ocr INTEGER NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (sha256, taxonomy_version, model_name))`.
-    3. Política: Persistir no cache apenas classificações com `confidence_score >= confidence_min`, permitindo que documentos enviados para `revisao_manual/` sejam reavaliados em execuções futuras.
+---
 
-### 3. [Blocker] Contratos de `ExecutionSummary`, `PipelineEvent` e Parsing de `authors`
-* **Revisor:** `egm-implementation-readiness`
-* **Escopo Afetado:** Item 7 ([`src/bibliotec/core/models.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L239-L241)), Item 20 ([`src/bibliotec/storage/namer.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L291-L293)) e Seção 3 ([linhas 119-127](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L119-L127)).
-* **Descrição e Correção:**
-  * **Correção:**
-    1. Adicionar `ExecutionSummary` (`total_scanned`, `organized_count`, `manual_review_count`, `duplicate_skipped_count`, `ignored_non_pdf_count`, `error_count`, `manual_review_ratio`, `exceeded_manual_review_ceiling`, `entries: list[FileManifestEntry]`) e `PipelineEvent` (`stage`, `source_path`, `status`, `message`) na tabela de contratos da Seção 3 e no Item 7.
-    2. Especificar no Item 20 (`namer.py`) que cada string em `authors: list[str]` segue o formato `"Sobrenome, Nome"`: para 1 autor usa `authors[0]`; para 2 autores extrai o sobrenome antes da vírgula (`a.split(",")[0].strip()`) formando `f"{s1}; {s2}"`; para 3+ autores forma `f"{s1} et al."`.
+### 2. [IMPL-02] Rótulos `(Criar)` no Tempo Futuro e Divergências em `src/bibliotec/__init__.py` e `src/bibliotec/core/__init__.py`
+* **Severidade:** Blocker
+* **Fontes:** `egm-style` (#1, #2), `egm-codebase-details` (#2, #3), `egm-implementation-readiness` (#4, #8)
+* **Escopo Afetado:** Introdução ([L216](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L216)), Item 4 ([L230–L232](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L230-L232)), Item 5 ([L234–L236](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L234-L236)) e todos os 27 itens ([L218–L324](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L218-L324))
+* **Descrição e Orientação Técnica:**
+  1. **Marcadores `(Criar)` e tempo futuro:** Todos os 27 itens estão rotulados como `(Criar)` e descritos no futuro, embora já estejam implementados na `v0.4.0`.
+  2. **Item 4 (`src/bibliotec/__init__.py`):** O documento afirma que o módulo define `__version__ = "0.1.0"`, expõe a API pública de alto nível e centraliza a versão usada no cabeçalho `User-Agent`. Na realidade, [`src/bibliotec/__init__.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/__init__.py#L1-L20) define `__version__ = "0.4.0"`, configura variáveis de ambiente (`HF_HUB_DISABLE_PROGRESS_BARS`, `TOKENIZERS_PARALLELISM`) e filtros `warnings.filterwarnings`, enquanto [`enrichers.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/enrichers.py#L34) declara `_USER_AGENT` como string literal.
+  3. **Item 5 (`src/bibliotec/core/__init__.py`):** O documento afirma que `core/__init__.py` exporta o orquestrador do pipeline, mas [`src/bibliotec/core/__init__.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/__init__.py#L39-L73) **não exporta `run_pipeline`** (nem os novos provedores e `create_provider_chain`), enquanto exporta os símbolos de `logging.py` e `session.py`.
+* **Ação Recomendada:** Calibrar o tempo verbal e os rótulos da seção para o estado `v0.4.0`, atualizar a versão para `0.4.0` no Item 4 e alinhar as exportações de `src/bibliotec/core/__init__.py` no Item 5.
 
-### 4. [Major] Formato de `taxonomy_capes.json`, `taxonomy_version` e Fallback de Par Irreparável
-* **Revisor:** `egm-implementation-readiness`
-* **Escopo Afetado:** Item 8 ([`taxonomy_capes.json`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L243-L245)) e Item 9 ([`src/bibliotec/core/taxonomy.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L247-L249)).
-* **Descrição e Correção:**
-  * **Correção:** Definir que `taxonomy_capes.json` possui a estrutura `{"version": "capes-cnpq-v1", "areas": {"Grande Área": ["Área Básica", ...]}}` (sem caracteres `/` nos nomes de áreas), que `taxonomy_version` lê o campo `"version"`, e que `validate_or_repair_pair` retorna `None` (forçando `confidence_score = 0.0` e envio para `revisao_manual/`) caso nem `area_basica` nem `grande_area` constem no catálogo.
+---
 
-### 5. [Major] Condição Determinística de "Título/Autor Genéricos" e Short-Circuit em `llm.py`
-* **Revisor:** `egm-implementation-readiness`
-* **Escopo Afetado:** Item 18 ([`src/bibliotec/core/llm.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L283-L285)) e Stage 4 ([linha 106](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L106)).
-* **Descrição e Correção:**
-  * **Correção:**
-    1. Se `len(alphanumeric_chars) < 50` e não houver `ExternalMetadata`, fazer *short-circuit* antes de chamar a API Gemini, retornando imediatamente `confidence_score = 0.0` com motivo `"Texto extraído insuficiente (< 50 caracteres) e sem metadados externos"`.
-    2. Definir título genérico como string vazia, iniciando por `"microsoft powerpoint -"` / `"microsoft word -"`, ou pertencente a `{"sem título", "sem titulo", "untitled", "unknown", "desconhecido", "documento", "pdf", "artigo", "livro", "slide"}` (case-insensitive) quando `authors` estiver vazio ou contiver apenas `"Autor Desconhecido"`, aplicando `confidence_score = min(score, 0.50)`.
-    3. Truncar `sampled_text` em no máximo `15.000` caracteres antes do envio ao Gemini (conforme também apontado no Stage 7).
+### 3. [IMPL-03] Especificação Incompleta de `src/bibliotec/core/llm.py` e `src/bibliotec/storage/organizer.py`
+* **Severidade:** Blocker
+* **Fontes:** `egm-implementation-readiness` (#2, #3), `egm-codebase-details` (#4, #6), `egm-style` (#3)
+* **Escopo Afetado:** Item 18 ([L286–L288](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L286-L288)) e Item 21 ([L298–L300](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L298-L300)) vs. [`llm.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/llm.py#L1-L1309) e [`organizer.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/storage/organizer.py#L1-L470)
+* **Descrição e Orientação Técnica:**
+  1. **Em `src/bibliotec/core/llm.py` (Item 18):** O texto documenta apenas `GeminiProvider`. Na `v0.4.0`, o módulo implementa o dataclass `ClassificationResult`, 6 provedores de produção (`GeminiProvider` com modelo `gemini-3.5-flash` e fallback 404, `NvidiaProvider` com `nvidia/nemotron-3.5-lightning-30b-a3b` e fallback `reasoning_content`, `DeepSeekProvider` com `deepseek-flash`, `ClaudeProvider` com `claude-3-5-haiku-20241022`, `GroqProvider` com `openai/gpt-oss-20b`, `GitHubModelsProvider` com `gpt-4o`), `MockLLMProvider`, o despachante [`FallbackLLMDispatcher`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/llm.py#L1059-L1172) e a fábrica [`create_provider_chain`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/llm.py#L1175-L1309).
+  2. **Em `src/bibliotec/storage/organizer.py` (Item 21):** O texto omite:
+     * A cópia/movimentação física de duplicatas exatas (`duplicate_skipped`) para `<TARGET_DIR>/duplicatas/<nome>` acompanhada de `.md` companheiro (`generate_duplicate_companion_markdown`);
+     * A geração de `<destination_path>.md` ao lado de cada PDF aprovado na árvore temática (`generate_companion_markdown`);
+     * O dicionário em memória `_planned_destinations: dict[Path, str]` para detecção de colisões durante `--dry-run`;
+     * O método `add_ignored_non_pdf` e a seção `## Arquivos Não-PDF e Atalhos Ignorados` em `revisao_manual/relatorio_revisao.md` (`[DIAG-06]`).
+* **Ação Recomendada:** Atualizar integralmente os Itens 18 e 21 com todos os componentes e contratos da `v0.4.0`.
 
-### 6. [Major] Mapeamento de Seções TOML e `AliasChoices` de Variáveis de Ambiente em `config.py`
-* **Revisor:** `egm-implementation-readiness`
-* **Escopo Afetado:** Item 6 ([`src/bibliotec/core/config.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L235-L237)).
-* **Descrição e Correção:**
-  * **Correção:** Especificar que `AppConfig` agrupa os submodelos `general: GeneralConfig`, `llm: LLMConfig` e `api_keys: ApiKeysConfig`, resolvendo variáveis de ambiente via `AliasChoices` com precedência `BIBLIOTEC_GEMINI_API_KEY > GEMINI_API_KEY`, `BIBLIOTEC_GOOGLE_BOOKS_API_KEY > GOOGLE_BOOKS_API_KEY` e `BIBLIOTEC_OPENALEX_POLITE_EMAIL > OPENALEX_POLITE_EMAIL`.
+---
 
-### 7. [Major] Regras de `revisao_manual/`, `--dry-run`, Exclusão de `<TARGET_DIR>` e Densidade por Página
-* **Revisores:** `egm-implementation-readiness` & `egm-design` (Stage 7)
-* **Escopo Afetado:** Item 10 (`scanner.py`), Item 14 (`native_pdf.py`), Item 15 (`ocr_docling.py`) e Item 21 (`organizer.py`).
-* **Descrição e Correção:**
-  * **Correção:**
-    1. Em `scanner.py`: Resolver `SOURCE_DIR.resolve()` e `TARGET_DIR.resolve()`, rejeitar `SOURCE_DIR == TARGET_DIR` e pular qualquer arquivo dentro da subárvore de `TARGET_DIR`.
-    2. Em `native_pdf.py` e `ocr_docling.py`: Avaliar densidade por página (acionar OCR se mais da metade das páginas inspecionadas tiver `< 30` caracteres alfanuméricos úteis, recortando até 8 páginas sem texto dentre as 8 primeiras e 2 últimas páginas).
-    3. Em `organizer.py`: Preservar `source_path.name` para arquivos enviados a `revisao_manual/` (com resolução de colisão por `SHA-256` / sufixo ` (2).pdf`); em modo `--dry-run`, não criar pastas temáticas nem copiar/mover PDFs, gravando apenas `manifest.json` e `relatorio_revisao.md`.
+## 🟡 Achados Principais (Majors)
 
-### 8. [Nit] Uso de `DocumentStream` no Docling (`ocr_docling.py`)
-* **Revisores:** `egm-codebase-details` & `egm-implementation-readiness`
-* **Escopo Afetado:** Item 15 ([`src/bibliotec/extractors/ocr_docling.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L271-L273)).
-* **Descrição e Correção:** Encapsular o `io.BytesIO` em `DocumentStream(name=f"{path.stem}_slice.pdf", stream=buf)` (`from docling.datamodel.base_models import DocumentStream`) ao chamar `DocumentConverter.convert()`.
+### 4. [IMPL-04] Lacunas na Fronteira `bibliotec.core` (`models.py` e `pipeline.py`) para a Desktop GUI `v1.0.0`
+* **Severidade:** Major
+* **Fontes:** `egm-implementation-readiness` (#4)
+* **Escopo Afetado:** Item 7 ([L242–L244](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L242-L244)) e Item 22 ([L302–L304](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L302-L304)) vs. [`models.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/models.py#L110-L119) e [`pipeline.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/pipeline.py#L280-L419)
+* **Descrição e Orientação Técnica:**
+  1. **Campos de progresso em `PipelineEvent` (Item 7):** `PipelineEvent` inclui `total_files: int | None = None`, `completed_files: int | None = None` e `timestamp: str` (ISO-8601), atualizados de forma thread-safe em `pipeline.py` para alimentar barras de progresso na CLI e na futura GUI.
+  2. **Injeção padrão de provedor e `dry_run` em `run_pipeline` (Item 22):** Quando `provider is None`, [`run_pipeline`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/pipeline.py#L354-L359) verifica apenas `config.api_keys.gemini_api_key` em vez de chamar `create_provider_chain(config)`, e fixa `dry_run=False` ao instanciar `LibraryOrganizer` internamente, forçando a CLI (e a futura GUI) a construir `LibraryOrganizer` e `create_provider_chain` manualmente fora de `run_pipeline`.
+* **Ação Recomendada:** Documentar os campos completos de `PipelineEvent` no Item 7 e padronizar `run_pipeline` no Item 22 para utilizar `create_provider_chain(config)` por padrão e expor suporte a `dry_run` / `cancel_event`.
 
-### 9–12. [Nit] Calibração de Estilo e Precisão Textual (`egm-style`)
-* **Escopo Afetado:** Linhas 257, 269, 277, 297, 303–305, 313, 317.
-* **Descrição e Correção:** Remover hipérboles (*"Prova matematicamente"*, *"sem risco de"*, *"em milissegundos"*, *"nunca sofra deriva"*, *"enxuto sem hierarquias... desnecessárias"*) e detalhar o papel de `src/bibliotec/cli/__init__.py`.
+---
+
+### 5. [IMPL-05] Especificação Desatualizada de `src/bibliotec/core/config.py` (`FilteredTomlSettingsSource` e Configurações Multi-Provedor)
+* **Severidade:** Major
+* **Fontes:** `egm-implementation-readiness` (#5), `egm-codebase-details` (#5), `egm-style` (#3)
+* **Escopo Afetado:** Item 6 ([L238–L240](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L238-L240)) vs. [`src/bibliotec/core/config.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/config.py#L72-L227)
+* **Descrição e Orientação Técnica:**
+  O Item 6 menciona apenas 3 chaves de API e `TomlConfigSettingsSource`. Na `v0.4.0`, `config.py` implementa:
+  1. `FilteredTomlSettingsSource` (`LocalTomlSettingsSource` e `GlobalTomlSettingsSource`), que filtra strings vazias (`""`) via `_remove_empty_strings` para que valores em branco no template TOML não anulem variáveis de ambiente ou padrões.
+  2. `LLMConfig` com `provider` (`AliasChoices("provider", "default_provider")`), `fallback_chain = ["groq", "nvidia", "deepseek"]`, `model = "gemini-3.5-flash"` e `providers: dict[str, dict[str, Any]]`.
+  3. `ApiKeysConfig` com 8 chaves e seus respectivos `AliasChoices` (`gemini_api_key`, `google_books_api_key`, `openalex_polite_email`, `nvidia_api_key`, `deepseek_api_key`, `claude_api_key`, `groq_api_key` e `github_token`).
+* **Ação Recomendada:** Atualizar o Item 6 com `FilteredTomlSettingsSource`, os campos de `LLMConfig` e todas as 8 chaves de `ApiKeysConfig`.
+
+---
+
+### 6. [IMPL-06] Especificação Desatualizada de `src/bibliotec/cli/main.py` (Callback Raiz `-o/-d`, `resume`, `cache` e Diagnóstico de Atalhos)
+* **Severidade:** Major
+* **Fontes:** `egm-implementation-readiness` (#6), `egm-codebase-details` (#7), `egm-style` (#3)
+* **Escopo Afetado:** Item 24 ([L310–L312](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L310-L312)) vs. [`src/bibliotec/cli/main.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/cli/main.py#L1-L723)
+* **Descrição e Orientação Técnica:**
+  O Item 24 documenta apenas `organize` e `config (init|show|path)`. Na `v0.4.0`, `cli/main.py` inclui:
+  1. Callback raiz `_root_callback` para invocação direta `bibliotec -o <origem> -d <destino> [OPTIONS]` e subcomando `organize` com `hidden=True`.
+  2. Comando `bibliotec resume` (retomada via `.bibliotec_session.json`) e subgrupo `bibliotec cache {clean, clear, status, path}`.
+  3. Flags `--origem/-o/--source`, `--destino/-d/--target`, `--provider/-p` e `--verbose/-v`.
+  4. Painel duplo `rich.live.Live` + `rich.console.Group(prog_bar, status_prog)` e aviso pós-execução para atalhos `.webloc` e arquivos não-PDF ignorados em `_print_summary`.
+* **Ação Recomendada:** Atualizar o Item 24 contemplando todos os comandos, opções e componentes visuais da CLI `v0.4.0`.
+
+---
+
+### 7. [IMPL-07] Schema JSON Explícito em `prompts.py` e Proteção Anti-Mock em `cache.py`
+* **Severidade:** Major
+* **Fontes:** `egm-implementation-readiness` (#7), `egm-codebase-details` (#8, #9), `egm-style` (#3)
+* **Escopo Afetado:** Item 11 ([L258–L260](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L258-L260)) e Item 17 ([L282–L284](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L282-L284)) vs. [`cache.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/cache.py#L49-L144) e [`prompts.py`](file:///Users/dario/Projetos-de-aplicativos/bibliotec/src/bibliotec/core/prompts.py#L48-L162)
+* **Descrição e Orientação Técnica:**
+  1. **Item 11 (`src/bibliotec/core/cache.py`):** Além do modo WAL e da chave `(sha256, taxonomy_version, model_name)`, `FileCache(enabled=True, db_path=None)` usa `check_same_thread=False`, expõe `clear()` e bloqueia a leitura/gravação de entradas com `reasoning == "mock"` (`_is_mock`) quando opera no banco real (`db_path is None`), evitando poluição do cache do usuário por testes automatizados.
+  2. **Item 17 (`src/bibliotec/core/prompts.py`):** `build_system_prompt()` incorpora o bloco formal `Formato JSON obrigatório` com os 9 campos do schema (`[SCH-01]`), e o módulo também exporta `is_generic_title(title: str) -> bool` e `format_authors_for_filename(authors: list[str]) -> str`.
+* **Ação Recomendada:** Atualizar os Itens 11 e 17 com esses contratos.
+
+---
+
+## 🟢 Ajustes Menores e Editoriais (Nits)
+
+### 8. [IMPL-08] Assinaturas de `taxonomy.py` e Exportações de `storage/__init__.py`
+* **Severidade:** Nit
+* **Fontes:** `egm-codebase-details` (#10, #11), `egm-implementation-readiness` (#3)
+* **Escopo Afetado:** Item 9 ([L250–L252](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L250-L252)) e Item 19 ([L290–L292](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L290-L292))
+* **Descrição e Orientação Técnica:**
+  1. No Item 9 (`src/bibliotec/core/taxonomy.py`), explicitar a assinatura `get_areas_basicas(grande_area: str) -> list[str]` (com argumento obrigatório) e o nome exato da função `format_taxonomy_for_prompt() -> str`.
+  2. No Item 19 (`src/bibliotec/storage/__init__.py`), incluir `generate_companion_markdown` ao lado de `format_academic_filename` e `LibraryOrganizer`.
+
+---
+
+### 9. [IMPL-09] Cobertura das Novas Suítes de Teste (`test_multi_provider.py`, `test_cli_ergonomia.py`) e `pyproject.toml`
+* **Severidade:** Nit
+* **Fontes:** `egm-implementation-readiness` (#8), `egm-style` (#4)
+* **Escopo Afetado:** Item 1 ([L218–L220](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L218-L220)) e Itens 25–27 ([L314–L324](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L314-L324))
+* **Descrição e Orientação Técnica:**
+  1. No Item 1 (`pyproject.toml`), mencionar a seção `[tool.pytest.ini_options]` com o marcador `slow` e a lista `filterwarnings`.
+  2. Após o Item 27, listar as suítes de teste adicionadas até a `v0.4.0` (`tests/test_multi_provider.py`, `tests/test_cli_ergonomia.py`, etc.) e o arquivo `CHANGELOG.md`.
+
+---
+
+### 10. [IMPL-10] Precisão Terminológica e Eliminação de Metáforas nos Itens 5, 8, 11, 22 e 24
+* **Severidade:** Nit
+* **Fontes:** `egm-style` (#5)
+* **Escopo Afetado:** Linhas 236, 248, 260, 304 e 312 de [bibliotec.md](file:///Users/dario/Projetos-de-aplicativos/bibliotec/docs/designs/bibliotec.md#L236-L312)
+* **Descrição e Orientação Técnica:**
+  Substituir expressões figuradas ou promocionais por termos técnicos diretos:
+  * L236: substituir *"fronteira limpa"* por *"Isola o pacote `core` de dependências da camada de apresentação (`typer`, `rich`)"*;
+  * L260: substituir *"sem cristalizar no cache"* por *"sem persistir no cache"*;
+  * L304: substituir *"todo o fluxo de ponta a ponta"* por *"a execução sequencial e concorrente dos 5 estágios"*;
+  * L312: substituir *"Entrega a interface operacional do MVP permitindo uso imediato no terminal"* por *"Expõe os comandos da CLI, o controle de sessão e a exibição de progresso no terminal"*.

@@ -278,6 +278,7 @@ def test_avaliacao_repositorio_referencia(tmp_path: Path):
 
     target = tmp_path / "alvo"
     cfg = AppConfig()
+    cfg.general.recursive = False
     summary = run_pipeline(
         source_dir=repo,
         target_dir=target,
@@ -289,7 +290,7 @@ def test_avaliacao_repositorio_referencia(tmp_path: Path):
 
     assert summary.total_scanned == len(pdfs)
     assert summary.ignored_non_pdf_count >= len(weblocs)
-    assert summary.organized_count + summary.manual_review_count == len(pdfs)
+    assert summary.organized_count + summary.manual_review_count + summary.duplicate_skipped_count == len(pdfs)
     assert summary.exceeded_manual_review_ceiling in (True, False)
 
 
@@ -372,4 +373,60 @@ def test_callback_recebe_eventos_com_total_files_e_status(tmp_path: Path):
     for e in events_recebidos:
         if e.total_files is not None:
             assert e.total_files == 1
+
+
+def test_revisao_manual_resolve_colisao_nomes_distintos(tmp_path: Path):
+    """Dois PDFs distintos com o mesmo nome em subpastas diferentes não se sobrescrevem em revisao_manual/."""
+    source = tmp_path / "source"
+    sub1 = source / "sub1"
+    sub2 = source / "sub2"
+    sub1.mkdir(parents=True)
+    sub2.mkdir(parents=True)
+    target = tmp_path / "target"
+
+    _criar_pdf(sub1 / "artigo.pdf", texto="Conteúdo exclusivo da subpasta 1")
+    _criar_pdf(sub2 / "artigo.pdf", texto="Conteúdo exclusivo da subpasta 2")
+
+    cfg = AppConfig()
+    summary = run_pipeline(
+        source_dir=source,
+        target_dir=target,
+        config=cfg,
+        provider=_BaixaConfiancaProvider(),
+        workers=1,
+        cache=FileCache(enabled=True, db_path=tmp_path / "state.db"),
+    )
+
+    assert summary.manual_review_count == 2
+    assert (target / "revisao_manual" / "artigo.pdf").exists()
+    assert (target / "revisao_manual" / "artigo (2).pdf").exists()
+
+
+def test_pipeline_cancel_event_cooperativo(tmp_path: Path):
+    """Quando cancel_event está sinalizado, o pipeline interrompe o processamento de novos arquivos."""
+    import threading
+
+    source = tmp_path / "source"
+    target = tmp_path / "target"
+    source.mkdir()
+    _criar_pdf(source / "doc1.pdf", texto="Documento 1")
+    _criar_pdf(source / "doc2.pdf", texto="Documento 2")
+
+    cancel_event = threading.Event()
+    cancel_event.set()
+
+    cfg = AppConfig()
+    summary = run_pipeline(
+        source_dir=source,
+        target_dir=target,
+        config=cfg,
+        provider=MockLLMProvider(),
+        workers=1,
+        cache=FileCache(enabled=True, db_path=tmp_path / "state.db"),
+        cancel_event=cancel_event,
+    )
+
+    assert summary.organized_count == 0
+    assert summary.manual_review_count == 0
+
 

@@ -1,113 +1,160 @@
-# BiblioTEC: Organizador Acadêmico de PDFs
+# BiblioTEC — Organizador Acadêmico Inteligente de PDFs
 
-O BiblioTEC automatiza a triagem, classificação temática, padronização de nomes e organização física de bibliotecas acadêmicas de PDFs com base na tabela de áreas do conhecimento da CAPES/CNPq.
+[![Licença MIT](https://img.shields.io/badge/Licen%C3%A7a-MIT-blue.svg)](LICENSE)
+[![Plataformas](https://img.shields.io/badge/Plataformas-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg)](#como-baixar-e-instalar)
+[![100% Gratuito](https://img.shields.io/badge/Software-100%25%20Gratuito-orange.svg)](#-apoie-o-projeto-doação-voluntária)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 
-Estrutura de destino:
+O **BiblioTEC** é uma aplicação desktop acadêmica livre e gratuita projetada para automatizar a triagem, enriquecimento bibliográfico, padronização de nomes e catalogação temática de acervos de PDFs. 
+
+Ele organiza seus documentos diretamente em seu computador conforme a taxonomia oficial de áreas do conhecimento da **CAPES/CNPq** e gera arquivos de metadados complementares (`.md`) com fichamento e referências completas estritamente formatadas segundo a norma **ABNT NBR 6023**.
 
 ```
-<Grande Área>/<Área Básica>/<Tipo>/<autor> - <titulo> - <subtitulo> - <ano>.pdf
+<Destino>/<Grande Área>/<Área Básica>/<Tipo>/<Autor> - <Título> - <Subtítulo> - <Ano>.pdf
 ```
 
-Onde `<Tipo>` pertence ao conjunto fechado `{Livro, Revista Científica, Artigo, Tese_Dissertacao, Outros}`.
+---
 
-## Instalação
+## 📥 Como Baixar e Instalar
+
+Você não precisa instalar Python nem configurar ambientes complexos para usar o BiblioTEC. Baixe o instalador pronto para o seu sistema operacional na seção de **[Releases](https://github.com/dario/bibliotec/releases)**:
+
+| Sistema Operacional | Formato do Pacote | Link de Download Direto |
+| :--- | :--- | :--- |
+| **macOS** (Apple Silicon / Intel) | `.dmg` (Arrastar para `/Applications`) | [Baixar BiblioTEC para macOS (.dmg)](https://github.com/dario/bibliotec/releases/latest) |
+| **Windows** (10 / 11 64-bit) | `.exe` (Instalador completo Inno Setup) | [Baixar BiblioTEC para Windows (.exe)](https://github.com/dario/bibliotec/releases/latest) |
+| **Linux** (Ubuntu, Debian, Fedora, Arch) | `.AppImage` (Executável universal portátil) | [Baixar BiblioTEC para Linux (.AppImage)](https://github.com/dario/bibliotec/releases/latest) |
+
+---
+
+### 🍎 1. Instalação no macOS
+
+1. Baixe o arquivo `BiblioTEC-1.0.0-macOS.dmg`.
+2. Dê duplo clique no arquivo `.dmg` baixado para abri-lo.
+3. Arraste o ícone do **BiblioTEC** para a pasta **Applications (Aplicativos)**.
+
+> [!IMPORTANT]
+> **Primeira Execução no macOS (Aviso do Apple Gatekeeper):**  
+> Como o BiblioTEC é distribuído de forma independente e gratuita (sem certificado pago da Apple Developer ID de US$ 99/ano), o macOS exibirá na primeira abertura um aviso de *"desenvolvedor não identificado"*:
+> * **Método 1 (Mais Simples):** Abra o Finder, vá até a pasta **Aplicativos**, clique com o **botão direito** (ou pressione `Control` + clique) no ícone do BiblioTEC e selecione **Abrir**. Na janela de confirmação, clique em **Abrir**. Essa confirmação só precisa ser feita uma única vez!
+> * **Método 2 (Via Terminal):** Se preferir liberar o aplicativo permanentemente via linha de comando:
+>   ```bash
+>   xattr -cr /Applications/BiblioTEC.app
+>   ```
+
+---
+
+### 🪟 2. Instalação no Windows
+
+1. Baixe o instalador `BiblioTEC_Setup_v1.0.0_Windows_x64.exe`.
+2. Dê duplo clique no arquivo executável e siga os passos do assistente de instalação (ele criará atalhos no Menu Iniciar e, se desejado, na Área de Trabalho).
+
+> [!NOTE]
+> **Aviso do Windows SmartScreen:**  
+> Por ser um software de código aberto recém-lançado sem certificado corporativo pago de assinatura de código (EV Code Signing), o Windows Defender SmartScreen pode exibir uma tela azul informando: *"O Windows protegeu o seu computador"*.  
+> * Para prosseguir: clique em **Mais informações** e, em seguida, no botão **Executar assim mesmo**.
+
+---
+
+### 🐧 3. Instalação no Linux
+
+O BiblioTEC é disponibilizado no formato universal **AppImage**, que funciona em qualquer distribuição Linux moderna sem necessidade de instalar bibliotecas extras.
+
+1. Baixe o arquivo `BiblioTEC-1.0.0-x86_64.AppImage`.
+2. Abra o terminal na pasta onde o arquivo foi baixado e conceda permissão de execução:
+   ```bash
+   chmod +x BiblioTEC-1.0.0-x86_64.AppImage
+   ```
+3. Execute com duplo clique no gerenciador de arquivos ou diretamente no terminal:
+   ```bash
+   ./BiblioTEC-1.0.0-x86_64.AppImage
+   ```
+
+---
+
+### 💻 4. Instalação via Python / Terminal (Desenvolvedores)
+
+Se você é desenvolvedor ou prefere executar o BiblioTEC via ambiente Python:
 
 ```bash
-pip install .
-```
+# Clonar o repositório
+git clone https://github.com/dario/bibliotec.git
+cd bibliotec
 
-Ou, para desenvolvimento:
+# Criar e ativar ambiente virtual
+python3 -m venv .venv
+source .venv/bin/activate  # No Windows: .venv\Scripts\activate
 
-```bash
+# Instalar dependências
 pip install -e ".[dev]"
+
+# Iniciar a interface gráfica (Desktop GUI)
+bibliotec-gui
+# ou:
+bibliotec gui
 ```
 
-## Configuração inicial
+---
 
-Gere o arquivo de configuração global (com permissão `0600`):
+## 🚀 Como Obter Chaves de API Gratuitas
 
-```bash
-bibliotec config init
-```
+O BiblioTEC funciona localmente com simulação e extração heurística, mas alcança precisão catalográfica máxima quando conectado a modelos de linguagem (LLMs). Você pode obter chaves com **cotas 100% gratuitas** diretamente nos provedores:
 
-Ou gere um arquivo local no diretório corrente:
+1. **Google Gemini (Recomendado — Gratuito):**
+   * Acesse o [Google AI Studio](https://aistudio.google.com/).
+   * Faça login com sua conta Google e clique em **"Create API Key"**.
+   * Cota gratuita generosa para catalogação de bibliotecas inteiras.
+2. **Groq (Llama 3.3 70B — Ultrarrápido e Gratuito):**
+   * Crie sua conta em [Groq Console](https://console.groq.com/).
+   * Gere uma chave em **API Keys**.
+3. **DeepSeek (Alta Precisão com Custo Mínimo / Bônus Gratuito):**
+   * Acesse a [DeepSeek Platform](https://platform.deepseek.com/).
+   * Crie sua chave em **API Keys**.
+4. **NVIDIA NIM (Nemotron — Gratuito com créditos iniciais):**
+   * Obtenha em [NVIDIA Build](https://build.nvidia.com/).
 
-```bash
-bibliotec config init --local
-```
+No BiblioTEC, basta clicar no botão **Preferências** (ícone de engrenagem) na barra superior e colar sua chave na aba **Credenciais e Chaves de API**. A chave é gravada exclusivamente no disco local da sua máquina.
 
-Edite `~/.config/bibliotec/config.toml` (ou `./bibliotec.toml`) e preencha as chaves de API:
+---
 
-```toml
-[api_keys]
-gemini_api_key = "SUA_CHAVE_GEMINI"
-google_books_api_key = ""
-openalex_polite_email = "seu@email.com"
-```
+## ☕ Apoie o Projeto (Doação Voluntária)
 
-A ordem de precedência é: flags da CLI > variáveis de ambiente (`BIBLIOTEC_GEMINI_API_KEY` > `GEMINI_API_KEY`, etc.) > `./bibliotec.toml` > `~/.config/bibliotec/config.toml`.
+O **BiblioTEC** é uma iniciativa independente, de código aberto e **100% gratuita**. Ele foi concebido para fortalecer a pesquisa científica e poupar semanas de trabalho manual repetitivo de pesquisadores, estudantes e instituições.
 
-## Uso
+Se o BiblioTEC foi útil para sua dissertação, tese ou organização bibliográfica e você deseja demonstrar sua gratidão e incentivar a manutenção e novas funcionalidades, você pode fazer uma **contribuição espontânea de qualquer valor**:
 
-### Organizar uma biblioteca
+* **Chave Pix (Brasil):** `dpinheiro+bibliotec@gmail.com`
+* **Apoio Internacional / GitHub Sponsors:** [GitHub Sponsors BiblioTEC](https://github.com/dario/bibliotec)
 
-```bash
-bibliotec organize <SOURCE_DIR> <TARGET_DIR>
-```
+> [!NOTE]
+> **Esclarecimento Jurídico (Doação Pura):**  
+> Toda contribuição financeira voluntária configura estritamente **Doação Pura e Simples**, nos termos do **Art. 538 do Código Civil Brasileiro** (Lei Federal nº 10.406/2002). A doação não constitui contraprestação mercantil, compra de software, contratação de serviços ou suporte comercial com SLA. Todos os usuários têm acesso irrestrito às mesmas versões e recursos do BiblioTEC sem distinção.
 
-Opções de `bibliotec organize`:
+---
 
-| Opção | Descrição |
-|-------|-----------|
-| `--config PATH` | Caminho para um config.toml customizado |
-| `--recursive / --flat` | Varre subpastas recursivamente (padrão) ou apenas nível raiz |
-| `--move / --copy` | Mover arquivos em vez de copiar (padrão: `--copy`) |
-| `--dry-run` | Extrai e classifica sem copiar/mover, grava apenas o manifesto |
-| `--model TEXT` | Modelo Gemini (sobrescreve o config.toml) |
-| `--api-key TEXT` | Chave de API do Gemini (sobrescreve config e env) |
-| `--google-books-key TEXT` | Chave de API do Google Books |
-| `--confidence-min FLOAT` | Limiar mínimo para organização automática (padrão: 0.70) |
-| `--no-cache` | Ignora o cache SQLite local |
-| `--workers INT` | Concorrência para chamadas de rede (padrão: 1) |
+## 🔒 Privacidade e Proteção de Dados (LGPD & GDPR)
 
-Exemplos:
+O BiblioTEC foi construído sob o princípio fundamental de **Privacidade desde a Concepção (*Privacy by Design & by Default*)**:
 
-```bash
-# Execução padrão: cópia, recursiva, com cache
-bibliotec organize ~/Downloads/pdfs ~/Biblioteca
+* **Processamento 100% Local:** A leitura dos arquivos PDF, a análise estrutural de metadados e a movimentação das pastas ocorrem estritamente no processador e no disco rígido do seu computador.
+* **Zero Telemetria:** O BiblioTEC **não** possui servidores intermediários, não coleta métricas de uso e não envia dados analíticos para os criadores do software.
+* **Modelo BYOK (Bring Your Own Key):** Suas chaves de autenticação de API nunca saem do seu computador; elas são salvas em arquivos locais protegidos (`0600`) e estabelecem comunicação criptografada (TLS) direta entre o seu dispositivo e o provedor escolhido por você.
+* **Controlador dos Dados:** Perante a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018), o usuário atua como único Controlador dos documentos e conteúdos que submeter ao processamento.
 
-# Modo simulação: não move nem copia nada
-bibliotec organize ~/Downloads/pdfs ~/Biblioteca --dry-run
+---
 
-# Modo plano e move
-bibliotec organize ~/Downloads/pdfs ~/Biblioteca --flat --move
+## ⚠️ Isenção de Responsabilidade e Política de Backup
 
-# Sem cache
-bibliotec organize ~/Downloads/pdfs ~/Biblioteca --no-cache
-```
+> [!WARNING]
+> **AVISO MANDATÓRIO DE SEGURANÇA (BACKUP):**  
+> O BiblioTEC executa operações de leitura, cópia, movimentação e renomeação em massa de arquivos digitais no sistema de arquivos local. Embora o aplicativo incorpore mecanismos rigorosos de salvaguarda (como sanitização de caracteres proibidos pelo sistema operacional, validação criptográfica de integridade SHA-256 e modo de simulação prévia `--dry-run`), o software é disponibilizado **"no estado em que se encontra" (*as-is*)**, sem garantias de qualquer natureza.  
+> 
+> **É responsabilidade exclusiva e indelegável do usuário manter cópias de segurança (backup) completas e atualizadas de seus acervos antes de processar pastas em lote.** Os desenvolvedores e colaboradores do BiblioTEC ficam expressamente isentos de qualquer responsabilidade civil por eventuais perdas, exclusões ou corrupções de arquivos decorrentes de interrupções de energia, falhas físicas de hardware, permissões do sistema operacional ou interpretações automatizadas dos modelos de linguagem.
 
-### Comandos de configuração
+---
 
-```bash
-bibliotec config init [--local]
-bibliotec config show
-bibliotec config path
-```
+## ⚖️ Licença
 
-## Arquitetura (5 estágios)
+Este projeto é software livre distribuído sob os termos da **[Licença MIT](LICENSE)** combinada com os Termos Complementares de Jurisdição Brasileira e Isenção de Responsabilidade. Consulte o arquivo [LICENSE](LICENSE) e o parecer jurídico detalhado em [`docs/legal_distribution_framework.md`](docs/legal_distribution_framework.md).
 
-1. **Scanner:** Valida a assinatura `%PDF-`, calcula SHA-256, ignora não-PDFs e exclui a subárvore do destino.
-2. **Extrator:** Lê texto das 10 primeiras e 5 últimas páginas; aplica OCR seletivo via Docling quando necessário.
-3. **Enriquecimento:** Consulta OpenAlex e Google Books por DOI/ISBN/título-autor.
-4. **Classificação LLM:** Classifica via Gemini com saída estruturada, validada contra o catálogo fechado CAPES/CNPq.
-5. **Materialização:** Renomeia, copia/move para a árvore temática e grava `manifest.json` e `revisao_manual/relatorio_revisao.md`.
-
-Documentos com confiança `< 0.70` são encaminhados para `revisao_manual/`.
-
-## Taxonomia
-
-O catálogo oficial das 9 Grandes Áreas e suas Áreas Básicas da CAPES/CNPq fica em `src/bibliotec/core/resources/taxonomy_capes.json`.
-
-## Licença
-
-Projeto privado.
+*Marcas citadas (CAPES, CNPq, Google, Anthropic, DeepSeek, Groq, NVIDIA, OpenAlex) pertencem aos seus respectivos titulares e são mencionadas exclusivamente com finalidade de identificação e interoperabilidade técnica (Uso Nominativo e Justo, Art. 132 da LPI).*

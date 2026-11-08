@@ -27,6 +27,7 @@ warnings.filterwarnings(
 )
 
 import os
+import sys
 
 from pathlib import Path
 from typing import Optional
@@ -712,6 +713,36 @@ def cache_status() -> None:
 def cache_path() -> None:
     """Imprimir o caminho absoluto do banco de dados do cache."""
     console.print(str(CACHE_DB_PATH))
+
+
+# --------------------------------------------------------------------------- #
+# Comando: gui
+# --------------------------------------------------------------------------- #
+@app.command("gui")
+def gui_command(
+    source: str | None = None,
+    target: str | None = None,
+    dark: bool = False,
+    light: bool = False,
+) -> None:
+    """Abrir a bancada desktop (GUI) do BiblioTEC.
+
+    A importação de PySide6 ocorre apenas aqui, preservando a execução
+    headless do motor na CLI.
+    """
+    from bibliotec.core.config import AppConfig
+
+    config = AppConfig()
+    if dark and light:
+        console.print("[red]Erro:[/red] Informe apenas um de --dark / --light.")
+        raise typer.Exit(code=2)
+
+    source_dir = Path(source) if source else None
+    target_dir = Path(target) if target else None
+
+    from bibliotec.gui.app import launch_gui
+
+    sys.exit(launch_gui(config=config, source_dir=source_dir, target_dir=target_dir))
 
 
 def main() -> None:
