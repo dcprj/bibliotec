@@ -45,6 +45,7 @@ jobs:
           pip install --upgrade pip
           pip install -e ".[dev]"
           pip install pyinstaller
+          pip cache purge
 
       - name: Executar testes (exclui GUI - validada localmente em offscreen)
         env:
