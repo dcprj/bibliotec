@@ -53,3 +53,30 @@ Thread 0 Crashed (Dispatch queue: com.apple.main-thread):
    - Garantir coleta explícita de `QtWebEngineProcess.app` e arquivos de recursos `.pak` via `collect_data_files('PySide6')` ou hook customizado.
 3. **Mecanismo de Resiliência / Fallback Gracioso:**
    - Proteger a instanciação do `QWebEngineView` com bloco `try/except`. Se o motor WebEngine falhar no ambiente congelado do usuário, alternar automaticamente para a bancada nativa pura (`QtWidgets.QTableView` + `QSplitter` nativo já implementada em `document_table.py` e `inspector.py`).
+
+---
+
+## 🎨 Identidade Visual e Experiência Desktop
+
+### [FEAT-UI-01] Substituição do Ícone Padrão do Python por Ícone Personalizado do BiblioTEC
+
+- **Prioridade:** Média / Alta (Polimento de Produto)
+- **Status:** Aberto / Mapeado
+- **Escopo:** macOS (.app / Dock), Windows (.exe / Taskbar / Inno Setup), Linux (.AppImage / Desktop Menu)
+- **Data do Relato:** 2026-11-08
+
+#### 1. Objetivo
+Substituir o ícone genérico padrão do Python (exibido atualmente no Dock do macOS, na barra de tarefas do Windows e nos binários empacotados) por uma identidade visual exclusiva e personalizada do **BiblioTEC** (*Editorial Academic Workbench*), remetendo a organização acadêmica, catalogação e rigor tipográfico.
+
+#### 2. Requisitos de Entrega
+1. **Arte e Formatos Multiplataforma:**
+   - **macOS (`.icns`):** Arquivo multi-resolução com camadas de 16x16 até 1024x1024 (Retina @2x), integrado em `Contents/Resources/icon.icns` do `.app`.
+   - **Windows (`.ico`):** Arquivo contendo resoluções de 16x16, 32x32, 48x48, 64x64, 128x128 e 256x256 incorporado ao `BiblioTEC.exe` e ao instalador Inno Setup (`SetupIconFile`).
+   - **Linux (`.png` e `.svg`):** Ícone vetorial e bitmap 512x512 instalado em `usr/share/icons/hicolor/512x512/apps/bibliotec.png` no `AppDir` do AppImage.
+2. **Runtime do Aplicativo (`src/bibliotec/gui/app.py`):**
+   - Configurar `app.setWindowIcon(QIcon(icon_path))` no `QApplication` e em `MainWindow` para que janelas secundárias e diálogos modais herdem o ícone oficial.
+   - Definir `AppUserModelID` no Windows (`ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID`) para garantir que o Windows agrupe a janela corretamente na barra de tarefas com o ícone customizado.
+3. **Scripts de Empacotamento (`packaging/`):**
+   - No `packaging/pyinstaller.spec`: adicionar parâmetro `icon='assets/icons/bibliotec.icns'` no bloco `BNDL` (macOS) e `icon='assets/icons/bibliotec.ico'` no bloco `EXE` (Windows).
+   - No `packaging/windows_installer.iss`: configurar `SetupIconFile=..\assets\icons\bibliotec.ico` e `UninstallDisplayIcon={app}\BiblioTEC.exe`.
+
