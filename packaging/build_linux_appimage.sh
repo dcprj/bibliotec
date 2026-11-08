@@ -49,6 +49,13 @@ mkdir -p "${APP_DIR}/usr/bin"
 mkdir -p "${APP_DIR}/usr/share/applications"
 mkdir -p "${APP_DIR}/usr/share/icons/hicolor/512x512/apps"
 
+# Copiar ícone oficial
+if [ -f "${SCRIPT_DIR}/icons/icon.png" ]; then
+    cp "${SCRIPT_DIR}/icons/icon.png" "${APP_DIR}/usr/share/icons/hicolor/512x512/apps/bibliotec.png"
+    cp "${SCRIPT_DIR}/icons/icon.png" "${APP_DIR}/bibliotec.png"
+    cp "${SCRIPT_DIR}/icons/icon.png" "${APP_DIR}/.DirIcon"
+fi
+
 # Copiar bundle
 cp -R "${DIST_DIR}/${APP_NAME}/"* "${APP_DIR}/usr/bin/"
 

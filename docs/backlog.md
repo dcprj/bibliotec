@@ -59,6 +59,31 @@ Thread 0 Crashed (Dispatch queue: com.apple.main-thread):
 
 ## 🎨 Identidade Visual e Experiência Desktop
 
+### [FEAT-BRAND-01] Aplicação da Identidade Visual Oficial (Logo e Ícone de /logo_e_icone)
+
+- **Prioridade:** Alta (Identidade Oficial do Aplicativo)
+- **Status:** Em andamento / Pré-configurado (Pausado para atualização de SO)
+- **Escopo:** `logo_e_icone/`, `packaging/icons/`, `src/bibliotec/gui/resources/`, `src/bibliotec/gui/web/`
+- **Data do Relato:** 2026-11-08
+- **Responsável:** Prisma (UX/UI) & Chefe
+
+#### 1. Diagnóstico e Fontes Oficiais
+Foram disponibilizadas as artes oficiais em alta resolução:
+- `/Users/dario/Projetos-de-aplicativos/bibliotec/logo_e_icone/icone.png` (1254 x 1254 px)
+- `/Users/dario/Projetos-de-aplicativos/bibliotec/logo_e_icone/Logo.png` (1774 x 887 px)
+
+#### 2. Entregas Pré-processadas
+1. **Ícones Multiplataforma:**
+   - `packaging/icons/icon.icns`: Pacote Apple Silicon / Retina multi-camada (16x16 até 1024x1024) com transparência de cantos gerado via `iconutil`.
+   - `packaging/icons/icon.ico`: Pacote multi-resolução para Windows (16, 32, 48, 64, 128, 256) integrado no instalador Inno Setup (`packaging/windows_installer.iss`).
+   - `packaging/icons/icon.png`: Resolução 512x512 para o AppImage e menu `.desktop` Linux.
+   - `src/bibliotec/gui/resources/bibliotec_icon.png`: Bitmap oficial 256x256 injetado no `app.setWindowIcon` e `window.setWindowIcon`.
+2. **Logo e Web GUI:**
+   - Cópias em `src/bibliotec/gui/resources/` e `src/bibliotec/gui/web/logo.png`.
+   - Pendência ao retomar: finalizar inserção do elemento `<img>` na toolbar e no modal "Sobre o BiblioTEC".
+
+---
+
 ### [FEAT-UI-01] Substituição do Ícone Padrão do Python por Ícone Personalizado do BiblioTEC
 
 - **Prioridade:** Média / Alta (Polimento de Produto)

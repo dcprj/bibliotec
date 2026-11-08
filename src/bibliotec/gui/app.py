@@ -21,8 +21,9 @@ from bibliotec.core.config import AppConfig
 
 __all__ = ["launch_gui", "main"]
 
-# Caminho do ícone oficial da aplicação (SVG vetorial).
-ICON_PATH = Path(__file__).parent / "resources" / "bibliotec_icon.svg"
+# Caminho do ícone oficial da aplicação (prioriza PNG em alta resolução da marca oficial; fallback para SVG).
+_RES_DIR = Path(__file__).parent / "resources"
+ICON_PATH = _RES_DIR / "bibliotec_icon.png" if (_RES_DIR / "bibliotec_icon.png").exists() else _RES_DIR / "bibliotec_icon.svg"
 
 
 def _apply_webengine_defenses() -> None:
