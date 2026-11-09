@@ -87,7 +87,7 @@ except Exception:
 a = Analysis(
     [str(SRC_DIR / "bibliotec" / "gui" / "app.py")],
     pathex=[str(SRC_DIR)],
-    binaries=[],
+    binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
@@ -153,8 +153,8 @@ if sys.platform == "darwin":
         info_plist={
             "CFBundleName": "Tomus",
             "CFBundleDisplayName": "Tomus — Organizador Acadêmico de PDFs",
-            "CFBundleVersion": "1.1.0",
-            "CFBundleShortVersionString": "1.1.0",
+            "CFBundleVersion": "1.1.1",
+            "CFBundleShortVersionString": "1.1.1",
             "CFBundlePackageType": "APPL",
             "CFBundleSignature": "????",
             "LSMinimumSystemVersion": "12.0.0",

@@ -22,10 +22,6 @@ from bibliotec.core.logging import setup_logging
 
 __all__ = ["launch_gui", "main"]
 
-# Inicializar o sistema de logs da GUI para que erros de OCR e runtime
-# nunca fiquem invisíveis no Windows (arquivo tomus.log ao lado da aplicação).
-setup_logging(log_file="tomus.log", verbose=False)
-
 # Caminho do ícone oficial da aplicação (marca Tomus, PNG em alta resolução; fallback para SVG).
 _RES_DIR = Path(__file__).parent / "resources"
 ICON_PATH = _RES_DIR / "bibliotec_icon.png" if (_RES_DIR / "bibliotec_icon.png").exists() else _RES_DIR / "bibliotec_icon.svg"
@@ -68,6 +64,14 @@ def launch_gui(
     # Aplicar proteções defensivas do WebEngine ANTES de importar/criar qualquer
     # objeto Qt (especialmente QWebEnginePage usado pela visualização de PDF).
     _apply_webengine_defenses()
+
+    # Inicializar o sistema de logs da GUI para que erros de OCR e runtime
+    # nunca fiquem invisíveis no Windows/macOS (arquivo tomus.log na pasta do
+    # usuário, evitando PermissionError em diretórios protegidos como '/' ou
+    # 'Program Files').
+    _log_dir = Path.home() / ".tomus"
+    _log_dir.mkdir(parents=True, exist_ok=True)
+    setup_logging(log_file=_log_dir / "tomus.log", verbose=False)
 
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QColor, QIcon, QPalette

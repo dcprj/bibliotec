@@ -3,7 +3,7 @@
 
 #define MyAppName "Tomus"
 #ifndef MyAppVersion
-#define MyAppVersion "1.1.0"
+#define MyAppVersion "1.1.1"
 #endif
 #define MyAppPublisher "Tomus Open Source Community"
 #define MyAppURL "https://github.com/dcprj/tomus"

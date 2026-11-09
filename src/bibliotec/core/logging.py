@@ -57,12 +57,26 @@ def setup_logging(
         root_logger.removeHandler(handler)
 
     # FileHandler sempre ativo -> arquivo de log.
+    # Em caso de erro de permissão/disco (ex: diretório raiz '/', Program Files
+    # protegido no Windows), fallback silencioso para NullHandler para garantir
+    # que NENHUM erro de log impeça a inicialização da aplicação.
     log_path = Path(log_file)
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    file_handler = logging.FileHandler(log_path, encoding="utf-8")
-    file_handler.setLevel(level)
-    file_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
-    root_logger.addHandler(file_handler)
+    file_handler = None
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_path, encoding="utf-8")
+        file_handler.setLevel(level)
+        file_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+        root_logger.addHandler(file_handler)
+    except Exception:
+        # Fallback: adicionar NullHandler para não quebrar a aplicação.
+        root_logger.addHandler(logging.NullHandler())
+        # Tentar gravar aviso em stderr sem depender do sistema de logging.
+        import sys as _sys
+        _sys.stderr.write(
+            f"[bibliotec] Aviso: não foi possível criar arquivo de log em "
+            f"{log_path}. Logs serão ignorados.\n"
+        )
 
     # StreamHandler apenas quando verbose=True.
     if verbose:
@@ -85,7 +99,8 @@ def setup_logging(
     rapidocr_logger.setLevel(level)
     for handler in list(rapidocr_logger.handlers):
         rapidocr_logger.removeHandler(handler)
-    rapidocr_logger.addHandler(file_handler)
+    if file_handler is not None:
+        rapidocr_logger.addHandler(file_handler)
     rapidocr_logger.propagate = False  # evita dupla gravação via root
 
     # --- Log do próprio BiblioTEC -------------------------------------------

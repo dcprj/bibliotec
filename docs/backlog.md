@@ -287,6 +287,73 @@ Atualmente, a aplicação grava qualquer string inserida nos campos de chave de 
 3. **Não-Bloqueio Gracioso:**
    - Se o usuário estiver temporariamente offline no momento de salvar, informar que a chave foi gravada mas não pôde ser testada por ausência de conexão.
 
+---
+
+## 🎨 Design do Ícone & Resolução Visual do Aplicativo [BRAND-02]
+
+- **Prioridade:** Alta (Qualidade Visual & Identidade de Produto)
+- **Status:** Em Anotação de Backlog
+- **Responsável:** Prisma (UX/UI Designer)
+- **Evidências Visuais Fornecidas:**
+  1. **Instalador DMG (`Tomus.app` ao lado da pasta `Applications`):** Exibição de uma moldura retangular/escura falsa de estúdio com cantos sujos e símbolo reduzido.
+  2. **Dock do macOS (Comparativo direto com `Google Chrome`, `Maestri`, `WhatsApp`, `ChatGPT`, `Ajustes`, `Terminal`):**
+     - Enquanto todas as aplicações profissionais do sistema preenchem 100% da silhueta do squircle oficial da Apple com fundos contínuos e ícones vetoriais nítidos, o Tomus apresenta uma moldura cinza clara de estúdio fotográfico (mockup 3D) em volta de outro squircle minúsculo, parecendo um "ícone minúsculo dentro de outro ícone".
+     - O símbolo central ("T" / Tomo) ocupa menos de 25% da área total, gerando desfoque, baixa resolução percebida e quebra total da harmonia do Dock e da barra de tarefas do Windows.
+
+### Problemas Identificados
+1. **Falso Fundo Cinza / Moldura de Mockup:** O arquivo de ícone atual foi compilado a partir de um mockup de estúdio fotográfico (com sombras de mesa e cantos cinzas `#B1B0AC`), em vez de uma arte vetorial com fundo transparente nos cantos.
+2. **Símbolo Microscópico e Desfocado:** O emblema central do Tomus perdeu definição nas reduções para 64px, 32px e 16px por falta de escala proporcional adequada.
+
+### Requisitos de Entrega para a Sprint Visual
+1. **Preenchimento Proporcional da Área Útil:**
+   - O squircle base do Tomus deve preencher entre 80% e 85% do canvas total de 1024x1024, com transparência alfa (`#00000000`) impecável fora do squircle (padrão *Apple Human Interface Guidelines* e *Microsoft Windows App Icons*).
+2. **Símbolo Nítido e de Alto Contraste:**
+   - O monograma/emblema central deve ocupar a área nobre central com traços de espessura e contraste reforçados, garantindo legibilidade instantânea no Dock, no Alt+Tab e na barra de tarefas.
+3. **Erradicação Total de Artefatos de IA / 3D Mockup:**
+   - Eliminar qualquer fundo 3D, mesa, gradiente sujo ou dupla moldura.
+
+---
+
+## 🐛 Correção da Injeção de Binários do ONNXRuntime no PyInstaller [BUG-PKG-05]
+
+- **Prioridade:** Crítica (Correção Definitiva do OCR no Windows)
+- **Status:** Em Anotação de Backlog
+- **Responsável:** Atlas (Foundation)
+
+### Causa Raiz Identificada
+No arquivo `packaging/pyinstaller.spec`, a variável `binaries` foi populada com `collect_dynamic_libs("onnxruntime")`, mas o bloco `Analysis(...)` recebeu uma lista vazia hardcoded `binaries=[]`. Com isso, as DLLs do ONNXRuntime foram excluídas do executável final `Tomus.exe`, impedindo o funcionamento do OCR de imagens no Windows.
+
+---
+
+## 💥 Crash Imediato na Inicialização do Tomus no macOS e Windows [BUG-PKG-06]
+
+- **Prioridade:** Bloqueador / Crítica (v1.1.0 não abre no macOS nem em diretórios protegidos do Windows)
+- **Status:** Em Anotação de Backlog
+- **Responsáveis:** Atlas (Foundation) & Forja (Core/Pipeline)
+- **Data do Relato:** 2026-11-09
+
+### 1. Diagnóstico e Causa Raiz
+No commit `905252e`, foi adicionada a seguinte linha no topo de `src/bibliotec/gui/app.py`:
+```python
+setup_logging(log_file="tomus.log", verbose=False)
+```
+- **No macOS:** Quando o aplicativo é aberto pelo Finder, Dock ou LaunchServices (`Tomus.app`), o diretório de trabalho padrão (*Current Working Directory* - CWD) é `/` (raiz do sistema). O Python tenta abrir `/tomus.log` e lança fatalmente:
+  ```text
+  PermissionError: [Errno 1] Operation not permitted: '/tomus.log'
+  ```
+- **No Windows:** Quando instalado em `C:\Program Files\Tomus\`, qualquer usuário sem privilégios de Administrador também sofre `PermissionError: [Errno 13] Access is denied: 'tomus.log'`.
+- Por estar no escopo de importação do módulo (`app.py`), o erro explode antes mesmo da instanciação do `QApplication`, impedindo qualquer janela de abrir.
+
+### 2. Requisitos de Correção
+1. **Destino Canônico de Logs por Usuário:**
+   - Em vez de caminho relativo no CWD, os logs da GUI devem ser gravados em diretório de usuário seguro:
+     - `Path.home() / ".tomus" / "tomus.log"` (ou via `platformdirs` / `AppConfig.get_data_dir() / "logs" / "tomus.log"`).
+2. **Tratamento Defensivo contra Falhas de I/O de Log:**
+   - O `setup_logging` deve conter bloco `try/except Exception` na criação do `FileHandler`. Em nenhuma circunstância a falha de escrita em disco do log pode abortar a inicialização da aplicação gráfica. Se falhar no destino padrão, fazer fallback para `/tmp/tomus.log` ou `logging.NullHandler()`.
+3. **Chamada após inicialização:**
+   - Mover a chamada de `setup_logging` para dentro de `launch_gui()` ou do ponto de entrada do processo, e não no nível global de importação de `app.py`.
+
+
 
 
 
