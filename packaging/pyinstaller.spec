@@ -1,10 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller spec file multiplataforma para o BiblioTEC (macOS, Windows, Linux).
+"""PyInstaller spec file multiplataforma para o BiblioTEC (macOS e Windows).
 
 Gera:
 - macOS: BiblioTEC.app (bundle nativo sem console)
 - Windows: BiblioTEC.exe (GUI noconsole com ícone)
-- Linux: BiblioTEC (binário para empacotamento em AppImage)
 """
 
 import os
