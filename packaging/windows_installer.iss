@@ -1,8 +1,10 @@
 ; Script de Instalação Inno Setup para o BiblioTEC (Windows)
-; Gera um instalador profissional .exe: BiblioTEC_Setup_v1.0.0_Windows_x64.exe
+; Gera um instalador profissional .exe: BiblioTEC_Setup_v1.0.1_Windows_x64.exe
 
 #define MyAppName "BiblioTEC"
-#define MyAppVersion "1.0.0"
+#ifndef MyAppVersion
+#define MyAppVersion "1.0.1"
+#endif
 #define MyAppPublisher "BiblioTEC Open Source Community"
 #define MyAppURL "https://github.com/dcprj/bibliotec"
 #define MyAppExeName "BiblioTEC.exe"
