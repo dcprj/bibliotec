@@ -1,0 +1,60 @@
+name: Build Teste Windows Hotfix
+
+on:
+  push:
+    branches:
+      - "hotfix/*"
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Instalar dependências do sistema (Windows Inno Setup)
+        run: |
+          choco install innosetup --yes
+
+      - name: Instalar dependências Python
+        run: |
+          python -m pip install --upgrade pip
+          pip install "setuptools<70"
+          pip install -e ".[dev]"
+          pip install pyinstaller
+
+      - name: Build Windows (PyInstaller + Inno Setup)
+        run: |
+          echo "📦 Gerando binário com PyInstaller..."
+          pyinstaller --clean -y packaging/pyinstaller.spec
+          echo "🔧 Gerando instalador Windows com Inno Setup..."
+          if [ -f "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" ]; then
+            "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" packaging/windows_installer.iss
+          elif command -v iscc >/dev/null 2>&1; then
+            iscc packaging/windows_installer.iss
+          else
+            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging/windows_installer.iss
+          fi
+
+      - name: Listar artifacts gerados
+        run: |
+          echo "=== Arquivos em dist/ ==="
+          ls -la dist/
+
+      - name: Upload artifact (Windows EXE Instalador de Teste)
+        uses: actions/upload-artifact@v4
+        with:
+          name: BiblioTEC_Windows_Hotfix_OCR
+          path: dist/*Setup*.exe
+          retention-days: 7

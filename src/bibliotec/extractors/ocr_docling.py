@@ -13,15 +13,19 @@ sem quebrar o processo.
 from __future__ import annotations
 
 import io
+import logging
 from pathlib import Path
 from typing import Optional
 
 import fitz  # PyMuPDF
 
+_logger = logging.getLogger("bibliotec.extractors.ocr_docling")
+
 # Janela de inspeção para OCR seletivo (Item 15).
 _OCR_FIRST_PAGES = 8
 _OCR_LAST_PAGES = 2
 _OCR_MAX_PAGES = 8
+_ALPHANUM_THRESHOLD = 30
 
 _CONVERTER: Optional[object] = None
 
@@ -40,17 +44,18 @@ def _get_converter():
 
         _CONVERTER = DocumentConverter()
         return _CONVERTER
-    except Exception:
+    except Exception as exc:
+        _logger.warning("Docling DocumentConverter indisponível no ambiente: %s", exc)
         _CONVERTER = None
         return None
 
 
 def _pages_without_text(doc: fitz.Document) -> list[int]:
-    """Listar índices de páginas sem texto selecionável."""
+    """Listar índices de páginas com menos de 30 caracteres alfanuméricos úteis (escaneadas ou vazias)."""
     empty_pages: list[int] = []
     for idx in range(doc.page_count):
         text = doc[idx].get_text() or ""
-        if sum(1 for ch in text if ch.isalnum()) == 0:
+        if sum(1 for ch in text if ch.isalnum()) < _ALPHANUM_THRESHOLD:
             empty_pages.append(idx)
     return empty_pages
 
@@ -86,7 +91,8 @@ def ocr_scanned_pages(path: Path) -> str:
     """
     try:
         doc = fitz.open(str(path))
-    except Exception:
+    except Exception as exc:
+        _logger.warning("Erro durante conversão OCR do Docling para %s: %s", path.name, exc)
         return ""
 
     try:
@@ -129,7 +135,8 @@ def ocr_scanned_pages(path: Path) -> str:
             elif hasattr(doc_obj, "text"):
                 extracted_text = doc_obj.text or ""
         return extracted_text
-    except Exception:
+    except Exception as exc:
+        _logger.warning("Erro durante conversão OCR do Docling para %s: %s", path.name, exc)
         return ""
     finally:
         try:

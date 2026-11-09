@@ -30,7 +30,7 @@ datas = [
     (str(SRC_DIR / "bibliotec" / "core" / "resources"), "bibliotec/core/resources"),
 ]
 
-# Hidden imports essenciais para PySide6 WebEngine e dependências dinâmicas
+# Hidden imports essenciais para PySide6 WebEngine, dependências dinâmicas e OCR Docling
 hiddenimports = [
     "PySide6.QtWebEngineWidgets",
     "PySide6.QtWebEngineCore",
@@ -52,13 +52,26 @@ hiddenimports = [
     "pydantic_settings",
     "google.genai",
     "httpx",
+    "torch",
+    "torchvision",
+    "docling",
+    "docling.document_converter",
+    "docling.datamodel.base_models",
+    "docling.datamodel.pipeline_options",
+    "docling.backend.docling_parse_backend",
+    "docling.pipeline.standard_pdf_pipeline",
 ]
 
-# Tentar coletar dados adicionais de pacotes se instalados no ambiente
-try:
-    datas += collect_data_files("docling")
-except Exception:
-    pass
+# Coletar submódulos e arquivos de dados do Docling e motor de OCR
+for pkg in ["docling", "docling_core", "docling_parse", "docling_ibm_models"]:
+    try:
+        datas += collect_data_files(pkg)
+    except Exception:
+        pass
+    try:
+        hiddenimports += collect_submodules(pkg)
+    except Exception:
+        pass
 
 try:
     hiddenimports += collect_submodules("bibliotec")
