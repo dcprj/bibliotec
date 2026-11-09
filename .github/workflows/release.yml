@@ -63,20 +63,15 @@ jobs:
 
       - name: Build Windows (Inno Setup instalador .exe)
         if: runner.os == 'Windows'
+        shell: cmd
         run: |
-          echo "📦 Gerando binário com PyInstaller..."
+          echo 📦 Gerando binário com PyInstaller...
           pyinstaller --clean -y packaging/pyinstaller.spec
-          echo "🔧 Gerando instalador Windows com Inno Setup..."
-          # Extrair versão da tag (ex: refs/tags/v1.0.1 -> 1.0.1)
-          VERSION="${GITHUB_REF_NAME#v}"
-          echo "Versão detectada: $VERSION"
-          if [ -f "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" ]; then
-            "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" /DMyAppVersion=$VERSION packaging/windows_installer.iss
-          elif command -v iscc >/dev/null 2>&1; then
-            iscc /DMyAppVersion=$VERSION packaging/windows_installer.iss
-          else
-            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=$VERSION packaging/windows_installer.iss
-          fi
+          echo 🔧 Gerando instalador Windows com Inno Setup...
+          rem Extrair versão da tag (ex: refs/tags/v1.0.1 -> 1.0.1)
+          set VERSION=%GITHUB_REF_NAME:v=%
+          echo Versão detectada: %VERSION%
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=%VERSION% packaging/windows_installer.iss
 
       - name: Listar artifacts gerados
         continue-on-error: true
