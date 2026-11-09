@@ -76,6 +76,7 @@ for pkg in ["docling", "docling_core", "docling_parse", "docling_ibm_models", "r
         pass
 
 # Coletar binários/DLLs do onnxruntime (essenciais no Windows para RapidOCR)
+binaries = []
 binaries += collect_dynamic_libs("onnxruntime")
 
 try:
