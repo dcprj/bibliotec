@@ -167,5 +167,104 @@ Conforme decisão de produto, o lançamento inicial foca na estabilização dos 
    - Anexar ambos os arquivos (`.dmg` e `.exe`) à página de releases do repositório `dcprj/bibliotec`.
    - Garantir que ambos os instaladores oficiais (macOS e Windows) apareçam listados com seus hashes SHA-256 e tamanhos.
 
+---
+
+## 🔑 Guia de APIs e Credenciais: Google Books API Key
+
+### 1. Para que a chave é necessária no BiblioTEC
+1. **Enriquecimento Bibliográfico Oficial:** O extrator `metadata_google_books.py` consulta o catálogo mundial do Google Books para enriquecer livros e e-books com metadados canônicos (título padronizado, nomes completos dos autores, editora, cidade, ano de publicação exato, sinopse e categorização temática), além de validar e formatar o ISBN-13.
+2. **Prevenção de Rate Limiting (HTTP 429):** Requisições anônimas (sem chave) compartilham um pool restrito de cotas baseado em IP público. Em varreduras de pastas com dezenas de PDFs acadêmicos, requisições repetidas sem chave sofrem bloqueio temporário (erro `429 Too Many Requests`). A chave pessoal garante requisições dedicadas e sem bloqueio.
+3. **Cota Diária Gratuita:** O Google Cloud oferece gratuitamente uma cota de 1.000 requisições por dia por projeto, o que cobre com folga qualquer biblioteca pessoal ou acadêmica.
+
+### 2. Passo a Passo para Gerar a Chave no Google Cloud Console
+1. Acesse o [Google Cloud Console](https://console.cloud.google.com/) com a sua conta Google.
+2. Selecione ou crie um projeto (ex.: `BiblioTEC`).
+3. No menu de navegação lateral (☰), vá em **APIs e Serviços** > **Biblioteca**.
+4. No campo de busca, pesquise por **Books API** (ou **Google Books API**) e clique em **Ativar** (Enable).
+5. Após ativada, vá em **APIs e Serviços** > **Credenciais**.
+6. Clique no botão superior **+ Criar Credenciais** e selecione **Chave de API**.
+7. *(Boa prática de segurança)*: Clique nos três pontinhos ao lado da chave criada e selecione **Editar chave**:
+   - Em **Restrições de API**, marque **Restringir chave** e selecione exclusivamente a **Books API**.
+   - Salve a configuração.
+8. Copie a chave gerada (iniciada por `AIzaSy...`).
+9. **Configuração no BiblioTEC:**
+   - **Interface Gráfica (Recomendado):** Abra o modal **Preferências (⚙️)** > aba **Chaves de API** > preencha o campo **Google Books API Key** e salve.
+   - **Arquivo Local:** Adicione em `bibliotec.toml`: `google_books_api_key = "AIzaSy..."`.
+   - **Variável de Ambiente:** Exporte `export BIBLIOTEC_GOOGLE_BOOKS_API_KEY="AIzaSy..."`.
+
+---
+
+## 🌐 Presença Web e Distribuição: Landing Page no GitHub Pages [FEAT-WEB-01]
+
+- **Prioridade:** Média (Pós-v1.0.1)
+- **Status:** Planejado
+- **Responsáveis:** Prisma (UX/UI Designer) & Farol (GitOps)
+- **Hospedagem:** Gratuita via GitHub Pages (`https://dcprj.github.io/bibliotec/`)
+
+### 1. Escopo e Objetivos
+1. **Página Estática Leve e Responsiva:** Desenvolvida em HTML5/CSS3 moderno na pasta `docs/` ou branch dedicada, sem dependências de frameworks pesados.
+2. **Hero Section:**
+   - Logotipo oficial e identidade visual do BiblioTEC.
+   - Slogan acadêmico voltado a pesquisadores e estudantes de pós-graduação.
+   - Botões de download inteligentes que direcionam para os assets oficiais da última release:
+     - `BiblioTEC_Setup_v{VERSION}_Windows_x64.exe`
+     - `BiblioTEC-{VERSION}-macOS.dmg`
+3. **Showcase Visual:**
+   - Demonstração da taxonomia curricular CAPES/CNPq.
+   - Extração de metadados canônicos via DOI/Crossref e Google Books.
+   - Resgate de documentos escaneados antigos via Docling OCR.
+   - Geração de companion markdown (.md) com referências ABNT NBR 6023.
+   - Garantia de privacidade 100% local (sem envio de documentos acadêmicos para a nuvem).
+4. **Instruções de Instalação e FAQ:** Requisitos para macOS (Apple Silicon / Intel) e Windows 10/11.
+
+---
+
+## 🏛️ Governança de Engenharia: Modelo de Pull Requests & Code Review [GOV-01]
+
+- **Prioridade:** Alta (Para as próximas sprints v1.0.2 e v1.1.0)
+- **Status:** Planejado
+- **Responsáveis:** Farol (Release Manager), Sentinela (AppSec) e Chefe (Arquiteto)
+
+### 1. Regras de Proteção de Branch (`main`)
+- Bloqueio de commits diretos na branch principal.
+- Exigência de Pull Request aprovado e esteira de CI/CD 100% verde antes de qualquer merge.
+
+### 2. Mapeamento de Responsabilidades (`.github/CODEOWNERS`)
+- `src/bibliotec/gui/`: Revisão obrigatória de Prisma (UX/UI).
+- `src/bibliotec/core/`: Revisão obrigatória de Atlas (Foundation).
+- `src/bibliotec/extractors/`: Revisão obrigatória de Lince (Extractors).
+- `src/bibliotec/cli/`: Revisão obrigatória de Forja (Pipeline & CLI).
+- `packaging/`, `.github/workflows/`: Revisão obrigatória de Farol (Release Manager).
+- Todo o código / credenciais / segurança: Gatekeeper Sentinela (AppSec).
+
+### 3. Template de PR Padronizado (`.github/pull_request_template.md`)
+- Checklist de testes unitários executados.
+- Checklist de segurança da informação (ausência de chaves, sanitização de entradas e caminhos).
+- Evidências gráficas para alterações de interface.
+
+---
+
+## 🏛️ Rebranding Oficial para TOMUS [BRAND-01]
+
+- **Prioridade:** Alta (Alvo da versão v1.1.0)
+- **Status:** Aprovado pela Direção (Dario)
+- **Responsáveis:** Prisma (UX/UI Designer) & Atlas (Foundation)
+- **Novo Nome Oficial:** **Tomus — Organizador Acadêmico de PDFs**
+- **Conceito & Etimologia:** Do latim *tomus* (volume encadernado, seção de um compêndio ou enciclopédia do saber).
+- **Identidade Visual Aprovada:** Opção 1 — Neoclássico Editorial
+  - **Paleta:** Fundo Navy Slate (`#0f172a`), filetes em ouro acetinado e iluminação azul etéreo.
+  - **Emblema:** Tomo encadernado clássico com páginas organizadas formando a letra **"T"**.
+  - **Arquivos de Referência:**
+    - Ícone: `docs/designs/tomus_branding/tomus_app_icon.jpg`
+    - Banner: `docs/designs/tomus_branding/tomus_horizontal_logo.jpg`
+- **Etapas de Execução para v1.1.0:**
+  1. Criação dos pacotes de ícones vetoriais: `icon.icns` (macOS Retina) e `icon.ico` (Windows multi-resolução 16-256px).
+  2. Atualização dos cabeçalhos, títulos da janela e logo no WebView da GUI.
+  3. Atualização do `README.md` e metadados de empacotamento.
+  4. Lançamento da Landing Page no GitHub Pages já ostentando a nova marca **Tomus**.
+
+
+
+
 
 

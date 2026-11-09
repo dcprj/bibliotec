@@ -60,10 +60,11 @@ hiddenimports = [
     "docling.datamodel.pipeline_options",
     "docling.backend.docling_parse_backend",
     "docling.pipeline.standard_pdf_pipeline",
+    "rapidocr",
 ]
 
 # Coletar submódulos e arquivos de dados do Docling e motor de OCR
-for pkg in ["docling", "docling_core", "docling_parse", "docling_ibm_models"]:
+for pkg in ["docling", "docling_core", "docling_parse", "docling_ibm_models", "rapidocr"]:
     try:
         datas += collect_data_files(pkg)
     except Exception:
