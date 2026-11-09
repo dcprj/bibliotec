@@ -96,22 +96,25 @@ body, html {
 .brand {
   display: flex;
   align-items: center;
-  margin-right: 8px;
+  gap: 9px;
+  margin-right: 12px;
 }
 
-.brand-logo-img {
-  height: 32px;
-  width: auto;
-  max-width: 140px;
-  object-fit: contain;
+.brand-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   display: block;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
 }
 
-.brand-text {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.3px;
+.brand-name {
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  line-height: 1;
+  user-select: none;
 }
 
 /* Path Groups */
@@ -1262,19 +1265,23 @@ body, html {
   margin-bottom: 4px;
 }
 
-.about-logo-img {
-  height: 40px;
-  width: auto;
-  max-width: 180px;
-  object-fit: contain;
-  display: block;
+.about-brand-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.15);
 }
 
-.about-brand-wrap .brand-text {
-  font-size: 22px;
+.about-brand-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.about-brand-title .brand-name {
+  font-size: 20px;
   font-weight: 800;
-  color: var(--primary);
-  letter-spacing: -0.02em;
+  color: #0f172a;
 }
 
 .about-subtitle {
