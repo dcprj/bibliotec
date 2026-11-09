@@ -57,7 +57,7 @@ jobs:
       - name: Gerar instalador Windows com Inno Setup
         run: |
           echo "🔧 Gerando instalador Windows com versão ${{ steps.version.outputs.version }}..."
-          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" /DMyAppVersion="${{ steps.version.outputs.version }}" packaging/windows_installer.iss
+          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" /DMyAppVersion=${{ steps.version.outputs.version }} packaging/windows_installer.iss
 
       - name: Renomear artefato com versão explícita
         run: |

@@ -71,11 +71,11 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           echo "Versão detectada: $VERSION"
           if [ -f "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" ]; then
-            "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" /DMyAppVersion="$VERSION" packaging/windows_installer.iss
+            "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" /DMyAppVersion=$VERSION packaging/windows_installer.iss
           elif command -v iscc >/dev/null 2>&1; then
-            iscc /DMyAppVersion="$VERSION" packaging/windows_installer.iss
+            iscc /DMyAppVersion=$VERSION packaging/windows_installer.iss
           else
-            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion="$VERSION" packaging/windows_installer.iss
+            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=$VERSION packaging/windows_installer.iss
           fi
 
       - name: Listar artifacts gerados
