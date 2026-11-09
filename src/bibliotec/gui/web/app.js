@@ -1,5 +1,5 @@
 /**
- * BiblioTEC Web UI — Script de Controle e Comunicação com o Motor Python
+ * Tomus Web UI — Script de Controle e Comunicação com o Motor Python
  */
 
 (function () {
@@ -212,7 +212,7 @@
 
       upsertItemFromEvent(ev);
     } catch (err) {
-      console.error('[BiblioTEC] Erro ao processar evento:', err, eventJson);
+      console.error('[Tomus] Erro ao processar evento:', err, eventJson);
     }
   }
 
@@ -262,7 +262,7 @@
         selectItem(state.items[0].source_path);
       }
     } catch (err) {
-      console.error('[BiblioTEC] Erro ao finalizar pipeline:', err, summaryJson);
+      console.error('[Tomus] Erro ao finalizar pipeline:', err, summaryJson);
     }
   }
 
@@ -1087,7 +1087,7 @@
       }
     });
   }
-  // --- Eventos do Modal "Sobre o BiblioTEC" ---
+  // --- Eventos do Modal "Sobre o Tomus" ---
   function openAboutModal() {
     if (el.aboutModal) {
       el.aboutModal.style.display = 'flex';

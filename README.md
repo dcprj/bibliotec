@@ -32,9 +32,9 @@ Você não precisa instalar Python nem configurar ambientes complexos para usar 
 
 ### 🍎 1. Instalação no macOS
 
-1. Baixe o arquivo `BiblioTEC-1.0.0-macOS.dmg`.
+1. Baixe o arquivo oficial `BiblioTEC-1.0.1-macOS.dmg` (ou versão mais recente).
 2. Dê duplo clique no arquivo `.dmg` baixado para abri-lo.
-3. Arraste o ícone do **BiblioTEC** para a pasta **Applications (Aplicativos)**.
+3. Arraste o ícone do aplicativo para a pasta **Applications (Aplicativos)**.
 
 > [!IMPORTANT]
 > **Primeira Execução no macOS (Aviso do Apple Gatekeeper):**  
@@ -49,13 +49,21 @@ Você não precisa instalar Python nem configurar ambientes complexos para usar 
 
 ### 🪟 2. Instalação no Windows
 
-1. Baixe o instalador `BiblioTEC_Setup_v1.0.0_Windows_x64.exe`.
-2. Dê duplo clique no arquivo executável e siga os passos do assistente de instalação (ele criará atalhos no Menu Iniciar e, se desejado, na Área de Trabalho).
+1. Baixe o instalador oficial `BiblioTEC_Setup_v1.0.1_Windows_x64.exe` (ou versão mais recente na página de releases).
+2. Dê duplo clique no arquivo executável para abrir o assistente de instalação.
 
-> [!NOTE]
-> **Aviso do Windows SmartScreen:**  
-> Por ser um software de código aberto recém-lançado sem certificado corporativo pago de assinatura de código (EV Code Signing), o Windows Defender SmartScreen pode exibir uma tela azul informando: *"O Windows protegeu o seu computador"*.  
-> * Para prosseguir: clique em **Mais informações** e, em seguida, no botão **Executar assim mesmo**.
+> [!IMPORTANT]
+> **Aviso do Windows SmartScreen (Como prosseguir com a instalação):**  
+> Por ser um software de código aberto independente distribuído gratuitamente (sem certificado comercial pago de assinatura de código EV de US$ 400/ano), o **Windows Defender SmartScreen** exibirá uma tela azul informando:  
+> *"O Windows protegeu o seu computador — O Windows Defender SmartScreen impediu a inicialização de um aplicativo não reconhecido."*  
+> 
+> Para instalar normalmente (procedimento necessário apenas uma vez):
+> 1. Na tela azul do SmartScreen, clique no link **"Mais informações"** (logo abaixo do texto).
+> 2. O botão **"Executar assim mesmo"** ficará visível no canto inferior direito. Clique nele.
+> 3. Se o Windows exibir a confirmação do Controle de Conta de Usuário (UAC), clique em **Sim** para autorizar o assistente do Inno Setup.
+> 
+> O assistente criará automaticamente os atalhos no Menu Iniciar e na Área de Trabalho com desinstalação limpa no Painel de Controle.
+
 
 ---
 

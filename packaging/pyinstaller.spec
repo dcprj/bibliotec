@@ -1,15 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller spec file multiplataforma para o BiblioTEC (macOS e Windows).
+"""PyInstaller spec file multiplataforma para o Tomus (macOS e Windows).
 
 Gera:
-- macOS: BiblioTEC.app (bundle nativo sem console)
-- Windows: BiblioTEC.exe (GUI noconsole com ícone)
+- macOS: Tomus.app (bundle nativo sem console)
+- Windows: Tomus.exe (GUI noconsole com ícone)
 """
 
 import os
 import sys
 from pathlib import Path
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules, collect_dynamic_libs
 
 block_cipher = None
 
@@ -61,10 +61,11 @@ hiddenimports = [
     "docling.backend.docling_parse_backend",
     "docling.pipeline.standard_pdf_pipeline",
     "rapidocr",
+    "onnxruntime",
 ]
 
 # Coletar submódulos e arquivos de dados do Docling e motor de OCR
-for pkg in ["docling", "docling_core", "docling_parse", "docling_ibm_models", "rapidocr"]:
+for pkg in ["docling", "docling_core", "docling_parse", "docling_ibm_models", "rapidocr", "onnxruntime"]:
     try:
         datas += collect_data_files(pkg)
     except Exception:
@@ -73,6 +74,9 @@ for pkg in ["docling", "docling_core", "docling_parse", "docling_ibm_models", "r
         hiddenimports += collect_submodules(pkg)
     except Exception:
         pass
+
+# Coletar binários/DLLs do onnxruntime (essenciais no Windows para RapidOCR)
+binaries += collect_dynamic_libs("onnxruntime")
 
 try:
     hiddenimports += collect_submodules("bibliotec")
@@ -113,7 +117,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="BiblioTEC",
+    name="Tomus",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -135,27 +139,27 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name="BiblioTEC",
+    name="Tomus",
 )
 
 # No macOS, encapsula o diretório em um bundle .app nativo com metadados Apple
 if sys.platform == "darwin":
     app = BUNDLE(
         coll,
-        name="BiblioTEC.app",
+        name="Tomus.app",
         icon=icon_target,
-        bundle_identifier="org.bibliotec.app",
+        bundle_identifier="org.tomus.app",
         info_plist={
-            "CFBundleName": "BiblioTEC",
-            "CFBundleDisplayName": "BiblioTEC",
-            "CFBundleVersion": "1.0.0",
-            "CFBundleShortVersionString": "1.0.0",
+            "CFBundleName": "Tomus",
+            "CFBundleDisplayName": "Tomus — Organizador Acadêmico de PDFs",
+            "CFBundleVersion": "1.1.0",
+            "CFBundleShortVersionString": "1.1.0",
             "CFBundlePackageType": "APPL",
             "CFBundleSignature": "????",
             "LSMinimumSystemVersion": "12.0.0",
             "NSHighResolutionCapable": True,
             "NSSupportsAutomaticGraphicsSwitching": True,
             "LSApplicationCategoryType": "public.app-category.education",
-            "NSHumanReadableCopyright": "Copyright © 2026 BiblioTEC. Licença Gratuita.",
+            "NSHumanReadableCopyright": "Copyright © 2026 Tomus. Licença Gratuita.",
         },
     )

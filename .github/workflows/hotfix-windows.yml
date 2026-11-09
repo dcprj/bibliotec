@@ -38,6 +38,7 @@ jobs:
           pip install "setuptools<70"
           pip install -e ".[dev]"
           pip install pyinstaller
+          pip install rapidocr onnxruntime
 
       - name: Extrair versão da tag
         id: version
@@ -62,11 +63,11 @@ jobs:
       - name: Renomear artefato com versão explícita
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          # O Inno Setup gera: BiblioTEC_Setup_v{VERSION}_Windows_x64.exe
+          # O Inno Setup gera: Tomus_Setup_v{VERSION}_Windows_x64.exe
           # Garantir que o nome final está correto
           ls -la dist/
-          if [ -f "dist/BiblioTEC_Setup_v${VERSION}_Windows_x64.exe" ]; then
-            echo "✅ Instalador gerado com sucesso: dist/BiblioTEC_Setup_v${VERSION}_Windows_x64.exe"
+          if [ -f "dist/Tomus_Setup_v${VERSION}_Windows_x64.exe" ]; then
+            echo "✅ Instalador gerado com sucesso: dist/Tomus_Setup_v${VERSION}_Windows_x64.exe"
           else
             echo "⚠️ Procurando instalador gerado..."
             ls -la dist/*Setup*.exe 2>/dev/null || true
@@ -75,8 +76,8 @@ jobs:
       - name: Upload artifact Windows EXE instalador
         uses: actions/upload-artifact@v4
         with:
-          name: bibliotec-windows-exe-hotfix
-          path: dist/BiblioTEC_Setup_v${{ steps.version.outputs.version }}_Windows_x64.exe
+          name: tomus-windows-exe-hotfix
+          path: dist/Tomus_Setup_v${{ steps.version.outputs.version }}_Windows_x64.exe
           retention-days: 30
 
   release-windows:
@@ -91,7 +92,7 @@ jobs:
       - name: Baixar artifact Windows EXE
         uses: actions/download-artifact@v4
         with:
-          name: bibliotec-windows-exe-hotfix
+          name: tomus-windows-exe-hotfix
           path: release-assets/windows
 
       - name: Listar assets

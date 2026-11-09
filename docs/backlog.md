@@ -263,6 +263,31 @@ Conforme decisão de produto, o lançamento inicial foca na estabilização dos 
   3. Atualização do `README.md` e metadados de empacotamento.
   4. Lançamento da Landing Page no GitHub Pages já ostentando a nova marca **Tomus**.
 
+---
+
+## 🔑 Validação Ativa de Chaves de API no Salvamento [FEAT-AUTH-02]
+
+- **Prioridade:** Alta (UX & Resiliência - Sprint v1.1.0/v1.2.0)
+- **Status:** Planejado
+- **Responsáveis:** Prisma (UX/UI) & Atlas (Foundation)
+- **Origem:** Demanda de Produto (Dario)
+
+### 1. Problema Identificado
+Atualmente, a aplicação grava qualquer string inserida nos campos de chave de API no arquivo de configuração sem validação imediata. Se a chave estiver expirada, digitada incorretamente ou for um token inválido (como tokens OAuth em vez de API Keys), o usuário só descobre a falha muito tempo depois, durante a execução de um lote de PDFs, gerando erros HTTP 401/403 ou paradas inesperadas.
+
+### 2. Requisitos de Entrega
+1. **Health Check Ativo no Salvamento:**
+   - Ao clicar no botão **"Salvar"** no modal de Preferências (ou via comando `config set`), disparar uma verificação assíncrona leve para cada chave informada:
+     - **Google Gemini:** Consulta rápida de modelos disponíveis ou teste mínimo de conexão.
+     - **Google Books:** Consulta leve com a chave fornecida (`q=isbn:0000000000&key=...`).
+     - **Provedores Alternativos (Groq, DeepSeek, NVIDIA):** Ping leve de autenticação (`/models`).
+2. **Feedback Visual Imediato na Interface:**
+   - **Chave Válida:** Indicador visual verde (badge "Ativa e Validada").
+   - **Chave Inválida / Não Autorizada (HTTP 401/403):** Alerta claro e contextualizado (ex.: *"Chave da Google Books recusada pelo Google Cloud. Verifique se a Books API foi ativada nas credenciais do seu projeto"*), permitindo correção imediata.
+3. **Não-Bloqueio Gracioso:**
+   - Se o usuário estiver temporariamente offline no momento de salvar, informar que a chave foi gravada mas não pôde ser testada por ausência de conexão.
+
+
 
 
 

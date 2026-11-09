@@ -1,4 +1,4 @@
-"""Ponto de entrada da GUI do BiblioTEC (PySide6 / Qt6 Fusion).
+"""Ponto de entrada da GUI do Tomus (PySide6 / Qt6 Fusion).
 
 Implementa ``launch_gui()`` e ``main()`` (registro em ``pyproject.toml`` como
 ``bibliotec-gui = "bibliotec.gui.app:main"``).
@@ -18,10 +18,15 @@ import sys
 from pathlib import Path
 
 from bibliotec.core.config import AppConfig
+from bibliotec.core.logging import setup_logging
 
 __all__ = ["launch_gui", "main"]
 
-# Caminho do ícone oficial da aplicação (prioriza PNG em alta resolução da marca oficial; fallback para SVG).
+# Inicializar o sistema de logs da GUI para que erros de OCR e runtime
+# nunca fiquem invisíveis no Windows (arquivo tomus.log ao lado da aplicação).
+setup_logging(log_file="tomus.log", verbose=False)
+
+# Caminho do ícone oficial da aplicação (marca Tomus, PNG em alta resolução; fallback para SVG).
 _RES_DIR = Path(__file__).parent / "resources"
 ICON_PATH = _RES_DIR / "bibliotec_icon.png" if (_RES_DIR / "bibliotec_icon.png").exists() else _RES_DIR / "bibliotec_icon.svg"
 
@@ -76,8 +81,8 @@ def launch_gui(
 
     app = QApplication.instance() or QApplication(sys.argv)
     app.setStyle("Fusion")
-    app.setApplicationName("BiblioTEC")
-    app.setApplicationDisplayName("BiblioTEC — Organizador Acadêmico de PDFs")
+    app.setApplicationName("Tomus")
+    app.setApplicationDisplayName("Tomus — Organizador Acadêmico de PDFs")
 
     # --- Ícone oficial da aplicação (substitui o genérico do Python) ---
     if ICON_PATH.exists():

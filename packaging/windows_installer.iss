@@ -1,13 +1,13 @@
-; Script de Instalação Inno Setup para o BiblioTEC (Windows)
-; Gera um instalador profissional .exe: BiblioTEC_Setup_v1.0.1_Windows_x64.exe
+; Script de Instalação Inno Setup para o Tomus (Windows)
+; Gera um instalador profissional .exe: Tomus_Setup_v1.1.0_Windows_x64.exe
 
-#define MyAppName "BiblioTEC"
+#define MyAppName "Tomus"
 #ifndef MyAppVersion
-#define MyAppVersion "1.0.1"
+#define MyAppVersion "1.1.0"
 #endif
-#define MyAppPublisher "BiblioTEC Open Source Community"
-#define MyAppURL "https://github.com/dcprj/bibliotec"
-#define MyAppExeName "BiblioTEC.exe"
+#define MyAppPublisher "Tomus Open Source Community"
+#define MyAppURL "https://github.com/dcprj/tomus"
+#define MyAppExeName "Tomus.exe"
 
 [Setup]
 AppId={{D37E6F10-B14C-409D-A3D9-974F8175E7B1}
@@ -21,7 +21,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile=..\LICENSE
 OutputDir=..\dist
-OutputBaseFilename=BiblioTEC_Setup_v{#MyAppVersion}_Windows_x64
+OutputBaseFilename=Tomus_Setup_v{#MyAppVersion}_Windows_x64
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -38,8 +38,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-; Copiar todo o conteúdo gerado pelo PyInstaller em dist/BiblioTEC
-Source: "..\dist\BiblioTEC\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Copiar todo o conteúdo gerado pelo PyInstaller em dist/Tomus
+Source: "..\dist\Tomus\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
