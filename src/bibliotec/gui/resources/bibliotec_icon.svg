@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1E3A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Livro aberto (acervo acadêmico) -->
-  <path d="M3 4v16c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1z"/>
-  <!-- Linhas de texto (páginas) -->
-  <path d="M7 7h8M7 10h6M7 13h5M7 16h4M15 7h3M15 10h2M15 13h2M15 16h1"/>
-  <!-- Marcador acadêmico (laço/fita) -->
-  <path d="M12 4v4M12 8h2"/>
-</svg>
