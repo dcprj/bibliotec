@@ -9,9 +9,6 @@ on:
 jobs:
   build-and-release:
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -46,6 +43,7 @@ jobs:
           pip install rapidocr
 
       - name: Executar testes (exclui GUI - validada localmente em offscreen)
+        shell: bash
         env:
           QT_QPA_PLATFORM: offscreen
         continue-on-error: true
@@ -75,6 +73,7 @@ jobs:
           "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=%VERSION% packaging/windows_installer.iss
 
       - name: Listar artifacts gerados
+        shell: bash
         continue-on-error: true
         run: |
           echo "=== Arquivos em dist/ ==="
