@@ -3,11 +3,34 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Optional
 
-_RESOURCES_DIR = Path(__file__).parent / "resources"
-_TAXONOMY_PATH = _RESOURCES_DIR / "taxonomy_capes.json"
+
+def _find_taxonomy_file() -> Path:
+    candidates = [
+        Path(__file__).parent / "resources" / "taxonomy_capes.json",
+    ]
+    if getattr(sys, "frozen", False):
+        if hasattr(sys, "_MEIPASS"):
+            meipass = Path(sys._MEIPASS)
+            candidates.append(meipass / "bibliotec" / "core" / "resources" / "taxonomy_capes.json")
+            candidates.append(meipass / "resources" / "taxonomy_capes.json")
+        if hasattr(sys, "executable"):
+            exe_dir = Path(sys.executable).parent
+            candidates.append(exe_dir.parent / "Frameworks" / "bibliotec" / "core" / "resources" / "taxonomy_capes.json")
+            candidates.append(exe_dir.parent / "Resources" / "taxonomy_capes.json")
+            candidates.append(exe_dir / "resources" / "taxonomy_capes.json")
+            candidates.append(exe_dir / "bibliotec" / "core" / "resources" / "taxonomy_capes.json")
+
+    for cand in candidates:
+        if cand.exists():
+            return cand
+    return candidates[0]
+
+
+_TAXONOMY_PATH = _find_taxonomy_file()
 
 _taxonomy_cache: Optional[dict] = None
 
@@ -15,7 +38,8 @@ _taxonomy_cache: Optional[dict] = None
 def _load_taxonomy() -> dict:
     global _taxonomy_cache
     if _taxonomy_cache is None:
-        with open(_TAXONOMY_PATH, "r", encoding="utf-8") as fh:
+        path = _find_taxonomy_file()
+        with open(path, "r", encoding="utf-8") as fh:
             _taxonomy_cache = json.load(fh)
     return _taxonomy_cache
 

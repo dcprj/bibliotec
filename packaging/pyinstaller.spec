@@ -27,6 +27,8 @@ ICONS_DIR = ROOT_DIR / "packaging" / "icons"
 # Dados estáticos obrigatórios
 datas = [
     (str(SRC_DIR / "bibliotec" / "gui" / "web"), "bibliotec/gui/web"),
+    (str(SRC_DIR / "bibliotec" / "gui" / "resources"), "bibliotec/gui/resources"),
+    (str(SRC_DIR / "bibliotec" / "core" / "resources"), "bibliotec/core/resources"),
 ]
 
 # Hidden imports essenciais para PySide6 WebEngine e dependências dinâmicas
