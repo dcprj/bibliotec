@@ -94,6 +94,48 @@ def test_preferences_dialog_light_styling():
     assert "#FFFFFF" in dlg.styleSheet()
     assert "#1E3A8A" in dlg.styleSheet()
     assert dlg.tabs.count() == 3
+    assert dlg.tabs.tabText(0) == "Credenciais e Chaves de API"
+    assert dlg.tabs.tabText(1) == "Provedores LLM && Fallback"
+    assert dlg.tabs.tabText(2) == "Pipeline, OCR && Cache"
+    dlg.close()
+
+
+def test_preferences_dialog_save_and_reactivity(tmp_path, monkeypatch):
+    """Garante que PreferencesDialog salva in-place e atualiza labels reativos."""
+    from bibliotec.gui.widgets.preferences_dialog import PreferencesDialog
+
+    monkeypatch.chdir(tmp_path)
+    qapp = get_qapp()
+    cfg = AppConfig()
+    cfg_file = tmp_path / "config.toml"
+    dlg = PreferencesDialog(cfg, config_path=cfg_file)
+
+    # Label inicial deve ser não configurado se vazio
+    dlg._fields["gemini_api_key"].setText("")
+    assert "Não configurado" in dlg._env_labels["gemini_api_key"].text()
+
+    # Digitar chave deve atualizar reativamente para configurado
+    dlg._fields["gemini_api_key"].setText("AIzaSyTestKey123")
+    assert "Configurado" in dlg._env_labels["gemini_api_key"].text()
+
+    # Alterar provedor e modelo
+    dlg.cmb_primary.setCurrentText("groq")
+    dlg.edit_model.setText("llama-3.3-70b-versatile")
+    dlg.chk_nvidia.setChecked(False)
+
+    dlg._save()
+
+    # Validar persistência in-place no objeto cfg
+    assert cfg.api_keys.gemini_api_key == "AIzaSyTestKey123"
+    assert cfg.llm.provider == "groq"
+    assert cfg.llm.model == "llama-3.3-70b-versatile"
+    assert "nvidia" not in cfg.llm.fallback_chain
+
+    # Validar persistência no arquivo TOML
+    assert dlg._config_path.exists()
+    content = dlg._config_path.read_text(encoding="utf-8")
+    assert "AIzaSyTestKey123" in content
+    assert "groq" in content
     dlg.close()
 
 

@@ -189,15 +189,45 @@ class AppConfig(BaseSettings):
         )
 
 
+_ENV_KEY_MAP: dict[str, tuple[str, ...]] = {
+    "gemini_api_key": ("BIBLIOTEC_GEMINI_API_KEY", "GEMINI_API_KEY"),
+    "google_books_api_key": ("BIBLIOTEC_GOOGLE_BOOKS_API_KEY", "GOOGLE_BOOKS_API_KEY"),
+    "openalex_polite_email": ("BIBLIOTEC_OPENALEX_POLITE_EMAIL", "OPENALEX_POLITE_EMAIL"),
+    "nvidia_api_key": ("BIBLIOTEC_NVIDIA_API_KEY", "NVIDIA_API_KEY"),
+    "deepseek_api_key": ("BIBLIOTEC_DEEPSEEK_API_KEY", "DEEPSEEK_API_KEY"),
+    "claude_api_key": ("BIBLIOTEC_CLAUDE_API_KEY", "CLAUDE_API_KEY", "ANTHROPIC_API_KEY"),
+    "groq_api_key": ("BIBLIOTEC_GROQ_API_KEY", "GROQ_API_KEY"),
+    "github_token": ("BIBLIOTEC_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"),
+}
+
+
 class FilteredTomlSettingsSource(TomlConfigSettingsSource):
-    """TomlConfigSettingsSource que ignora valores vazios (strings vazias) para que
-    variáveis de ambiente possam preencher os campos (respeitando a precedência
-    env > TOML).
+    """TomlConfigSettingsSource que ignora valores vazios (strings vazias) e
+    chaves com variáveis de ambiente ativas para respeitar a precedência
+    ENV > Local TOML > Global TOML.
     """
 
     def __call__(self) -> dict[str, Any]:
         data = super().__call__()
-        return self._remove_empty_strings(data)
+        data = self._remove_empty_strings(data)
+        data = self._filter_env_overrides(data)
+        data = self._normalize_aliases(data)
+        return data
+
+    @staticmethod
+    def _normalize_aliases(data: dict[str, Any]) -> dict[str, Any]:
+        if "llm" in data and isinstance(data["llm"], dict):
+            if "default_provider" in data["llm"] and "provider" not in data["llm"]:
+                data["llm"]["provider"] = data["llm"]["default_provider"]
+        return data
+
+    @staticmethod
+    def _filter_env_overrides(data: dict[str, Any]) -> dict[str, Any]:
+        if "api_keys" in data and isinstance(data["api_keys"], dict):
+            for field, env_vars in _ENV_KEY_MAP.items():
+                if any(os.environ.get(ev) for ev in env_vars):
+                    data["api_keys"].pop(field, None)
+        return data
 
     @staticmethod
     def _remove_empty_strings(data: dict[str, Any]) -> dict[str, Any]:
@@ -223,7 +253,14 @@ class GlobalTomlSettingsSource(FilteredTomlSettingsSource):
     """Fonte TOML global: ~/.config/bibliotec/config.toml."""
 
     def __init__(self, settings_cls: type[BaseSettings]) -> None:
-        super().__init__(settings_cls, toml_file=str(GLOBAL_CONFIG_PATH))
+        global_path = Path.home() / ".config" / "bibliotec" / "config.toml"
+        super().__init__(settings_cls, toml_file=str(global_path))
+
+    def __call__(self) -> dict[str, Any]:
+        # Se um bibliotec.toml local estiver presente no diretório atual, ele prevalece
+        if Path(LOCAL_CONFIG_FILENAME).exists():
+            return {}
+        return super().__call__()
 
 
 def mask_key(value: str) -> str:

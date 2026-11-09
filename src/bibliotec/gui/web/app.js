@@ -156,7 +156,13 @@
       backend.pipelineFinished.connect(handlePipelineFinished);
       backend.sourceChanged.connect(function (path) { setSource(path); });
       backend.targetChanged.connect(function (path) { setTarget(path); });
-      backend.keyStatusChanged.connect(updateKeyBadge);
+      backend.keyStatusChanged.connect(function (hasKey) {
+        if (backend && backend.checkProviderKey && state.provider) {
+          backend.checkProviderKey(state.provider).then(updateKeyBadge);
+        } else {
+          updateKeyBadge(hasKey);
+        }
+      });
 
       // Obter estado inicial
       backend.getInitialState().then(function (initStateJson) {

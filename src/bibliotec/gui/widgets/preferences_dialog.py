@@ -193,12 +193,16 @@ def _env_active(env_names: list[str]) -> bool:
 class PreferencesDialog(QDialog):
     """Diálogo modal de edição do config.toml e chaves de API."""
 
-    def __init__(self, config: AppConfig, parent=None) -> None:
+    def __init__(self, config: AppConfig, parent=None, config_path: Path | None = None) -> None:
         super().__init__(parent)
         self._config = config
 
-        local = Path.cwd() / LOCAL_CONFIG_FILENAME
-        self._config_path = local if local.exists() else GLOBAL_CONFIG_PATH
+        if config_path is not None:
+            self._config_path = Path(config_path)
+        else:
+            local = Path.cwd() / LOCAL_CONFIG_FILENAME
+            global_path = Path.home() / ".config" / "bibliotec" / "config.toml"
+            self._config_path = local if local.exists() else global_path
 
         self.setWindowTitle("Preferências e Credenciais — BiblioTEC")
         self.setModal(True)
@@ -221,8 +225,8 @@ class PreferencesDialog(QDialog):
         layout.setSpacing(12)
 
         self.tabs = QTabWidget()
-        self.tabs.addTab(self._tab_credentials(), "Provedores LLM & Fallback".replace("&", "&&"))
-        self.tabs.addTab(self._tab_enrichment(), "Credenciais e Chaves de API")
+        self.tabs.addTab(self._tab_credentials(), "Credenciais e Chaves de API")
+        self.tabs.addTab(self._tab_fallback(), "Provedores LLM & Fallback".replace("&", "&&"))
         self.tabs.addTab(self._tab_pipeline(), "Pipeline, OCR & Cache".replace("&", "&&"))
         layout.addWidget(self.tabs)
 
@@ -265,9 +269,9 @@ class PreferencesDialog(QDialog):
             row = QHBoxLayout()
             row.setSpacing(8)
             edit = QLineEdit()
-            edit.setPlaceholderText("••••••••")
+            edit.setPlaceholderText("Cole sua chave aqui...")
             edit.setEchoMode(QLineEdit.EchoMode.Password)
-            edit.setFixedWidth(240)
+            edit.setFixedWidth(260)
             reveal = QPushButton("Mostrar")
             reveal.setFixedWidth(76)
             reveal.setCheckable(True)
@@ -277,11 +281,26 @@ class PreferencesDialog(QDialog):
                     b.setText("Ocultar" if checked else "Mostrar"),
                 )
             )
-            env_lbl = QLabel("")
-            env_lbl.setStyleSheet("color: #64748B; font-size: 11px; font-style: italic;")
+            env_lbl = QLabel("(Não configurado)")
+            env_lbl.setStyleSheet("color: #94A3B8; font-size: 11px; font-style: italic;")
+            env_lbl.setMinimumWidth(190)
+
+            def _on_change(_text, e=edit, l=env_lbl, ev=env_names):
+                if _env_active(ev):
+                    l.setText("(Ativo via Variável de Ambiente)")
+                    l.setStyleSheet("color: #0284C7; font-size: 11px; font-weight: 500;")
+                elif e.text().strip():
+                    l.setText("✓ Configurado")
+                    l.setStyleSheet("color: #16A34A; font-size: 11px; font-weight: 600;")
+                else:
+                    l.setText("(Não configurado)")
+                    l.setStyleSheet("color: #94A3B8; font-size: 11px; font-style: italic;")
+
+            edit.textChanged.connect(_on_change)
+
             row.addWidget(edit)
             row.addWidget(reveal)
-            row.addSpacing(12)
+            row.addSpacing(10)
             row.addWidget(env_lbl)
             row.addStretch(1)
             lbl = QLabel(label)
@@ -291,43 +310,77 @@ class PreferencesDialog(QDialog):
             self._env_labels[field_name] = env_lbl
 
         layout.addLayout(form)
-        layout.addStretch(1)
-        return widget
+        layout.addSpacing(8)
 
-    def _tab_enrichment(self) -> QWidget:
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
+        header_enrich = QLabel("Serviços de enriquecimento acadêmico (Stage 3 — OpenAlex & Google Books)")
+        header_enrich.setStyleSheet("font-weight: 600; color: #0F172A; font-size: 13px;")
+        layout.addWidget(header_enrich)
 
-        header_lbl = QLabel("Serviços de enriquecimento acadêmico (Stage 3 — OpenAlex & Google Books)")
-        header_lbl.setStyleSheet("font-weight: 600; color: #0F172A; font-size: 13px;")
-        layout.addWidget(header_lbl)
-
-        form = QFormLayout()
-        form.setSpacing(10)
+        form_enrich = QFormLayout()
+        form_enrich.setSpacing(10)
         for field_name, label, env_names in ENRICHMENT_FIELDS:
             edit = QLineEdit()
-            edit.setFixedWidth(300)
-            env_lbl = QLabel("")
-            env_lbl.setStyleSheet("color: #64748B; font-size: 11px; font-style: italic;")
+            edit.setFixedWidth(260)
+            if "key" in field_name:
+                edit.setPlaceholderText("Cole sua chave aqui...")
+                edit.setEchoMode(QLineEdit.EchoMode.Password)
+            else:
+                edit.setPlaceholderText("pesquisador@instituicao.edu.br")
+
+            env_lbl = QLabel("(Não configurado)")
+            env_lbl.setStyleSheet("color: #94A3B8; font-size: 11px; font-style: italic;")
+            env_lbl.setMinimumWidth(190)
+
             row = QHBoxLayout()
             row.setSpacing(8)
             row.addWidget(edit)
-            row.addSpacing(12)
+
+            if "key" in field_name:
+                reveal = QPushButton("Mostrar")
+                reveal.setFixedWidth(76)
+                reveal.setCheckable(True)
+                reveal.toggled.connect(
+                    lambda checked, e=edit, b=reveal: (
+                        e.setEchoMode(QLineEdit.EchoMode.Normal if checked else QLineEdit.EchoMode.Password),
+                        b.setText("Ocultar" if checked else "Mostrar"),
+                    )
+                )
+                row.addWidget(reveal)
+            else:
+                spacer = QWidget()
+                spacer.setFixedWidth(76)
+                row.addWidget(spacer)
+
+            def _on_enrich_change(_text, e=edit, l=env_lbl, ev=env_names, fn=field_name):
+                if _env_active(ev):
+                    l.setText("(Ativo via Variável de Ambiente)")
+                    l.setStyleSheet("color: #0284C7; font-size: 11px; font-weight: 500;")
+                elif e.text().strip():
+                    if fn == "openalex_polite_email":
+                        l.setText("✓ Polite Pool Ativo (10 req/s)")
+                    else:
+                        l.setText("✓ Configurado")
+                    l.setStyleSheet("color: #16A34A; font-size: 11px; font-weight: 600;")
+                else:
+                    l.setText("(Não configurado)")
+                    l.setStyleSheet("color: #94A3B8; font-size: 11px; font-style: italic;")
+
+            edit.textChanged.connect(_on_enrich_change)
+
+            row.addSpacing(10)
             row.addWidget(env_lbl)
             row.addStretch(1)
             lbl = QLabel(label)
             lbl.setStyleSheet("font-weight: 500; color: #1E293B;")
-            form.addRow(lbl, row)
+            form_enrich.addRow(lbl, row)
             self._fields[field_name] = edit
             self._env_labels[field_name] = env_lbl
 
-        layout.addLayout(form)
+        layout.addLayout(form_enrich)
         layout.addStretch(1)
         return widget
 
-    def _tab_pipeline(self) -> QWidget:
+    def _tab_fallback(self) -> QWidget:
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(16, 16, 16, 16)
@@ -360,7 +413,7 @@ class PreferencesDialog(QDialog):
         lbl_mod.setStyleSheet("font-weight: 500; color: #1E293B;")
         fallback_lay.addWidget(lbl_mod)
         self.edit_model = QLineEdit("gemini-3.5-flash")
-        self.edit_model.setFixedWidth(200)
+        self.edit_model.setFixedWidth(240)
         fallback_lay.addWidget(self.edit_model)
         fallback_lay.addStretch(1)
         layout.addLayout(fallback_lay)
@@ -390,7 +443,23 @@ class PreferencesDialog(QDialog):
         fb_row.addStretch(1)
         layout.addLayout(fb_row)
 
-        layout.addSpacing(12)
+        desc = QLabel(
+            "Quando o provedor primário esgota sua cota (HTTP 429) ou sofre timeout, "
+            "o BiblioTEC tenta sequencialmente os provedores habilitados acima."
+        )
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #64748B; font-size: 12px; line-height: 1.4;")
+        layout.addWidget(desc)
+
+        layout.addStretch(1)
+        return widget
+
+    def _tab_pipeline(self) -> QWidget:
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
+
         header2 = QLabel("Limiar de qualidade e concorrência (Stage 1 a Stage 5)")
         header2.setStyleSheet("font-weight: 600; color: #0F172A; font-size: 13px;")
         layout.addWidget(header2)
@@ -429,30 +498,44 @@ class PreferencesDialog(QDialog):
         modo = " (Permissão 0600 Segura)" if self._config_path.exists() else ""
         self.path_lbl.setText(f"ARQUIVO DE CONFIGURAÇÃO ATIVO: {self._config_path}{modo}")
 
-        for field_name, _label, env_names in API_KEY_FIELDS:
+        for field_name, _label, _env in API_KEY_FIELDS:
             value = getattr(self._config.api_keys, field_name, "")
-            self._fields[field_name].setText(value)
-            if _env_active(env_names):
-                self._env_labels[field_name].setText("(Ativo via Variável de Ambiente)")
-            else:
-                self._env_labels[field_name].setText("(Via TOML)" if value else "(Não configurado)")
+            if field_name in self._fields:
+                self._fields[field_name].setText(value)
 
         for field_name, _label, _env in ENRICHMENT_FIELDS:
             value = getattr(self._config.api_keys, field_name, "")
-            self._fields[field_name].setText(value)
+            if field_name in self._fields:
+                self._fields[field_name].setText(value)
+
+        curr_provider = self._config.llm.provider or "gemini"
+        idx = self.cmb_primary.findText(curr_provider)
+        if idx >= 0:
+            self.cmb_primary.setCurrentIndex(idx)
+        else:
+            self.cmb_primary.setCurrentText(curr_provider)
+
+        self.edit_model.setText(self._config.llm.model or "gemini-3.5-flash")
+
+        fb = self._config.llm.fallback_chain or []
+        self.chk_groq.setChecked("groq" in fb)
+        self.chk_nvidia.setChecked("nvidia" in fb)
+        self.chk_deepseek.setChecked("deepseek" in fb)
 
         self.edit_conf.setText(f"{self._config.general.confidence_min:.2f}")
         self.edit_workers.setText(str(self._config.general.workers))
         self.chk_use_cache.setChecked(self._config.general.use_cache)
 
     def _save(self) -> None:
-        """Serializar as seções em config.toml com permissão 0600."""
+        """Serializar as seções em config.toml com permissão 0600 e atualizar self._config in-place."""
         import tomli_w
 
         api_updates = {}
-        for field_name in self._fields:
+        for field_name, edit in self._fields.items():
+            val = edit.text().strip()
             if hasattr(self._config.api_keys, field_name):
-                api_updates[field_name] = self._fields[field_name].text()
+                setattr(self._config.api_keys, field_name, val)
+                api_updates[field_name] = val
 
         try:
             conf = float(self.edit_conf.text())
@@ -468,6 +551,20 @@ class PreferencesDialog(QDialog):
         self._config.general.confidence_min = conf
         self._config.general.workers = workers
 
+        primary_prov = self.cmb_primary.currentText()
+        model_name = self.edit_model.text().strip() or "gemini-3.5-flash"
+        fallback = []
+        if self.chk_groq.isChecked():
+            fallback.append("groq")
+        if self.chk_nvidia.isChecked():
+            fallback.append("nvidia")
+        if self.chk_deepseek.isChecked():
+            fallback.append("deepseek")
+
+        self._config.llm.provider = primary_prov
+        self._config.llm.model = model_name
+        self._config.llm.fallback_chain = fallback
+
         new_config = AppConfig(
             general=GeneralConfig(
                 **{
@@ -477,7 +574,13 @@ class PreferencesDialog(QDialog):
                     "use_cache": use_cache,
                 }
             ),
-            llm=self._config.llm,
+            llm=LLMConfig(
+                provider=primary_prov,
+                default_provider=primary_prov,
+                model=model_name,
+                fallback_chain=fallback,
+                providers=self._config.llm.providers,
+            ),
             api_keys=ApiKeysConfig(
                 **{**self._config.api_keys.model_dump(), **api_updates}
             ),

@@ -330,6 +330,11 @@ class WebBridge(QObject):
 
         dlg = PreferencesDialog(self.config, parent=self.parent_widget)
         if dlg.exec():
+            # Recarregar AppConfig a partir do disco para sincronização total
+            from bibliotec.core.config import AppConfig
+
+            self.config = AppConfig()
+
             # Atualizar status da chave para o provedor selecionado
             current_provider = self.config.llm.provider or "gemini"
             has_key = self.checkProviderKey(current_provider)
