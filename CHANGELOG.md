@@ -5,6 +5,36 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adota versionamento semântico ([Semantic Versioning](https://semver.org/lang/pt-BR/)).
 
+## [1.0.1] - 2026-11-09
+
+### Corrigido — Vulnerabilidades de Segurança (Relatório de Auditoria Sentinela)
+
+#### CRT-02 — Vazamento de chaves de API em logs (`src/tomus/core/logging.py`)
+- Adicionado `RedactingFilter` que faz regex replace mascarando chaves de API e tokens (`key=...`, `sk-...`, `nvapi-...`, `gsk-...`, `token=...`) em todas as mensagens de log gravadas no arquivo `tomus.log`.
+- Definido nível `WARNING` para o logger `httpx`, impedindo que URLs completas com query params (incluindo `key=`) sejam gravadas em nível INFO.
+
+#### ALT-01 e ALT-02 — Path Traversal e Catálogo de Destino no QtWebChannel (`src/tomus/gui/bridge.py`)
+- Implementada função `_is_safe_path(p, allowed_roots)` que verifica containment do caminho resolvido em `source_dir`, `target_dir` e pastas do usuário, bloqueando `..`, dotfiles e diretórios sensíveis (`.ssh`, `.gnupg`, `.aws`, `.bashrc`, `/etc`, etc.).
+- `revealPath()` e `openPdf()` agora validam o caminho com `_is_safe_path()` antes de abrir ou revelar; arquivos fora das pastas autorizadas são rejeitados com aviso de log.
+
+#### MED-01 — Vazamento de chaves em exceções (`src/tomus/core/llm.py`, `src/tomus/core/pipeline.py`)
+- Adicionada função `_sanitize_error_message()` que aplica máscara (regex) a chaves de API e tokens em mensagens de erro antes de injetá-las em `reasoning` ou `error_message`.
+- Todas as chamadas `f"Falha na chamada ao LLM {exc}"` agora usam `_sanitize_error_message(str(exc))`.
+
+#### MED-02 — Sanitização em `runJavaScript` (`src/tomus/gui/bridge.py`)
+- Todos os payloads enviados para `web_view.page().runJavaScript` agora usam `json.dumps(..., ensure_ascii=False)`, garantindo serialização segura e sem risco de escape de string JS.
+
+#### MED-03 — Prevenção de XSS em link DOI (`src/tomus/gui/web/app.js`)
+- Na função `buildAbntCitation()`, o DOI é validado: apenas links que começam com `https://`, `http://` ou `10.` são renderizados como `<a>`; protocolos inseguros (`javascript:`, `data:`) são renderizados como texto puro sem tag `<a>`.
+
+#### MED-04 — Silenciar logs de console JS no terminal (`src/tomus/gui/main_window.py`)
+- `javaScriptConsoleMessage` agora imprime no stdout apenas quando `verbose=True` (desativado por padrão).
+
+#### BAI-01 — Avisos de segurança na CLI (`src/tomus/cli/main.py`)
+- As flags `--api-key` e `--google-books-key` agora incluem aviso no help recomendando o uso de variáveis de ambiente (`TOMUS_GEMINI_API_KEY`, `TOMUS_GOOGLE_BOOKS_API_KEY`).
+
+---
+
 ## [1.0.0] - 2026-11-07
 
 ### Added
