@@ -11,10 +11,12 @@ DIST_DIR="${PROJECT_ROOT}/dist"
 BUILD_DIR="${PROJECT_ROOT}/build"
 
 # Ler a versão do pyproject.toml
-if command -v python3 &> /dev/null; then
-    VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('${PROJECT_ROOT}/pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || python3 -c "import tomli; print(tomli.load(open('${PROJECT_ROOT}/pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || echo "1.0.0")
+if [ -f "${PROJECT_ROOT}/.venv/bin/python3" ]; then
+    VERSION=$("${PROJECT_ROOT}/.venv/bin/python3" -c "import tomllib; print(tomllib.load(open('${PROJECT_ROOT}/pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || echo "1.1.1")
+elif command -v python3 &> /dev/null; then
+    VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('${PROJECT_ROOT}/pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || python3 -c "import tomli; print(tomli.load(open('${PROJECT_ROOT}/pyproject.toml', 'rb'))['project']['version'])" 2>/dev/null || echo "1.1.1")
 else
-    VERSION="1.0.0"
+    VERSION="1.1.1"
 fi
 
 DMG_NAME="${APP_NAME}-${VERSION}-macOS.dmg"
