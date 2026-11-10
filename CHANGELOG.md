@@ -5,6 +5,29 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adota versionamento semântico ([Semantic Versioning](https://semver.org/lang/pt-BR/)).
 
+## [1.1.2] - 2026-11-10
+
+### Corrigido
+- **Renomeação integral para `tomus`**: todos os pacotes, módulos e caminhos de importação renomeados de `bibliotec` para `tomus` (src/, pyproject.toml, CLI, imports internos).
+- **Redação de segredos em logs (`src/tomus/core/logging.py`)**: `RedactingFilter` mascara chaves de API e tokens (`key=`, `sk-`, `nvapi-`, `gsk-`, `token=`) em todas as mensagens gravadas em `tomus.log`.
+- **Path Traversal e Catálogo de Destino no QtWebChannel (`src/tomus/gui/bridge.py`)**: função `_is_safe_path()` valida containment do caminho resolvido em `source_dir`, `target_dir` e pastas do usuário, bloqueando `..`, dotfiles e diretórios sensíveis.
+- **Sanitização de exceções LLM (`src/tomus/core/llm.py`, `src/tomus/core/pipeline.py`)**: `_sanitize_error_message()` aplica máscara regex a chaves de API antes de injetar em `reasoning` ou `error_message`.
+- **Sanitização em `runJavaScript` (`src/tomus/gui/bridge.py`)**: payloads serializados com `json.dumps(..., ensure_ascii=False)`, sem risco de escape de string JS.
+- **Prevenção de XSS em link DOI (`src/tomus/gui/web/app.js`)**: DOI validado para apenas protocolos seguros (`https://`, `http://`, `10.`); protocolos inseguros (`javascript:`, `data:`) renderizados como texto puro.
+- **Silenciar logs de console JS (`src/tomus/gui/main_window.py`)**: `javaScriptConsoleMessage` imprime apenas com `verbose=True`.
+- **Avisos de segurança na CLI (`src/tomus/cli/main.py`)**: flags `--api-key` e `--google-books-key` incluem aviso recomendando variáveis de ambiente.
+
+### Adicionado
+- **Identidade visual TOMUS v1.1.2**: ícones oficiais (`icon.ico` com 7 resoluções 16px–256px, `icon.icns` Retina, `icon.png` com transparência alfa), logotipo horizontal 1014x334, emblema isolado 28x28/44x44 na toolbar e modal Sobre.
+- **Suporte completo a RapidOCR + ONNXRuntime no Windows**: DLLs do onnxruntime embarcadas via `binaries=binaries` no PyInstaller spec.
+- **Landing Page oficial (`docs/index.html`)**: redesign editorial studio-grade com seção de créditos celebrando a parceria entre Dario e o enxame de agentes de IA.
+- **README focado em macOS**: instruções de instalação atualizadas para o ecossistema Apple Silicon e Intel.
+
+### Alterado
+- **Versão**: 1.1.1 → 1.1.2 em pyproject.toml, Inno Setup, PyInstaller spec, badge da GUI web e docs/index.html.
+
+---
+
 ## [1.0.1] - 2026-11-09
 
 ### Corrigido — Vulnerabilidades de Segurança (Relatório de Auditoria Sentinela)

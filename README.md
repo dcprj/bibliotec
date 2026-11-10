@@ -31,7 +31,7 @@ Você não precisa instalar Python nem configurar ambientes complexos para usar 
 
 ### 🍎 1. Instalação no macOS
 
-1. Baixe o arquivo oficial `Tomus-1.1.0-macOS.dmg` (ou versão mais recente).
+1. Baixe o arquivo oficial `Tomus-1.1.2-macOS.dmg` (ou versão mais recente).
 2. Dê duplo clique no arquivo `.dmg` baixado para abri-lo.
 3. Arraste o ícone do aplicativo para a pasta **Applications (Aplicativos)**.
 
