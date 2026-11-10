@@ -1,4 +1,4 @@
-"""Testes para o cache SQLite do BiblioTEC (src/bibliotec/core/cache.py).
+"""Testes para o cache SQLite do Tomus (src/tomus/core/cache.py).
 
 Cobre: conexão WAL, get/put com confidence_min, persistência seletiva,
 --no-cache, invalidação e múltiplas entradas com chave composta.
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from bibliotec.core.cache import FileCache, CACHE_DB_PATH
+from tomus.core.cache import FileCache, CACHE_DB_PATH
 
 
 class _FakeClassification(dict):

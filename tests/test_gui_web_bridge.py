@@ -5,9 +5,9 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
-from bibliotec.core.config import AppConfig
-from bibliotec.gui.bridge import WebBridge
-from bibliotec.gui.main_window import BiblioTECMainWindow
+from tomus.core.config import AppConfig
+from tomus.gui.bridge import WebBridge
+from tomus.gui.main_window import TomusMainWindow
 
 _QAPP = None
 
@@ -73,8 +73,8 @@ def test_web_bridge_check_provider_key():
 
 
 def test_web_bridge_cache_module_accessible():
-    """Garante que bibliotec.core.cache é importado sem erros no slot de cache."""
-    from bibliotec.core.cache import FileCache
+    """Garante que tomus.core.cache é importado sem erros no slot de cache."""
+    from tomus.core.cache import FileCache
 
     cache = FileCache(enabled=True)
     count = cache.count()
@@ -85,7 +85,7 @@ def test_web_bridge_cache_module_accessible():
 
 def test_preferences_dialog_light_styling():
     """Garante que PreferencesDialog tem estilo claro explícito e componentes legíveis."""
-    from bibliotec.gui.widgets.preferences_dialog import PreferencesDialog
+    from tomus.gui.widgets.preferences_dialog import PreferencesDialog
 
     qapp = get_qapp()
     cfg = AppConfig()
@@ -102,7 +102,7 @@ def test_preferences_dialog_light_styling():
 
 def test_preferences_dialog_save_and_reactivity(tmp_path, monkeypatch):
     """Garante que PreferencesDialog salva in-place e atualiza labels reativos."""
-    from bibliotec.gui.widgets.preferences_dialog import PreferencesDialog
+    from tomus.gui.widgets.preferences_dialog import PreferencesDialog
 
     monkeypatch.chdir(tmp_path)
     qapp = get_qapp()
@@ -142,7 +142,7 @@ def test_preferences_dialog_save_and_reactivity(tmp_path, monkeypatch):
 def test_main_window_web_view_instancia():
     qapp = get_qapp()
     cfg = AppConfig()
-    win = BiblioTECMainWindow(cfg, source_dir="/tmp/origem", target_dir="/tmp/destino")
+    win = TomusMainWindow(cfg, source_dir="/tmp/origem", target_dir="/tmp/destino")
     assert win.web_view is not None
     assert win.bridge is not None
     assert win.bridge.source_dir == "/tmp/origem"
@@ -151,7 +151,7 @@ def test_main_window_web_view_instancia():
 
 def test_web_bridge_pipeline_event_with_destination_and_sha256():
     """Garante que PipelineEvent carrega destination_path e sha256 para os botões do Inspetor."""
-    from bibliotec.core.models import PipelineEvent
+    from tomus.core.models import PipelineEvent
 
     ev = PipelineEvent(
         stage="organizer",

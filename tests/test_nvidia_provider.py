@@ -16,8 +16,8 @@ import httpx
 import pytest
 import respx
 
-from bibliotec.core.llm import NvidiaProvider
-from bibliotec.core.models import ExternalMetadata
+from tomus.core.llm import NvidiaProvider
+from tomus.core.models import ExternalMetadata
 
 BASE_URL = "https://integrate.api.nvidia.com/v1"
 
@@ -265,7 +265,7 @@ def test_resposta_embrulhada_em_markdown_json():
 
 
 def test_cumpre_protocolo_llm_provider():
-    from bibliotec.core.llm import LLMProvider
+    from tomus.core.llm import LLMProvider
 
     provider = _make_provider()
     assert isinstance(provider, LLMProvider)

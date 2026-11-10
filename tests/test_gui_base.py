@@ -1,4 +1,4 @@
-"""Testes unitários da Etapa 1 da Passagem 2 — pacote base ``src/bibliotec/gui/``.
+"""Testes unitários da Etapa 1 da Passagem 2 — pacote base ``src/tomus/gui/``.
 
 Valida:
 * as cores hexadecimais dos temas Editorial Paper e Technical Graphite
@@ -27,8 +27,8 @@ _os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
 
-from bibliotec.core.models import ProcessStatus
-from bibliotec.gui.theme import (
+from tomus.core.models import ProcessStatus
+from tomus.gui.theme import (
     EDITORIAL_PAPER_THEME,
     TECHNICAL_GRAPHITE_THEME,
     ThemeTokens,
@@ -36,7 +36,7 @@ from bibliotec.gui.theme import (
     generate_qss,
     status_colors,
 )
-from bibliotec.gui.icons import ICON_NAMES, render_icon, render_pixmap, svg_for
+from tomus.gui.icons import ICON_NAMES, render_icon, render_pixmap, svg_for
 
 # --------------------------------------------------------------------------- #
 # Fixture QApplication (necessária para QIcon/QPixmap/QSvgRenderer em offscreen)
@@ -76,10 +76,10 @@ _EMOJI_RE = re.compile(
 )
 
 _GUI_MODULE_FILES = [
-    "src/bibliotec/gui/__init__.py",
-    "src/bibliotec/gui/theme.py",
-    "src/bibliotec/gui/icons.py",
-    "src/bibliotec/gui/os_integration.py",
+    "src/tomus/gui/__init__.py",
+    "src/tomus/gui/theme.py",
+    "src/tomus/gui/icons.py",
+    "src/tomus/gui/os_integration.py",
 ]
 
 
@@ -405,7 +405,7 @@ def test_open_file_in_os_darwin(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setattr("subprocess.Popen", lambda cmd: chamados.append(cmd))
 
-    from bibliotec.gui.os_integration import open_file_in_os
+    from tomus.gui.os_integration import open_file_in_os
 
     open_file_in_os(arquivo)
     assert chamados == [["open", str(arquivo.resolve())]]
@@ -420,7 +420,7 @@ def test_reveal_in_file_manager_darwin(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setattr("subprocess.Popen", lambda cmd: chamados.append(cmd))
 
-    from bibliotec.gui.os_integration import reveal_in_file_manager
+    from tomus.gui.os_integration import reveal_in_file_manager
 
     reveal_in_file_manager(arquivo)
     assert chamados == [["open", "-R", str(arquivo.resolve())]]
@@ -439,7 +439,7 @@ def test_open_file_in_os_windows(monkeypatch, tmp_path):
 
     monkeypatch.setattr(_os, "startfile", _fake_startfile, raising=False)
 
-    from bibliotec.gui.os_integration import open_file_in_os
+    from tomus.gui.os_integration import open_file_in_os
 
     open_file_in_os(arquivo)
     assert chamados == [str(arquivo.resolve())]
@@ -454,7 +454,7 @@ def test_reveal_in_file_manager_windows(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("subprocess.Popen", lambda cmd: chamados.append(cmd))
 
-    from bibliotec.gui.os_integration import reveal_in_file_manager
+    from tomus.gui.os_integration import reveal_in_file_manager
 
     reveal_in_file_manager(arquivo)
     assert chamados == [["explorer", f"/select,{arquivo.resolve()}"]]
@@ -469,7 +469,7 @@ def test_open_file_in_os_linux(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "platform", "linux")
     monkeypatch.setattr("subprocess.Popen", lambda cmd: chamados.append(cmd))
 
-    from bibliotec.gui.os_integration import open_file_in_os
+    from tomus.gui.os_integration import open_file_in_os
 
     open_file_in_os(arquivo)
     assert chamados == [["xdg-open", str(arquivo.resolve())]]
@@ -477,7 +477,7 @@ def test_open_file_in_os_linux(monkeypatch, tmp_path):
 
 def test_open_file_in_os_arquivo_inexistente_leva_file_not_found():
     """open_file_in_os deve levantar FileNotFoundError para caminho ausente."""
-    from bibliotec.gui.os_integration import open_file_in_os
+    from tomus.gui.os_integration import open_file_in_os
 
     with pytest.raises(FileNotFoundError):
         open_file_in_os("/caminho/que/nao/existe.pdf")
@@ -492,7 +492,7 @@ def test_secure_chmod_600_aplica_0600(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setattr("os.chmod", lambda p, modo: chamados.append(modo))
 
-    from bibliotec.gui.os_integration import secure_chmod_600
+    from tomus.gui.os_integration import secure_chmod_600
 
     secure_chmod_600(arquivo)
     assert chamados == [0o600]
@@ -507,7 +507,7 @@ def test_secure_chmod_600_windows_ignora(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr("os.chmod", lambda p, modo: chamados.append(modo))
 
-    from bibliotec.gui.os_integration import secure_chmod_600
+    from tomus.gui.os_integration import secure_chmod_600
 
     secure_chmod_600(arquivo)
     assert chamados == []
@@ -515,7 +515,7 @@ def test_secure_chmod_600_windows_ignora(monkeypatch, tmp_path):
 
 def test_reveal_in_file_manager_arquivo_inexistente_leva_file_not_found():
     """reveal_in_file_manager deve levantar FileNotFoundError para caminho ausente."""
-    from bibliotec.gui.os_integration import reveal_in_file_manager
+    from tomus.gui.os_integration import reveal_in_file_manager
 
     with pytest.raises(FileNotFoundError):
         reveal_in_file_manager("/caminho/que/nao/existe.pdf")

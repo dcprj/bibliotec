@@ -1,4 +1,4 @@
-"""Testes unitários para src/bibliotec/core/config.py.
+"""Testes unitários para src/tomus/core/config.py.
 
 Valida a geração do arquivo config.toml local e a leitura por AppConfig()
 respeitando a precedência das fontes de configuração.
@@ -10,15 +10,15 @@ import os
 
 import pytest
 
-from bibliotec.core.config import AppConfig, init_config_file
+from tomus.core.config import AppConfig, init_config_file
 
 
-def test_init_config_file_local_creates_bibliotec_toml(tmp_path, monkeypatch):
-    """init_config_file(local=True) cria ./bibliotec.toml com permissão 0600."""
+def test_init_config_file_local_creates_tomus_toml(tmp_path, monkeypatch):
+    """init_config_file(local=True) cria ./tomus.toml com permissão 0600."""
     monkeypatch.chdir(tmp_path)
     target = init_config_file(local=True)
 
-    assert target == tmp_path / "bibliotec.toml"
+    assert target == tmp_path / "tomus.toml"
     assert target.exists()
 
     # Permissão restrita (apenas o dono lê/escreve)
@@ -34,7 +34,7 @@ def test_init_config_file_local_creates_bibliotec_toml(tmp_path, monkeypatch):
 
 
 def test_app_config_reads_local_toml_without_validation_error(tmp_path, monkeypatch):
-    """AppConfig() não falha com ValidationError quando ./bibliotec.toml existe."""
+    """AppConfig() não falha com ValidationError quando ./tomus.toml existe."""
     monkeypatch.chdir(tmp_path)
     init_config_file(local=True)
 
@@ -58,8 +58,8 @@ def test_app_config_reads_env_variables(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     init_config_file(local=True)
 
-    # BIBLIOTEC_* deve ser lido (sem GEMINI_API_KEY definido)
-    monkeypatch.setenv("BIBLIOTEC_GEMINI_API_KEY", "env-gemini-key-1234")
+    # TOMUS_* deve ser lido (sem GEMINI_API_KEY definido)
+    monkeypatch.setenv("TOMUS_GEMINI_API_KEY", "env-gemini-key-1234")
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
 
     config = AppConfig()
@@ -70,7 +70,7 @@ def test_app_config_reads_env_variables(tmp_path, monkeypatch):
 def test_app_config_ignores_extra_keys(tmp_path, monkeypatch):
     """AppConfig() não rejeita chaves extras no TOML (extra='ignore')."""
     monkeypatch.chdir(tmp_path)
-    toml_path = tmp_path / "bibliotec.toml"
+    toml_path = tmp_path / "tomus.toml"
     toml_path.write_text(
         """
 [general]
@@ -101,7 +101,7 @@ chave_inexistente = "deve ser ignorada"
 def test_llm_config_default_provider_alias(tmp_path, monkeypatch):
     """default_provider é um alias para provider (retrocompatibilidade)."""
     monkeypatch.chdir(tmp_path)
-    toml_path = tmp_path / "bibliotec.toml"
+    toml_path = tmp_path / "tomus.toml"
     toml_path.write_text(
         """
 [llm]
@@ -129,7 +129,7 @@ claude_api_key = ""
 def test_llm_config_providers_dict(tmp_path, monkeypatch):
     """providers aceita dicionário de configurações específicas por provedor."""
     monkeypatch.chdir(tmp_path)
-    toml_path = tmp_path / "bibliotec.toml"
+    toml_path = tmp_path / "tomus.toml"
     toml_path.write_text(
         """
 [llm]
@@ -170,7 +170,7 @@ def test_api_keys_deepseek_and_claude_env(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     init_config_file(local=True)
 
-    monkeypatch.setenv("BIBLIOTEC_DEEPSEEK_API_KEY", "ds-key-1234")
+    monkeypatch.setenv("TOMUS_DEEPSEEK_API_KEY", "ds-key-1234")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "claude-key-5678")
 
     config = AppConfig()
@@ -180,7 +180,7 @@ def test_api_keys_deepseek_and_claude_env(tmp_path, monkeypatch):
 
 def test_mask_key_mascarar_novas_chaves():
     """mask_key deve mascarar corretamente as novas chaves de API."""
-    from bibliotec.core.config import mask_key
+    from tomus.core.config import mask_key
 
     # Chave vazia
     assert mask_key("") == ""
@@ -196,7 +196,7 @@ def test_mask_key_mascarar_novas_chaves():
 
 def test_template_contem_novas_secoes():
     """O template gerado deve conter as novas seções e chaves."""
-    from bibliotec.core.config import generate_config_template
+    from tomus.core.config import generate_config_template
 
     template = generate_config_template()
     assert "default_provider" in template
@@ -212,7 +212,7 @@ def test_template_contem_novas_secoes():
 
 def test_llm_config_valores_padrao():
     """LLMConfig deve ter valores padrão corretos."""
-    from bibliotec.core.config import LLMConfig
+    from tomus.core.config import LLMConfig
 
     config = LLMConfig()
     assert config.provider == "gemini"

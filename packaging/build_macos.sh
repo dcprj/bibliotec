@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Script de Build do BiblioTEC para macOS (.app e .dmg)
+# Script de Build do Tomus para macOS (.app e .dmg)
 # ==============================================================================
 set -euo pipefail
 

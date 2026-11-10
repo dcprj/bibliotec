@@ -5,7 +5,7 @@
 # Tomus — Organizador Acadêmico de PDFs
 
 [![Licença MIT](https://img.shields.io/badge/Licen%C3%A7a-MIT-blue.svg)](LICENSE)
-[![Plataformas](https://img.shields.io/badge/Plataformas-macOS%20%7C%20Windows-brightgreen.svg)](#como-baixar-e-instalar)
+[![Plataformas](https://img.shields.io/badge/Plataformas-macOS-green.svg)](#como-baixar-e-instalar)
 [![100% Gratuito](https://img.shields.io/badge/Software-100%25%20Gratuito-orange.svg)](#-apoie-o-projeto-doação-voluntária)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python/)
 
@@ -21,12 +21,11 @@ Ele organiza seus documentos diretamente em seu computador conforme a taxonomia 
 
 ## 📥 Como Baixar e Instalar
 
-Você não precisa instalar Python nem configurar ambientes complexos para usar o Tomus. Baixe o instalador pronto para o seu sistema operacional na seção de **[Releases](https://github.com/dcprj/bibliotec/releases)**:
+Você não precisa instalar Python nem configurar ambientes complexos para usar o Tomus. Baixe o instalador pronto para macOS na seção de **[Releases](https://github.com/dcprj/tomus/releases)**:
 
 | Sistema Operacional | Formato do Pacote | Link de Download Direto |
 | :--- | :--- | :--- |
-| **macOS** (Apple Silicon / Intel) | `.dmg` (Arrastar para `/Applications`) | [Baixar Tomus para macOS (.dmg)](https://github.com/dcprj/bibliotec/releases/latest) |
-| **Windows** (10 / 11 64-bit) | `.exe` (Instalador completo Inno Setup) | [Baixar Tomus para Windows (.exe)](https://github.com/dcprj/bibliotec/releases/latest) |
+| **macOS** (Apple Silicon / Intel) | `.dmg` (Arrastar para `/Applications`) | [Baixar Tomus para macOS (.dmg)](https://github.com/dcprj/tomus/releases/latest) |
 
 ---
 
@@ -47,45 +46,26 @@ Você não precisa instalar Python nem configurar ambientes complexos para usar 
 
 ---
 
-### 🪟 2. Instalação no Windows
-
-1. Baixe o instalador oficial `Tomus_Setup_v1.1.0_Windows_x64.exe` (ou versão mais recente na página de releases).
-2. Dê duplo clique no arquivo executável para abrir o assistente de instalação.
-
-> [!IMPORTANT]
-> **Aviso do Windows SmartScreen (Como prosseguir com a instalação):**  
-> Por ser um software de código aberto independente distribuído gratuitamente (sem certificado comercial pago de assinatura de código EV de US$ 400/ano), o **Windows Defender SmartScreen** exibirá uma tela azul informando:  
-> *"O Windows protegeu o seu computador — O Windows Defender SmartScreen impediu a inicialização de um aplicativo não reconhecido."*  
-> 
-> Para instalar normalmente (procedimento necessário apenas uma vez):
-> 1. Na tela azul do SmartScreen, clique no link **"Mais informações"** (logo abaixo do texto).
-> 2. O botão **"Executar assim mesmo"** ficará visível no canto inferior direito. Clique nele.
-> 3. Se o Windows exibir a confirmação do Controle de Conta de Usuário (UAC), clique em **Sim** para autorizar o assistente do Inno Setup.
-> 
-> O assistente criará automaticamente os atalhos no Menu Iniciar e na Área de Trabalho com desinstalação limpa no Painel de Controle.
-
----
-
-### 💻 3. Instalação via Python / Terminal (Desenvolvedores)
+### 💻 2. Instalação via Python / Terminal (Desenvolvedores)
 
 Se você é desenvolvedor ou prefere executar o Tomus via ambiente Python:
 
 ```bash
 # Clonar o repositório
-git clone https://github.com/dcprj/bibliotec.git
-cd bibliotec
+git clone https://github.com/dcprj/tomus.git
+cd tomus
 
 # Criar e ativar ambiente virtual
 python3 -m venv .venv
-source .venv/bin/activate  # No Windows: .venv\Scripts\activate
+source .venv/bin/activate
 
 # Instalar dependências
 pip install -e ".[dev]"
 
 # Iniciar a interface gráfica (Desktop GUI)
-bibliotec-gui
+tomus-gui
 # ou:
-bibliotec gui
+tomus gui
 ```
 
 ---
@@ -97,7 +77,7 @@ O Tomus funciona localmente com simulação e extração heurística, mas alcan�
 1. **Google Gemini (Recomendado — Gratuito):**
    * Acesse o [Google AI Studio](https://aistudio.google.com/).
    * Faça login com sua conta Google e clique em **"Create API Key"**.
-   * Cota gratuita generosa para catalogação de bibliotecas inteiras.
+   * Cota gratuita generosa para catalogação de tomusas inteiras.
 2. **Groq (Llama 3.3 70B — Ultrarrápido e Gratuito):**
    * Crie sua conta em [Groq Console](https://console.groq.com/).
    * Gere uma chave em **API Keys**.
@@ -117,8 +97,8 @@ O **Tomus** é uma iniciativa independente, de código aberto e **100% gratuita*
 
 Se o Tomus foi útil para sua dissertação, tese ou organização bibliográfica e você deseja demonstrar sua gratidão e incentivar a manutenção e novas funcionalidades, você pode fazer uma **contribuição espontânea de qualquer valor**:
 
-* **Chave Pix (Brasil):** `dpinheiro+bibliotec@gmail.com`
-* **Código-fonte no GitHub:** [Repositório Oficial dcprj/bibliotec](https://github.com/dcprj/bibliotec)
+* **Chave Pix (Brasil):** `dpinheiro+tomus@gmail.com`
+* **Código-fonte no GitHub:** [Repositório Oficial dcprj/tomus](https://github.com/dcprj/tomus)
 
 > [!NOTE]
 > **Esclarecimento Jurídico (Doação Pura):**  

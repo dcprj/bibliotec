@@ -1,4 +1,4 @@
-# Backlog do BiblioTEC
+# Backlog do Tomus
 
 Este documento registra itens de melhoria contínua, débitos técnicos, ideias futuras e bugs reportados para tratamento em sprints posteriores.
 
@@ -10,12 +10,12 @@ Este documento registra itens de melhoria contínua, débitos técnicos, ideias 
 
 - **Prioridade:** Média (Próxima Sprint de Empacotamento)
 - **Status:** Concluído / Resolvido (v1.0.1)
-- **Ambiente:** macOS 14+ / Apple Silicon (ARM64), pacote congelado via PyInstaller (`BiblioTEC.app`).
+- **Ambiente:** macOS 14+ / Apple Silicon (ARM64), pacote congelado via PyInstaller (`Tomus.app`).
 - **Data do Relato:** 2026-11-08
-- **Responsável:** Prisma (BiblioTEC UX/UI & Desktop GUI Architect)
+- **Responsável:** Prisma (Tomus UX/UI & Desktop GUI Architect)
 
 #### 1. Sintoma e Log de Falha
-Ao iniciar o binário congelado `BiblioTEC.app` (fora do interpretador Python direto do `.venv`), o aplicativo aborta imediatamente na inicialização:
+Ao iniciar o binário congelado `Tomus.app` (fora do interpretador Python direto do `.venv`), o aplicativo aborta imediatamente na inicialização:
 ```text
 Exception Type:    EXC_CRASH (SIGABRT)
 Termination Reason: Namespace SIGNAL, Code 6, Abort trap: 6
@@ -39,7 +39,7 @@ Thread 0 Crashed (Dispatch queue: com.apple.main-thread):
    Em bundles não assinados ou sem Hardened Runtime e entitlements de JIT (`com.apple.security.cs.allow-jit`, `com.apple.security.cs.allow-unsigned-executable-memory`), o sandbox padrão do Chromium pode disparar violação de integridade de processo no macOS Sonoma/Sequoia.
 
 #### 3. Plano de Correção Mapeado
-1. **Configuração Defensiva de Ambiente em `src/bibliotec/gui/app.py`:**
+1. **Configuração Defensiva de Ambiente em `src/tomus/gui/app.py`:**
    - Injetar flags de desativação de sandbox antes da criação do `QApplication`:
      ```python
      import os, sys
@@ -63,27 +63,27 @@ Thread 0 Crashed (Dispatch queue: com.apple.main-thread):
 
 - **Prioridade:** Alta (Identidade Oficial do Aplicativo)
 - **Status:** Concluído / Resolvido (v1.0.0)
-- **Escopo:** `logo_e_icone/`, `packaging/icons/`, `src/bibliotec/gui/resources/`, `src/bibliotec/gui/web/`
+- **Escopo:** `logo_e_icone/`, `packaging/icons/`, `src/tomus/gui/resources/`, `src/tomus/gui/web/`
 - **Data do Relato:** 2026-11-08
 - **Responsável:** Prisma (UX/UI) & Chefe
 
 #### 1. Diagnóstico e Fontes Oficiais
 Foram disponibilizadas as artes oficiais em alta resolução:
-- `/Users/dario/Projetos-de-aplicativos/bibliotec/logo_e_icone/icone.png` (1254 x 1254 px)
-- `/Users/dario/Projetos-de-aplicativos/bibliotec/logo_e_icone/Logo.png` (1774 x 887 px)
+- `/Users/dario/Projetos-de-aplicativos/tomus/logo_e_icone/icone.png` (1254 x 1254 px)
+- `/Users/dario/Projetos-de-aplicativos/tomus/logo_e_icone/Logo.png` (1774 x 887 px)
 
 #### 2. Entregas Pré-processadas
 1. **Ícones Multiplataforma:**
    - `packaging/icons/icon.icns`: Pacote Apple Silicon / Retina multi-camada (16x16 até 1024x1024) com transparência de cantos gerado via `iconutil`.
    - `packaging/icons/icon.ico`: Pacote multi-resolução para Windows (16, 32, 48, 64, 128, 256) integrado no instalador Inno Setup (`packaging/windows_installer.iss`).
-   - `src/bibliotec/gui/resources/bibliotec_icon.png`: Bitmap oficial 256x256 injetado no `app.setWindowIcon` e `window.setWindowIcon`.
+   - `src/tomus/gui/resources/tomus_icon.png`: Bitmap oficial 256x256 injetado no `app.setWindowIcon` e `window.setWindowIcon`.
 2. **Logo e Web GUI:**
-   - Cópias em `src/bibliotec/gui/resources/` e `src/bibliotec/gui/web/logo.png`.
-   - Pendência ao retomar: finalizar inserção do elemento `<img>` na toolbar e no modal "Sobre o BiblioTEC".
+   - Cópias em `src/tomus/gui/resources/` e `src/tomus/gui/web/logo.png`.
+   - Pendência ao retomar: finalizar inserção do elemento `<img>` na toolbar e no modal "Sobre o Tomus".
 
 ---
 
-### [FEAT-UI-01] Substituição do Ícone Padrão do Python por Ícone Personalizado do BiblioTEC
+### [FEAT-UI-01] Substituição do Ícone Padrão do Python por Ícone Personalizado do Tomus
 
 - **Prioridade:** Média / Alta (Polimento de Produto)
 - **Status:** Concluído / Resolvido (v1.0.1)
@@ -92,18 +92,18 @@ Foram disponibilizadas as artes oficiais em alta resolução:
 - **Responsáveis:** Prisma (UX/UI) & Atlas (Foundation)
 
 #### 1. Objetivo
-Substituir o ícone genérico padrão do Python (exibido atualmente no Dock do macOS, na barra de tarefas do Windows e nos binários empacotados) por uma identidade visual exclusiva e personalizada do **BiblioTEC** (*Editorial Academic Workbench*), remetendo a organização acadêmica, catalogação e rigor tipográfico.
+Substituir o ícone genérico padrão do Python (exibido atualmente no Dock do macOS, na barra de tarefas do Windows e nos binários empacotados) por uma identidade visual exclusiva e personalizada do **Tomus** (*Editorial Academic Workbench*), remetendo a organização acadêmica, catalogação e rigor tipográfico.
 
 #### 2. Requisitos de Entrega
 1. **Arte e Formatos Multiplataforma:**
    - **macOS (`.icns`):** Arquivo multi-resolução com camadas de 16x16 até 1024x1024 (Retina @2x), integrado em `Contents/Resources/icon.icns` do `.app`.
-   - **Windows (`.ico`):** Arquivo contendo resoluções de 16x16, 32x32, 48x48, 64x64, 128x128 e 256x256 incorporado ao `BiblioTEC.exe` e ao instalador Inno Setup (`SetupIconFile`).
-2. **Runtime do Aplicativo (`src/bibliotec/gui/app.py`):**
+   - **Windows (`.ico`):** Arquivo contendo resoluções de 16x16, 32x32, 48x48, 64x64, 128x128 e 256x256 incorporado ao `Tomus.exe` e ao instalador Inno Setup (`SetupIconFile`).
+2. **Runtime do Aplicativo (`src/tomus/gui/app.py`):**
    - Configurar `app.setWindowIcon(QIcon(icon_path))` no `QApplication` e em `MainWindow` para que janelas secundárias e diálogos modais herdem o ícone oficial.
    - Definir `AppUserModelID` no Windows (`ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID`) para garantir que o Windows agrupe a janela corretamente na barra de tarefas com o ícone customizado.
 3. **Scripts de Empacotamento (`packaging/`):**
-   - No `packaging/pyinstaller.spec`: adicionar parâmetro `icon='assets/icons/bibliotec.icns'` no bloco `BNDL` (macOS) e `icon='assets/icons/bibliotec.ico'` no bloco `EXE` (Windows).
-   - No `packaging/windows_installer.iss`: configurar `SetupIconFile=..\assets\icons\bibliotec.ico` e `UninstallDisplayIcon={app}\BiblioTEC.exe`.
+   - No `packaging/pyinstaller.spec`: adicionar parâmetro `icon='assets/icons/tomus.icns'` no bloco `BNDL` (macOS) e `icon='assets/icons/tomus.ico'` no bloco `EXE` (Windows).
+   - No `packaging/windows_installer.iss`: configurar `SetupIconFile=..\assets\icons\tomus.ico` e `UninstallDisplayIcon={app}\Tomus.exe`.
 
 ---
 
@@ -115,11 +115,11 @@ Substituir o ícone genérico padrão do Python (exibido atualmente no Dock do m
 - **Status:** Concluído / Resolvido (v1.0.1)
 - **Escopo:** `packaging/build_macos.sh`, `.github/workflows/release.yml`
 - **Data do Relato:** 2026-11-08
-- **Responsável:** Atlas (BiblioTEC Foundation Engineer)
+- **Responsável:** Atlas (Tomus Foundation Engineer)
 
 #### 1. Objetivo
-Ao montar e abrir o arquivo `BiblioTEC-1.0.0-macOS.dmg`, o Finder deve abrir automaticamente uma janela limpa e customizada contendo:
-- O ícone do aplicativo **`BiblioTEC.app`** à esquerda.
+Ao montar e abrir o arquivo `Tomus-1.0.0-macOS.dmg`, o Finder deve abrir automaticamente uma janela limpa e customizada contendo:
+- O ícone do aplicativo **`Tomus.app`** à esquerda.
 - Um atalho simbólico nativo para a pasta **`Applications` (Aplicativos)** à direita.
 - (Opcional) Fundo ilustrativo com seta discreta e texto instrucional orientando a arrastar o aplicativo para instalar.
 
@@ -130,7 +130,7 @@ Ao montar e abrir o arquivo `BiblioTEC-1.0.0-macOS.dmg`, o Finder deve abrir aut
    - Utilizar ferramenta automatizada como `create-dmg` ou script AppleScript / `dmgbuild` para configurar:
      - Dimensão da janela (ex.: 540x380 px).
      - Tamanho dos ícones (ex.: 100px ou 128px).
-     - Coordenadas exatas dos ícones (ex.: `BiblioTEC.app` em `(140, 190)` e `Applications` em `(400, 190)`).
+     - Coordenadas exatas dos ícones (ex.: `Tomus.app` em `(140, 190)` e `Applications` em `(400, 190)`).
      - Ocultação da barra lateral e barra de status do Finder no volume montado.
 3. **Automação no CI/CD e Script Local:**
    - Atualizar `packaging/build_macos.sh` para suportar `create-dmg` (instalável via Homebrew ou GitHub Actions `brew install create-dmg`).
@@ -158,28 +158,28 @@ Conforme decisão de produto, o lançamento inicial foca na estabilização dos 
    - Executar o workflow de CI em runner Windows (`windows-latest`).
    - Gerar o bundle via PyInstaller e compilar o instalador Inno Setup (`packaging/windows_installer.iss`).
    - Validar que o instalador crie atalhos no Menu Iniciar, Área de Trabalho e suporte desinstalação limpa.
-   - Gerar o arquivo final `BiblioTEC_Setup_v1.0.0_Windows_x64.exe`.
+   - Gerar o arquivo final `Tomus_Setup_v1.0.0_Windows_x64.exe`.
 2. **Compilação do Instalador macOS:**
    - Executar o workflow de CI em runner macOS (`macos-latest`).
    - Gerar o bundle via PyInstaller e compilar a imagem DMG com Finder layout (`packaging/build_macos.sh`).
-   - Gerar o arquivo final `BiblioTEC-1.0.0-macOS.dmg`.
+   - Gerar o arquivo final `Tomus-1.0.0-macOS.dmg`.
 3. **Publicação Consolidada na Seção Assets:**
-   - Anexar ambos os arquivos (`.dmg` e `.exe`) à página de releases do repositório `dcprj/bibliotec`.
+   - Anexar ambos os arquivos (`.dmg` e `.exe`) à página de releases do repositório `dcprj/tomus`.
    - Garantir que ambos os instaladores oficiais (macOS e Windows) apareçam listados com seus hashes SHA-256 e tamanhos.
 
 ---
 
 ## 🔑 Guia de APIs e Credenciais: Google Books API Key
 
-### 1. Para que a chave é necessária no BiblioTEC
+### 1. Para que a chave é necessária no Tomus
 1. **Enriquecimento Bibliográfico Oficial:** O extrator `metadata_google_books.py` consulta o catálogo mundial do Google Books para enriquecer livros e e-books com metadados canônicos (título padronizado, nomes completos dos autores, editora, cidade, ano de publicação exato, sinopse e categorização temática), além de validar e formatar o ISBN-13.
 2. **Prevenção de Rate Limiting (HTTP 429):** Requisições anônimas (sem chave) compartilham um pool restrito de cotas baseado em IP público. Em varreduras de pastas com dezenas de PDFs acadêmicos, requisições repetidas sem chave sofrem bloqueio temporário (erro `429 Too Many Requests`). A chave pessoal garante requisições dedicadas e sem bloqueio.
-3. **Cota Diária Gratuita:** O Google Cloud oferece gratuitamente uma cota de 1.000 requisições por dia por projeto, o que cobre com folga qualquer biblioteca pessoal ou acadêmica.
+3. **Cota Diária Gratuita:** O Google Cloud oferece gratuitamente uma cota de 1.000 requisições por dia por projeto, o que cobre com folga qualquer tomusa pessoal ou acadêmica.
 
 ### 2. Passo a Passo para Gerar a Chave no Google Cloud Console
 1. Acesse o [Google Cloud Console](https://console.cloud.google.com/) com a sua conta Google.
-2. Selecione ou crie um projeto (ex.: `BiblioTEC`).
-3. No menu de navegação lateral (☰), vá em **APIs e Serviços** > **Biblioteca**.
+2. Selecione ou crie um projeto (ex.: `Tomus`).
+3. No menu de navegação lateral (☰), vá em **APIs e Serviços** > **Tomusa**.
 4. No campo de busca, pesquise por **Books API** (ou **Google Books API**) e clique em **Ativar** (Enable).
 5. Após ativada, vá em **APIs e Serviços** > **Credenciais**.
 6. Clique no botão superior **+ Criar Credenciais** e selecione **Chave de API**.
@@ -187,10 +187,10 @@ Conforme decisão de produto, o lançamento inicial foca na estabilização dos 
    - Em **Restrições de API**, marque **Restringir chave** e selecione exclusivamente a **Books API**.
    - Salve a configuração.
 8. Copie a chave gerada (iniciada por `AIzaSy...`).
-9. **Configuração no BiblioTEC:**
+9. **Configuração no Tomus:**
    - **Interface Gráfica (Recomendado):** Abra o modal **Preferências (⚙️)** > aba **Chaves de API** > preencha o campo **Google Books API Key** e salve.
-   - **Arquivo Local:** Adicione em `bibliotec.toml`: `google_books_api_key = "AIzaSy..."`.
-   - **Variável de Ambiente:** Exporte `export BIBLIOTEC_GOOGLE_BOOKS_API_KEY="AIzaSy..."`.
+   - **Arquivo Local:** Adicione em `tomus.toml`: `google_books_api_key = "AIzaSy..."`.
+   - **Variável de Ambiente:** Exporte `export TOMUS_GOOGLE_BOOKS_API_KEY="AIzaSy..."`.
 
 ---
 
@@ -199,16 +199,16 @@ Conforme decisão de produto, o lançamento inicial foca na estabilização dos 
 - **Prioridade:** Média (Pós-v1.0.1)
 - **Status:** Planejado
 - **Responsáveis:** Prisma (UX/UI Designer) & Farol (GitOps)
-- **Hospedagem:** Gratuita via GitHub Pages (`https://dcprj.github.io/bibliotec/`)
+- **Hospedagem:** Gratuita via GitHub Pages (`https://dcprj.github.io/tomus/`)
 
 ### 1. Escopo e Objetivos
 1. **Página Estática Leve e Responsiva:** Desenvolvida em HTML5/CSS3 moderno na pasta `docs/` ou branch dedicada, sem dependências de frameworks pesados.
 2. **Hero Section:**
-   - Logotipo oficial e identidade visual do BiblioTEC.
+   - Logotipo oficial e identidade visual do Tomus.
    - Slogan acadêmico voltado a pesquisadores e estudantes de pós-graduação.
    - Botões de download inteligentes que direcionam para os assets oficiais da última release:
-     - `BiblioTEC_Setup_v{VERSION}_Windows_x64.exe`
-     - `BiblioTEC-{VERSION}-macOS.dmg`
+     - `Tomus_Setup_v{VERSION}_Windows_x64.exe`
+     - `Tomus-{VERSION}-macOS.dmg`
 3. **Showcase Visual:**
    - Demonstração da taxonomia curricular CAPES/CNPq.
    - Extração de metadados canônicos via DOI/Crossref e Google Books.
@@ -230,10 +230,10 @@ Conforme decisão de produto, o lançamento inicial foca na estabilização dos 
 - Exigência de Pull Request aprovado e esteira de CI/CD 100% verde antes de qualquer merge.
 
 ### 2. Mapeamento de Responsabilidades (`.github/CODEOWNERS`)
-- `src/bibliotec/gui/`: Revisão obrigatória de Prisma (UX/UI).
-- `src/bibliotec/core/`: Revisão obrigatória de Atlas (Foundation).
-- `src/bibliotec/extractors/`: Revisão obrigatória de Lince (Extractors).
-- `src/bibliotec/cli/`: Revisão obrigatória de Forja (Pipeline & CLI).
+- `src/tomus/gui/`: Revisão obrigatória de Prisma (UX/UI).
+- `src/tomus/core/`: Revisão obrigatória de Atlas (Foundation).
+- `src/tomus/extractors/`: Revisão obrigatória de Lince (Extractors).
+- `src/tomus/cli/`: Revisão obrigatória de Forja (Pipeline & CLI).
 - `packaging/`, `.github/workflows/`: Revisão obrigatória de Farol (Release Manager).
 - Todo o código / credenciais / segurança: Gatekeeper Sentinela (AppSec).
 
@@ -303,7 +303,7 @@ Atualmente, a aplicação grava qualquer string inserida nos campos de chave de 
 ### Problemas Identificados e Solucionados
 1. **Falso Fundo Cinza Eliminado:** O ícone foi redimensionado a partir do canvas base 1024x1024 RGBA limpo, com squircle cobrindo ~82.5% da área e transparência alfa pura (`alpha=0`) nos quatro cantos externos.
 2. **Ícone Windows Multi-Resolução (7 Camadas):** O arquivo `packaging/icons/icon.ico` foi compilado contendo 7 resoluções (16, 24, 32, 48, 64, 128 e 256 px) totalizando 48.7 KB, sanando definitivamente o desfoque na Área de Trabalho e Barra de Tarefas do Windows.
-3. **Pacotes Atualizados:** `packaging/icons/icon.png`, `packaging/icons/icon.icns`, `packaging/icons/icon.ico`, `src/bibliotec/gui/resources/bibliotec_icon.png`, `src/bibliotec/gui/web/logo.png` e `src/bibliotec/gui/web/logo_transparent.png`.
+3. **Pacotes Atualizados:** `packaging/icons/icon.png`, `packaging/icons/icon.icns`, `packaging/icons/icon.ico`, `src/tomus/gui/resources/tomus_icon.png`, `src/tomus/gui/web/logo.png` e `src/tomus/gui/web/logo_transparent.png`.
 
 ---
 
@@ -334,9 +334,9 @@ Atualmente, a aplicação grava qualquer string inserida nos campos de chave de 
 - **Status:** Concluído / Resolvido (v1.1.1)
 - **Responsáveis:** Atlas (Foundation) & Forja (Core/Pipeline)
 - **Resolução:**
-  1. Remoção de `setup_logging` do escopo global de importação de `src/bibliotec/gui/app.py`.
+  1. Remoção de `setup_logging` do escopo global de importação de `src/tomus/gui/app.py`.
   2. Inicialização segura de logging dentro de `launch_gui()` apontando para `Path.home() / ".tomus" / "tomus.log"`.
-  3. Tratamento defensivo em `src/bibliotec/core/logging.py` com bloco `try/except` envolvendo a criação do `FileHandler` e fallback gracioso para `NullHandler()`, impedindo qualquer interrupção do aplicativo por falha de I/O de log.
+  3. Tratamento defensivo em `src/tomus/core/logging.py` com bloco `try/except` envolvendo a criação do `FileHandler` e fallback gracioso para `NullHandler()`, impedindo qualquer interrupção do aplicativo por falha de I/O de log.
 
 
 

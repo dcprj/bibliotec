@@ -8,13 +8,13 @@ detecção de Ficha Catalográfica.
 
 from __future__ import annotations
 
-from bibliotec.core.taxonomy import (
+from tomus.core.taxonomy import (
     get_taxonomy_version,
     get_grandes_areas,
     get_areas_basicas,
     validate_or_repair_pair,
 )
-from bibliotec.extractors.identifiers import (
+from tomus.extractors.identifiers import (
     extract_doi,
     extract_isbn,
     detect_cip_page,

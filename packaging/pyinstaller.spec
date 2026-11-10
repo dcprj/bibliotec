@@ -25,9 +25,9 @@ ICONS_DIR = ROOT_DIR / "packaging" / "icons"
 
 # Dados estáticos obrigatórios
 datas = [
-    (str(SRC_DIR / "bibliotec" / "gui" / "web"), "bibliotec/gui/web"),
-    (str(SRC_DIR / "bibliotec" / "gui" / "resources"), "bibliotec/gui/resources"),
-    (str(SRC_DIR / "bibliotec" / "core" / "resources"), "bibliotec/core/resources"),
+    (str(SRC_DIR / "tomus" / "gui" / "web"), "tomus/gui/web"),
+    (str(SRC_DIR / "tomus" / "gui" / "resources"), "tomus/gui/resources"),
+    (str(SRC_DIR / "tomus" / "core" / "resources"), "tomus/core/resources"),
 ]
 
 # Hidden imports essenciais para PySide6 WebEngine, dependências dinâmicas e OCR Docling
@@ -80,12 +80,12 @@ binaries = []
 binaries += collect_dynamic_libs("onnxruntime")
 
 try:
-    hiddenimports += collect_submodules("bibliotec")
+    hiddenimports += collect_submodules("tomus")
 except Exception:
     pass
 
 a = Analysis(
-    [str(SRC_DIR / "bibliotec" / "gui" / "app.py")],
+    [str(SRC_DIR / "tomus" / "gui" / "app.py")],
     pathex=[str(SRC_DIR)],
     binaries=binaries,
     datas=datas,

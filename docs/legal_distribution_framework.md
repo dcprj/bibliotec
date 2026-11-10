@@ -1,4 +1,4 @@
-# Framework Jurídico e Regulatório de Distribuição: BiblioTEC
+# Framework Jurídico e Regulatório de Distribuição: Tomus
 **Parecer Jurídico, Termos de Licenciamento, Diretrizes de Privacidade (LGPD/GDPR) e Minutas Oficiais**
 
 ---
@@ -6,7 +6,7 @@
 ## 1. PARECER JURÍDICO FUNDAMENTADO
 
 ### 1.1. Natureza Jurídica do Software e Regime de Direitos Autorais
-O **BiblioTEC** é uma aplicação desktop multiplataforma desenvolvida para auxílio à pesquisa acadêmica, cujo escopo tecnológico compreende a organização, extração de metadados, classificação temática (tabelas CAPES/CNPq) e renomeação de arquivos PDF em sistemas de arquivos locais.
+O **Tomus** é uma aplicação desktop multiplataforma desenvolvida para auxílio à pesquisa acadêmica, cujo escopo tecnológico compreende a organização, extração de metadados, classificação temática (tabelas CAPES/CNPq) e renomeação de arquivos PDF em sistemas de arquivos locais.
 
 Sob a ótica do ordenamento jurídico brasileiro:
 1. **Regime Legal Aplicável**: O software enquadra-se como programa de computador regido pela **Lei Federal nº 9.609/1998 (Lei do Software)** e, subsidiariamente, pela **Lei Federal nº 9.610/1998 (Lei de Direitos Autorais)**. A proteção aos direitos autorais sobre o código-fonte independe de registro ou homologação formal junto ao INPI (art. 2º, § 3º, da Lei 9.609/1998), embora a autoria moral e patrimonial original permaneça com os seus criadores/mantenedores.
@@ -29,10 +29,10 @@ Uma das preocupações jurídicas cardeais na disponibilização de utilitários
 ---
 
 ### 1.3. Conformidade com a LGPD (Lei nº 13.709/2018) e GDPR: Arquitetura *Privacy-by-Design*
-O BiblioTEC foi concebido sob o rigoroso paradigma de **Privacidade desde a Concepção e por Padrão (*Privacy by Design & by Default*)**:
+O Tomus foi concebido sob o rigoroso paradigma de **Privacidade desde a Concepção e por Padrão (*Privacy by Design & by Default*)**:
 
 1. **Inexistência de Infraestrutura de Nuvem Intermediária**:
-   - Os mantenedores do BiblioTEC **não** possuem, operam ou intermedeiam servidores de retaguarda (*backend servers*), banco de dados em nuvem ou serviços de telemetria/rastreamento de uso.
+   - Os mantenedores do Tomus **não** possuem, operam ou intermedeiam servidores de retaguarda (*backend servers*), banco de dados em nuvem ou serviços de telemetria/rastreamento de uso.
    - Nenhuma informação pessoal, conteúdo de PDF, caminho de diretório ou chave de API transita por servidores pertencentes aos autores do software.
 2. **Operação Estritamente Local no Endpoint do Usuário**:
    - A leitura dos arquivos PDF, a análise morfológica, a criação de arquivos de metadados `.md` e a reorganização de pastas ocorrem em memória e em disco local na máquina do usuário.
@@ -42,7 +42,7 @@ O BiblioTEC foi concebido sob o rigoroso paradigma de **Privacidade desde a Conc
 4. **Papéis Jurídicos perante a LGPD**:
    - **Usuário**: Atua como **Controlador dos Dados** (art. 5º, VI, da LGPD) em relação aos documentos PDF que escolhe processar e aos trechos enviados aos provedores de IA. O usuário é o exclusivo responsável por avaliar se os documentos contêm dados pessoais protegidos ou informações confidenciais antes de submetê-los a serviços de IA remotos.
    - **Provedores de Nuvem/LLM de Terceiros (OpenAI, Google, Anthropic, etc.)**: Atuam como Operadores/Processadores terceirizados sob os termos contratuais e políticas de privacidade independentes contratadas pelo próprio usuário ao criar suas chaves de API.
-   - **Desenvolvedores do BiblioTEC**: Não realizam operações de tratamento de dados pessoais (*data processing*), não tendo acesso nem custódia a quaisquer informações ou metadados processados pela ferramenta.
+   - **Desenvolvedores do Tomus**: Não realizam operações de tratamento de dados pessoais (*data processing*), não tendo acesso nem custódia a quaisquer informações ou metadados processados pela ferramenta.
 
 ---
 
@@ -63,12 +63,12 @@ Para viabilizar a sustentabilidade do projeto sem transmudar a relação em com�
 ---
 
 ### 1.5. Propriedade Intelectual e Uso Nominativo de Marcas de Terceiros
-O BiblioTEC faz referência a tabelas de classificação e interfaces de programação de terceiros:
+O Tomus faz referência a tabelas de classificação e interfaces de programação de terceiros:
 1. **Tabelas de Áreas do Conhecimento CAPES/CNPq**:
    - O uso das nomenclaturas das Grandes Áreas, Áreas e Subáreas da Coordenação de Aperfeiçoamento de Pessoal de Nível Superior (CAPES) e do Conselho Nacional de Desenvolvimento Científico e Tecnológico (CNPq) possui finalidade estritamente catalográfica, taxonômica e educacional, correspondendo a dados e classificações científicas de domínio e interesse público brasileiro.
 2. **Marcas e APIs de LLMs (Google, Anthropic, OpenAI, DeepSeek, Groq, NVIDIA) e Fontes Bibliográficas (OpenAlex, CrossRef, Google Books)**:
    - A referência a tais nomes é feita sob a égide do **Uso Nominativo e Justo de Marcas (*Nominative Fair Use*)**, em consonância com o **Artigo 132, incisos II e IV, da Lei de Propriedade Industrial (Lei Federal nº 9.279/1996 - LPI)**, o qual assegura que o titular de marca não pode impedir o uso de sua marca por terceiros para indicar a destinação ou compatibilidade técnica do produto, contanto que não gere falsa confusão de origem ou patrocínio direto.
-   - O BiblioTEC declara expressamente não possuir afiliação institucional, patrocínio ou chancela oficial por parte de nenhuma das corporações ou fundações citadas.
+   - O Tomus declara expressamente não possuir afiliação institucional, patrocínio ou chancela oficial por parte de nenhuma das corporações ou fundações citadas.
 
 ---
 
@@ -79,7 +79,7 @@ O BiblioTEC faz referência a tabelas de classificação e interfaces de program
 ```text
 MIT License
 
-Copyright (c) 2026 BiblioTEC Contributors and Maintainers.
+Copyright (c) 2026 Tomus Contributors and Maintainers.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -104,7 +104,7 @@ TERMOS COMPLEMENTARES E CONDIÇÕES DE USO (BRASIL / JURISDIÇÃO LOCAL)
 ================================================================================
 
 1. NATUREZA DA DISTRIBUIÇÃO E GRATUIDADE
-O BiblioTEC é um programa de computador distribuído no modelo de código aberto
+O Tomus é um programa de computador distribuído no modelo de código aberto
 e utilitário freeware (100% gratuito), regido pela Lei Federal nº 9.609/1998
 (Lei do Software) e Lei Federal nº 9.610/1998 (Direitos Autorais). Não há
 qualquer cobrança compulsória para o seu uso ou instalação.
@@ -113,7 +113,7 @@ qualquer cobrança compulsória para o seu uso ou instalação.
 O SOFTWARE FOI CONCEBIDO PARA REALIZAR OPERAÇÕES DE LEITURA, CLASSIFICAÇÃO,
 RENOMEAÇÃO E ORGANIZAÇÃO DE ARQUIVOS DIGITAIS DIRETAMENTE NO DISPOSITIVO LOCAL
 DO USUÁRIO. EM NENHUMA HIPÓTESE OS AUTORES, COLABORADORES OU DISTRIBUIDORES
-DO BIBLIOTEC SERÃO RESPONSÁVEIS POR:
+DO TOMUS SERÃO RESPONSÁVEIS POR:
 (I) QUAISQUER DANOS DIRETOS, INDIRETOS, INCIDENTAIS OU EMERGENTES,
 (II) CORRUPÇÃO, PERDA, APAGAMENTO INVOLUNTÁRIO OU RENOMEAÇÃO IMPRÓPRIA DE
      DOCUMENTOS OU DIRETÓRIOS,
@@ -123,7 +123,7 @@ DO BIBLIOTEC SERÃO RESPONSÁVEIS POR:
 ATUALIZADAS DE SEUS ARQUIVOS ANTES DE INICIAR QUALQUER PROCESSO EM LOTE.
 
 3. PRIVACIDADE E PROTEÇÃO DE DADOS (LGPD - LEI Nº 13.709/2018)
-O BiblioTEC opera exclusivamente no dispositivo local do usuário. Não há coleta,
+O Tomus opera exclusivamente no dispositivo local do usuário. Não há coleta,
 telemetria ou tráfego de dados para servidores dos desenvolvedores. O usuário
 é qualificado como único Controlador perante a LGPD em relação aos dados
 contidos nos arquivos manipulados e às requisições enviadas por meio de suas
@@ -147,7 +147,7 @@ garantem pedidos de funcionalidades exclusivas e não são passíveis de estorno
 
 > ### ⚠️ AVISO MANDATÓRIO DE CÓPIA DE SEGURANÇA (BACKUP)
 > 
-> O **BiblioTEC** executa tarefas profundas de organização em disco, incluindo:
+> O **Tomus** executa tarefas profundas de organização em disco, incluindo:
 > 1. Renomeação padronizada de arquivos `.pdf`;
 > 2. Criação de árvores de diretórios baseadas nas áreas da CAPES/CNPq;
 > 3. Geração de arquivos complementares `.md` (companion files) contendo referências ABNT NBR 6023 e fichamentos.
@@ -155,31 +155,31 @@ garantem pedidos de funcionalidades exclusivas e não são passíveis de estorno
 > Embora o software incorpore rotinas estritas de segurança (como verificação de integridade antes da renomeação, sanitização de caracteres proibidos pelo sistema operacional e modo de simulação/visualização prévia):
 > 
 > * **A realização prévia de backup é de responsabilidade estrita e indelegável do usuário.**
-> * **Recomenda-se enfaticamente testar o processamento primeiramente em uma pasta de amostra reduzida** antes de aplicar a renomeação a bibliotecas acadêmicas massivas.
-> * Os desenvolvedores, colaboradores e instituições associadas ao BiblioTEC **ficam isentos de toda e qualquer responsabilidade civil ou patrimonial** decorrente de interrupções de energia, falhas de disco, permissões concorrentes de acesso, substituição acidental de arquivos ou comportamento inadequado gerado por interpretações automatizadas de modelos de inteligência artificial.
+> * **Recomenda-se enfaticamente testar o processamento primeiramente em uma pasta de amostra reduzida** antes de aplicar a renomeação a tomusas acadêmicas massivas.
+> * Os desenvolvedores, colaboradores e instituições associadas ao Tomus **ficam isentos de toda e qualquer responsabilidade civil ou patrimonial** decorrente de interrupções de energia, falhas de disco, permissões concorrentes de acesso, substituição acidental de arquivos ou comportamento inadequado gerado por interpretações automatizadas de modelos de inteligência artificial.
 
 ---
 
 ## 4. POLÍTICA DE PRIVACIDADE E CONFORMIDADE COM LGPD/GDPR
 
 ### 4.1. Fundamentos e Filosofia "Zero Telemetria"
-* **Sem Rastreadores (No Trackers)**: O BiblioTEC não possui SDKs de analytics (Google Analytics, Sentry, Mixpanel, etc.).
-* **Sem Servidores Proprietários**: O software não se comunica com nenhum servidor pertencente aos criadores do BiblioTEC. Nenhuma chamada HTTP "home" é realizada para verificar licença ou registrar uso.
-* **Execução Local (On-Device Processing)**: A extração do texto dos PDFs é realizada integralmente no processador e na memória do computador do usuário por bibliotecas nativas de código aberto.
+* **Sem Rastreadores (No Trackers)**: O Tomus não possui SDKs de analytics (Google Analytics, Sentry, Mixpanel, etc.).
+* **Sem Servidores Proprietários**: O software não se comunica com nenhum servidor pertencente aos criadores do Tomus. Nenhuma chamada HTTP "home" é realizada para verificar licença ou registrar uso.
+* **Execução Local (On-Device Processing)**: A extração do texto dos PDFs é realizada integralmente no processador e na memória do computador do usuário por tomusas nativas de código aberto.
 
 ### 4.2. Fluxo de Dados e Credenciais de APIs Externas
 1. **Credenciais Pessoais (BYOK - Bring Your Own Key)**:
    - Para utilizar os recursos de inteligência artificial ou consulta bibliográfica avançada, o usuário fornece diretamente as suas próprias chaves de autenticação (*API Keys*).
-   - O armazenamento das chaves é realizado localmente nos arquivos de configuração do usuário no diretório de perfil (`~/.bibliotec/` ou `AppData` no Windows).
+   - O armazenamento das chaves é realizado localmente nos arquivos de configuração do usuário no diretório de perfil (`~/.tomus/` ou `AppData` no Windows).
 2. **Comunicação Direta com Provedores Terceirizados**:
-   - Ao disparar o enriquecimento semântico, o BiblioTEC estabelece uma conexão TLS/HTTPS direta e exclusiva entre a máquina do usuário e os servidores da empresa provedora contratada pelo usuário (ex.: Google Vertex/AI Studio, Anthropic Cloud, DeepSeek, Groq Cloud, NVIDIA Cloud, OpenAlex API).
+   - Ao disparar o enriquecimento semântico, o Tomus estabelece uma conexão TLS/HTTPS direta e exclusiva entre a máquina do usuário e os servidores da empresa provedora contratada pelo usuário (ex.: Google Vertex/AI Studio, Anthropic Cloud, DeepSeek, Groq Cloud, NVIDIA Cloud, OpenAlex API).
    - O usuário deve observar e acatar as respectivas políticas de privacidade e termos de serviço de cada fornecedor que decidir integrar.
 3. **Resumo de Papéis Regulatórios (LGPD)**:
    | Elemento | Papel Jurídico | Responsabilidade |
    | :--- | :--- | :--- |
    | **Usuário** | Controlador de Dados | Titular das escolhas de arquivos, chaves de API e consentimento de envio. |
    | **APIs Externas (Google, OpenAI, etc.)** | Operadores Terceirizados | Processamento dos prompts e dados conforme seus respectivos termos de serviço. |
-   | **Mantenedores do BiblioTEC** | Criadores de Código Aberto | Isentos de custódia; sem acesso a dados, credenciais ou acervos. |
+   | **Mantenedores do Tomus** | Criadores de Código Aberto | Isentos de custódia; sem acesso a dados, credenciais ou acervos. |
 
 ---
 
@@ -188,20 +188,20 @@ garantem pedidos de funcionalidades exclusivas e não são passíveis de estorno
 *Texto a ser divulgado na seção de apoio do repositório, documentação e botão "Apoiar o Projeto":*
 
 ```markdown
-### ☕ Apoie o BiblioTEC (Doação Voluntária)
+### ☕ Apoie o Tomus (Doação Voluntária)
 
-O BiblioTEC é uma iniciativa de código aberto, concebida para fortalecer a pesquisa científica e facilitar a vida de estudantes, professores e pesquisadores no Brasil e no mundo. O aplicativo é e sempre será **100% gratuito e livre**.
+O Tomus é uma iniciativa de código aberto, concebida para fortalecer a pesquisa científica e facilitar a vida de estudantes, professores e pesquisadores no Brasil e no mundo. O aplicativo é e sempre será **100% gratuito e livre**.
 
-Se o BiblioTEC economizou suas horas de organização acadêmica e você deseja expressar sua gratidão e incentivar o desenvolvimento contínuo de novas funcionalidades, sinta-se à vontade para fazer uma contribuição espontânea:
+Se o Tomus economizou suas horas de organização acadêmica e você deseja expressar sua gratidão e incentivar o desenvolvimento contínuo de novas funcionalidades, sinta-se à vontade para fazer uma contribuição espontânea:
 
-* **Chave Pix (Brasil)**: `dpinheiro+bibliotec@gmail.com`
+* **Chave Pix (Brasil)**: `dpinheiro+tomus@gmail.com`
 * **Apoio Coletivo / Internacional**: `[link-github-sponsors-ou-apoia-se]`
 
 #### Esclarecimento Jurídico sobre a Doação:
 1. **Natureza Jurídica**: Qualquer contribuição financeira voluntária configura estritamente **Doação Pura e Simples**, nos termos do art. 538 da Lei Federal nº 10.406/2002 (Código Civil Brasileiro).
 2. **Ausência de Relação Comercial**: A doação voluntária não constitui compra de licença, pagamento por serviços, antecipação de mensalidade ou contratação de software sob encomenda.
 3. **Sem Contraprestação Compulsória**: A doação não obriga os desenvolvedores a prestar suporte técnico personalizado, atendimento com Acordo de Nível de Serviço (SLA), correções sob demanda ou implementação de funcionalidades específicas para o doador.
-4. **Igualdade de Recursos**: Todos os usuários do BiblioTEC usufruem do mesmo software e das mesmas ferramentas, independentemente de terem realizado ou não qualquer doação.
+4. **Igualdade de Recursos**: Todos os usuários do Tomus usufruem do mesmo software e das mesmas ferramentas, independentemente de terem realizado ou não qualquer doação.
 ```
 
 ---
@@ -209,12 +209,12 @@ Se o BiblioTEC economizou suas horas de organização acadêmica e você deseja 
 ## 6. DECLARAÇÃO DE MARCAS E PROPRIEDADE INTELECTUAL DE TERCEIROS
 
 * **CAPES & CNPq**: Os nomes Coordenação de Aperfeiçoamento de Pessoal de Nível Superior (CAPES) e Conselho Nacional de Desenvolvimento Científico e Tecnológico (CNPq), bem como suas respectivas Árvores do Conhecimento e Tabelas de Áreas, pertencem às fundações e agências governamentais brasileiras a eles associadas. Seu uso nesta ferramenta tem caráter estritamente funcional e acadêmico de classificação bibliográfica.
-* **APIs de Terceiros e Modelos de Linguagem**: Anthropic®, Claude®, Google®, Google Gemini®, OpenAI®, ChatGPT®, DeepSeek®, Groq®, NVIDIA® e OpenAlex® são marcas registradas de seus respectivos titulares de direitos proprietários. A menção a tais entidades tem o propósito único de permitir a interoperabilidade e a configuração de endpoints pelo usuário final (*Uso Nominativo e Justo*, art. 132 da Lei nº 9.279/1996). O BiblioTEC não representa, não é patrocinado e não mantém vínculo societário com nenhuma das organizações supramencionadas.
+* **APIs de Terceiros e Modelos de Linguagem**: Anthropic®, Claude®, Google®, Google Gemini®, OpenAI®, ChatGPT®, DeepSeek®, Groq®, NVIDIA® e OpenAlex® são marcas registradas de seus respectivos titulares de direitos proprietários. A menção a tais entidades tem o propósito único de permitir a interoperabilidade e a configuração de endpoints pelo usuário final (*Uso Nominativo e Justo*, art. 132 da Lei nº 9.279/1996). O Tomus não representa, não é patrocinado e não mantém vínculo societário com nenhuma das organizações supramencionadas.
 * **Normas ABNT**: A referência à norma técnica ABNT NBR 6023 (Informação e documentação — Referências — Elaboração) tem propósito de conformidade técnica e padronização científica de citações bibliográficas.
 
 ---
 
-## 7. CONTEÚDO PRONTO PARA O MODAL "SOBRE O BIBLIOTEC" (ABOUT DIALOG)
+## 7. CONTEÚDO PRONTO PARA O MODAL "SOBRE O TOMUS" (ABOUT DIALOG)
 
 Abaixo constam as duas versões padronizadas para o diálogo `AboutDialog` da interface gráfica PySide6/Qt:
 
@@ -222,20 +222,20 @@ Abaixo constam as duas versões padronizadas para o diálogo `AboutDialog` da in
 
 ```html
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; color: #2c3e50;">
-    <h2 style="margin: 0; padding-bottom: 4px; color: #1a365d; font-size: 20px;">BiblioTEC</h2>
+    <h2 style="margin: 0; padding-bottom: 4px; color: #1a365d; font-size: 20px;">Tomus</h2>
     <p style="margin: 0 0 12px 0; font-size: 12px; color: #718096; font-weight: 500;">
         Organizador e Catalogador de Acervos Acadêmicos • Versão 1.0.0
     </p>
 
     <div style="background-color: #f7fafc; border-left: 4px solid #3182ce; padding: 10px 14px; margin-bottom: 14px; border-radius: 2px;">
         <p style="margin: 0; font-size: 12px; color: #2d3748;">
-            O <strong>BiblioTEC</strong> é um software livre, aberto e 100% gratuito, desenvolvido para auxiliar pesquisadores na renomeação, enriquecimento de metadados (ABNT NBR 6023) e classificação temática (CAPES/CNPq) de seus arquivos acadêmicos.
+            O <strong>Tomus</strong> é um software livre, aberto e 100% gratuito, desenvolvido para auxiliar pesquisadores na renomeação, enriquecimento de metadados (ABNT NBR 6023) e classificação temática (CAPES/CNPq) de seus arquivos acadêmicos.
         </p>
     </div>
 
     <h4 style="margin: 12px 0 4px 0; font-size: 13px; color: #2d3748;">Privacidade e Operação Local</h4>
     <p style="margin: 0 0 10px 0; font-size: 11px; color: #4a5568;">
-        <strong>Privacy-by-Design:</strong> Todos os seus arquivos PDF e dados de pesquisa são processados localmente em sua máquina. O BiblioTEC não envia telemetria e não possui servidores em nuvem. As chaves de API fornecidas são salvas exclusivamente em seu dispositivo e comunicam-se diretamente com os provedores escolhidos por você.
+        <strong>Privacy-by-Design:</strong> Todos os seus arquivos PDF e dados de pesquisa são processados localmente em sua máquina. O Tomus não envia telemetria e não possui servidores em nuvem. As chaves de API fornecidas são salvas exclusivamente em seu dispositivo e comunicam-se diretamente com os provedores escolhidos por você.
     </p>
 
     <h4 style="margin: 12px 0 4px 0; font-size: 13px; color: #2d3748;">Isenção de Responsabilidade & Backup</h4>
@@ -245,13 +245,13 @@ Abaixo constam as duas versões padronizadas para o diálogo `AboutDialog` da in
 
     <h4 style="margin: 12px 0 4px 0; font-size: 13px; color: #2d3748;">Apoio Espontâneo ao Projeto</h4>
     <p style="margin: 0 0 12px 0; font-size: 11px; color: #4a5568;">
-        O BiblioTEC é mantido de forma independente. Contribuições voluntárias são enquadradas como Doação Pura (Art. 538 do Código Civil), desprovidas de encargo ou finalidade mercantil.
+        O Tomus é mantido de forma independente. Contribuições voluntárias são enquadradas como Doação Pura (Art. 538 do Código Civil), desprovidas de encargo ou finalidade mercantil.
     </p>
 
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 12px 0;" />
 
     <p style="margin: 0; font-size: 10px; color: #a0aec0; text-align: center;">
-        © 2026 BiblioTEC Contributors • Código sob Licença MIT.<br/>
+        © 2026 Tomus Contributors • Código sob Licença MIT.<br/>
         Marcas registradas (CAPES, CNPq, Google, Anthropic, DeepSeek, Groq, NVIDIA, OpenAlex) pertencem aos seus respectivos titulares.
     </p>
 </div>
@@ -261,7 +261,7 @@ Abaixo constam as duas versões padronizadas para o diálogo `AboutDialog` da in
 
 ```python
 """
-Módulo de Diálogo 'Sobre o BiblioTEC' com ancoragem jurídica e conformidade LGPD.
+Módulo de Diálogo 'Sobre o Tomus' com ancoragem jurídica e conformidade LGPD.
 """
 from PySide6.QtWidgets import QMessageBox, QWidget
 
@@ -269,12 +269,12 @@ from PySide6.QtWidgets import QMessageBox, QWidget
 def show_about_dialog(parent: QWidget = None) -> None:
     """Exibe o diálogo modal 'Sobre' juridicamente estruturado."""
     about_text = """
-    <h3>BiblioTEC 1.0.0</h3>
+    <h3>Tomus 1.0.0</h3>
     <p><b>Organizador e Catalogador Acadêmico Inteligente</b></p>
     <p>Software livre e 100% gratuito sob os termos da <b>Licença MIT</b>.</p>
     
     <p><b>Privacidade &amp; Segurança (LGPD):</b><br>
-    O BiblioTEC opera exclusivamente no seu dispositivo local. Não coletamos telemetria 
+    O Tomus opera exclusivamente no seu dispositivo local. Não coletamos telemetria 
     nem intermediamos seus arquivos em servidores externos. Suas chaves de API são armazenadas 
     de forma estritamente local.</p>
     
@@ -292,7 +292,7 @@ def show_about_dialog(parent: QWidget = None) -> None:
     são utilizadas com propósitos de interoperabilidade técnica e pertencem aos seus titulares.
     </p>
     """
-    QMessageBox.about(parent, "Sobre o BiblioTEC", about_text)
+    QMessageBox.about(parent, "Sobre o Tomus", about_text)
 ```
 
 ---

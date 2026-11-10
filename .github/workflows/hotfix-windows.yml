@@ -1,4 +1,4 @@
-name: Release BiblioTEC - Windows Hotfix
+name: Release Tomus - Windows Hotfix
 
 on:
   push:

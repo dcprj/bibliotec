@@ -14,7 +14,7 @@ import httpx
 import pytest
 import respx
 
-from bibliotec.core.llm import (
+from tomus.core.llm import (
     ClaudeProvider,
     DeepSeekProvider,
     FallbackLLMDispatcher,

@@ -1,8 +1,8 @@
-# BiblioTEC Desktop GUI — Especificação de UX/UI e Arquitetura Multiplataforma (v1.0.0)
+# Tomus Desktop GUI — Especificação de UX/UI e Arquitetura Multiplataforma (v1.0.0)
 
 * **Autor:** Arquiteto de UX/UI & Engenheiro de Interface Desktop (Staff/Principal GUI Engineer)
 * **Data:** 2026-11-06
-* **Versão Alvo:** `1.0.0` (sobre o motor `bibliotec.core` `v0.4.0`)
+* **Versão Alvo:** `1.0.0` (sobre o motor `tomus.core` `v0.4.0`)
 * **Status:** Especificação Aprovada — Passagem 1 (Design System, Wireframes, Fluxos e Arquitetura Qt6/PySide6)
 * **Plataformas Suportadas:** macOS (Apple Silicon & Intel — referência primária), Windows 10/11 e Linux (Wayland/X11 — GNOME/KDE)
 
@@ -10,11 +10,11 @@
 
 ## 1. Visão Geral e Manifesto Anti-AI-Slop
 
-O **BiblioTEC Desktop (`v1.0.0`)** é a interface gráfica oficial do organizador acadêmico de PDFs BiblioTEC. Projetada sob o conceito **"Editorial Academic Workbench"** (Bancada Editorial Acadêmica), sua identidade visual e ergonômica inspira-se em ferramentas de precisão consagradas — **Zotero 7**, **Things 3**, **Linear** e **Panic Nova** — combinando a sobriedade tipográfica de um catálogo universitário com a densidade e velocidade de uma IDE técnica.
+O **Tomus Desktop (`v1.0.0`)** é a interface gráfica oficial do organizador acadêmico de PDFs Tomus. Projetada sob o conceito **"Editorial Academic Workbench"** (Bancada Editorial Acadêmica), sua identidade visual e ergonômica inspira-se em ferramentas de precisão consagradas — **Zotero 7**, **Things 3**, **Linear** e **Panic Nova** — combinando a sobriedade tipográfica de um catálogo universitário com a densidade e velocidade de uma IDE técnica.
 
 ### 1.1. Regras de Ouro Anti-AI-Slop (Estritamente Proibido)
 
-Para erradicar qualquer semelhança com templates genéricos de SaaS ou interfaces geradas por IA (*AI slop*), o pacote `bibliotec.gui` obedece a cinco restrições inegociáveis auditadas em código e folha de estilo (QSS):
+Para erradicar qualquer semelhança com templates genéricos de SaaS ou interfaces geradas por IA (*AI slop*), o pacote `tomus.gui` obedece a cinco restrições inegociáveis auditadas em código e folha de estilo (QSS):
 
 1. **Zero Gradientes Neon / Roxo-Rosa ("AI Glow"):** São estritamente proibidos fundos, botões, bordas ou barras de progresso com gradientes `purple-to-pink`, `indigo-to-cyan` ou sombras difusas coloridas (`drop-shadow` neon). Toda cor de acento é sólida, opaca e ancorada em tons editoriais (Azul Oxford no claro, Azul Ardósia no escuro).
 2. **Zero Emojis Crus na Interface:** É proibido usar caracteres emoji (`📂`, `🚀`, `✨`, `⚙️`, `✅`, `⚠️`, `📄`) em rótulos de botões, cabeçalhos de tabela, nós da árvore CAPES/CNPq ou barras de status. Todos os glifos visuais utilizam exclusivamente **ícones vetoriais SVG monocromáticos** com traço geométrico uniforme de `1.5px` (`stroke-linecap="round"`, `stroke-linejoin="round"`) renderizados via `QIcon` parametrizado pela cor de texto/acento do tema ativo.
@@ -28,7 +28,7 @@ Para erradicar qualquer semelhança com templates genéricos de SaaS ou interfac
 
 ### 2.1. Paletas de Cores Semânticas (Tokens Hexadecimais)
 
-O sistema de temas (`src/bibliotec/gui/theme.py`) opera sobre dois dicionários imutáveis de tokens cromáticos (`ThemeTokens`), alternáveis em tempo real ou sincronizados com a aparência do sistema operacional (`QStyleHints.colorScheme()`):
+O sistema de temas (`src/tomus/gui/theme.py`) opera sobre dois dicionários imutáveis de tokens cromáticos (`ThemeTokens`), alternáveis em tempo real ou sincronizados com a aparência do sistema operacional (`QStyleHints.colorScheme()`):
 
 | Token Semântico | Identificador (`ThemeTokens`) | Modo Claro: **Editorial Paper** | Modo Escuro: **Technical Graphite** | Aplicação nos Componentes Qt6 |
 | :--- | :--- | :--- | :--- | :--- |
@@ -59,7 +59,7 @@ O sistema de temas (`src/bibliotec/gui/theme.py`) opera sobre dois dicionários 
 
 ### 2.2. Tipografia Multiplataforma e Escala Modular
 
-A tipografia utiliza uma pilha nativa por sistema operacional resolvida dinamicamente em `src/bibliotec/gui/theme.py`, garantindo renderização subpixel/antialiasing perfeita em telas Retina (macOS) e ClearType/FreeType (Windows/Linux):
+A tipografia utiliza uma pilha nativa por sistema operacional resolvida dinamicamente em `src/tomus/gui/theme.py`, garantindo renderização subpixel/antialiasing perfeita em telas Retina (macOS) e ClearType/FreeType (Windows/Linux):
 
 * **Família Sans-Serif de Interface (`FONT_UI`):**
   * **macOS:** `"SF Pro Text", "Helvetica Neue", sans-serif`
@@ -87,13 +87,13 @@ A tipografia utiliza uma pilha nativa por sistema operacional resolvida dinamica
 
 ### 2.3. Sistema de Ícones Vetoriais Embutidos (`icons.py`)
 
-Nenhum arquivo externo `.png` ou emoji é utilizado. O módulo `src/bibliotec/gui/icons.py` contém um dicionário de **primitivas SVG vetoriais puras** (viewBox `0 0 24 24`, traço `1.5px`, sem preenchimento pesado) renderizadas em memória via `QSvgRenderer` + `QPainter` sobre `QPixmap` com `devicePixelRatio` nativo (suporte `@2x`/`@3x` Retina/High-DPI):
+Nenhum arquivo externo `.png` ou emoji é utilizado. O módulo `src/tomus/gui/icons.py` contém um dicionário de **primitivas SVG vetoriais puras** (viewBox `0 0 24 24`, traço `1.5px`, sem preenchimento pesado) renderizadas em memória via `QSvgRenderer` + `QPainter` sobre `QPixmap` com `devicePixelRatio` nativo (suporte `@2x`/`@3x` Retina/High-DPI):
 
 * `folder-input`: Pasta com seta de entrada (Origem).
 * `folder-output`: Pasta com marcador de árvore (Destino).
 * `play-run`: Triângulo geométrico técnico (Organizar Acervo).
 * `stop-square`: Quadrado sólido interno (Interromper / Cancelar lote).
-* `rotate-ccw`: Seta circular anti-horária (Retomar Sessão `.bibliotec_session.json`).
+* `rotate-ccw`: Seta circular anti-horária (Retomar Sessão `.tomus_session.json`).
 * `sliders-settings`: Três trilhos horizontais com seletores (Preferências e Chaves de API).
 * `database-cache`: Cilindro técnico discreto (Inspeção/Limpeza do Cache SQLite).
 * `check-circle`: Círculo com marca de verificação (Status: Organizado).
@@ -110,7 +110,7 @@ Nenhum arquivo externo `.png` ou emoji é utilizado. O módulo `src/bibliotec/gu
 
 ## 3. Arquitetura de Layout Desktop: Bancada de 3 Painéis + Barras Operacionais
 
-A janela principal (`BiblioTECMainWindow`, dimensões mínimas `1080x680`, padrão inicial `1360x840`) adota uma arquitetura de **Bancada Única (Single-Window Workbench)** sem abas ocultas para o fluxo principal. Toda a operação ocorre através de quatro zonas acopladas:
+A janela principal (`TomusMainWindow`, dimensões mínimas `1080x680`, padrão inicial `1360x840`) adota uma arquitetura de **Bancada Única (Single-Window Workbench)** sem abas ocultas para o fluxo principal. Toda a operação ocorre através de quatro zonas acopladas:
 
 1. **Zona Superior — Barra de Comando e Operação (`OperationalToolbar` + `SessionResumeBanner` condicional)**
 2. **Zona Central Esquerda — Navegador de Filtros e Árvore Taxonômica CAPES/CNPq (`CapesSidebarPanel`)**
@@ -126,13 +126,13 @@ As três zonas centrais são gerenciadas por um `QSplitter(Qt.Orientation.Horizo
 
 ```text
 +----------------------------------------------------------------------------------------------------------------------------------------+
-| BiblioTEC                                                                                                            [_] [ ] [X]       |
+| Tomus                                                                                                            [_] [ ] [X]       |
 +----------------------------------------------------------------------------------------------------------------------------------------+
-| [ORIGEM]  ~/Downloads/Acervo_Bruto          [Procurar...]  |  [DESTINO] ~/Biblioteca_CAPES          [Procurar...]                      |
+| [ORIGEM]  ~/Downloads/Acervo_Bruto          [Procurar...]  |  [DESTINO] ~/Tomusa_CAPES          [Procurar...]                      |
 | [PROVEDOR] [ Gemini (gemini-3.5-flash)  v ] (* Chave OK)   |  [MODO: Copiar | Mover] [x] Recursivo [ ] Dry-Run                         |
 |                                                                             [Preferencias] [Cache]  [ |> Organizar Acervo (Cmd+R) ]    |
 +----------------------------------------------------------------------------------------------------------------------------------------+
-| (!) SESSAO INTERROMPIDA DETECTADA: ~/Downloads/Acervo_Bruto -> ~/Biblioteca_CAPES (14/85 concluidos)  [Retomar Sessao] [Descartar]     |
+| (!) SESSAO INTERROMPIDA DETECTADA: ~/Downloads/Acervo_Bruto -> ~/Tomusa_CAPES (14/85 concluidos)  [Retomar Sessao] [Descartar]     |
 +---------------------------+-----------------------------------------------------------------------+------------------------------------+
 | FILTROS & TAXONOMIA       | DOCUMENTOS DO LOTE                              [Buscar titulo/autor] | INSPETOR DA OBRA          [Fechar] |
 |---------------------------+-----------------------------------------------------------------------+------------------------------------|
@@ -192,7 +192,7 @@ As três zonas centrais são gerenciadas por um `QSplitter(Qt.Orientation.Horizo
   * Estado Ocioso: **`Organizar Acervo`** (fundo `accent_primary`, atalho `Cmd+R` / `Ctrl+R`).
   * Estado Executando: Transforma-se em **`Interromper Lote`** (fundo sóbrio carmim `#B91C1C`, atalho `Esc` ou `Cmd+.`), que aciona `cancel_event.set()` e altera seu rótulo para `Finalizando estágio atual...` até que a worker thread encerre com segurança.
 * **Banner Condicional de Retomada de Sessão (`SessionResumeBanner`):**
-  * No startup da GUI, consulta `load_session()` (`bibliotec.core.session`). Se `.bibliotec_session.json` existir e for válido, exibe uma faixa fina (`34px` de altura) abaixo da toolbar com os detalhes da sessão interrompida (`source_dir`, `target_dir`, `provider`, `created_at`) e dois botões: **`Retomar Sessão`** (restaura todos os parâmetros e inicia o pipeline aproveitando o cache SQLite por SHA-256) e **`Descartar`** (chama `clear_session()`).
+  * No startup da GUI, consulta `load_session()` (`tomus.core.session`). Se `.tomus_session.json` existir e for válido, exibe uma faixa fina (`34px` de altura) abaixo da toolbar com os detalhes da sessão interrompida (`source_dir`, `target_dir`, `provider`, `created_at`) e dois botões: **`Retomar Sessão`** (restaura todos os parâmetros e inicia o pipeline aproveitando o cache SQLite por SHA-256) e **`Descartar`** (chama `clear_session()`).
 
 #### B. Painel Esquerdo — Filtros de Status e Árvore CAPES/CNPq (`CapesSidebarPanel`)
 * **Seção 1 — Visão de Status Operacional:**
@@ -225,7 +225,7 @@ O Inspetor adapta sua visualização automaticamente conforme o `ProcessStatus` 
 
 1. **Modo 1: Obra Organizada (`ProcessStatus.ORGANIZED`)**
    * **Cartão de Referência ABNT NBR 6023 (`ABNTReferenceCard`):**
-     * Renderiza em tempo real a referência bibliográfica gerada por `bibliotec.storage.companion.format_abnt_reference(classification)` com formatação rica (sobrenomes dos autores em CAIXA ALTA, título em **negrito**, subtítulo, ano, link DOI e ISBN).
+     * Renderiza em tempo real a referência bibliográfica gerada por `tomus.storage.companion.format_abnt_reference(classification)` com formatação rica (sobrenomes dos autores em CAIXA ALTA, título em **negrito**, subtítulo, ano, link DOI e ISBN).
      * Dois botões de utilidade imediata para o pesquisador:
        * **`Copiar Citação ABNT`** (`Cmd+Shift+C` / `Ctrl+Shift+C`): Copia a referência limpa para a área de transferência (`QApplication.clipboard()`) e muda temporariamente o rótulo do botão para `Copiado!` por `1.5s`.
        * **`Copiar Ficha Markdown (.md)`**: Copia o conteúdo integral do arquivo companheiro `.md` (Front Matter YAML + Citação ABNT + Metadados) gerado por `generate_companion_markdown`.
@@ -242,7 +242,7 @@ O Inspetor adapta sua visualização automaticamente conforme o `ProcessStatus` 
        * Seletores acoplados ao catálogo oficial `taxonomy.py`: `ComboBox Grande Área` (`get_grandes_areas()`) $\rightarrow$ `ComboBox Área Básica` (`get_areas_basicas(grande_area)`) $\rightarrow$ `ComboBox Tipo` (`DocumentType`).
        * Campos editáveis preenchidos com a sugestão parcial do LLM (se houver): `Título`, `Subtítulo`, `Autor(es)` (separados por `;`) e `Ano`.
        * Pré-visualização ao vivo do novo nome padronizado (`format_academic_filename`) e da citação ABNT resultante.
-       * Botão **`Aprovar e Materializar na Biblioteca`**: Executa a movimentação/cópia de `revisao_manual/` para a pasta temática `<Grande Área>/<Área Básica>/<Tipo>/`, gera o `.md` companheiro ABNT, grava a classificação revisada no `FileCache` SQLite (`confidence_score = 1.0`, `model_name = "manual_human_review"`) e atualiza `manifest.json` e `relatorio_revisao.md`.
+       * Botão **`Aprovar e Materializar na Tomusa`**: Executa a movimentação/cópia de `revisao_manual/` para a pasta temática `<Grande Área>/<Área Básica>/<Tipo>/`, gera o `.md` companheiro ABNT, grava a classificação revisada no `FileCache` SQLite (`confidence_score = 1.0`, `model_name = "manual_human_review"`) e atualiza `manifest.json` e `relatorio_revisao.md`.
 
 3. **Modo 3: Duplicata Exata (`DUPLICATE_SKIPPED`) ou Não-PDF Ignorado (`IGNORED_NON_PDF`)**
    * Para **Duplicatas**: Exibe o hash `SHA-256` idêntico, o caminho da duplicata isolada em `<TARGET_DIR>/duplicatas/` e um link direto (`Selecionar Obra Canônica` / `Mostrar Obra Canônica na Pasta`) apontando para o PDF principal já organizado na árvore temática.
@@ -256,22 +256,22 @@ O Inspetor adapta sua visualização automaticamente conforme o `ProcessStatus` 
   * Se ultrapassar `20%` (`exceeded_manual_review_ceiling == True`), o indicador muda para `Âmbar Editorial` (`! Revisão Manual: 23.4% — Acima do teto de 20%`), clicável para filtrar imediatamente os itens de revisão manual.
 * **Gaveta Expansível (`LogCacheDrawer` — atalho `` Cmd+` `` / `` Ctrl+` ``):**
   * Painel inferior colapsável (`180px` de altura quando aberto) dividido em duas abas técnicas enxutas:
-    1. **`Log de Execução (bibliotec.log)`:** Visualizador monoespaçado em tempo real anexado ao logger do `bibliotec.core.logging`.
-    2. **`Estado do Cache SQLite (state.db)`:** Exibe o caminho `~/.cache/bibliotec/state.db`, tamanho em KB/MB, total de obras indexadas (`SELECT COUNT(*) FROM processed_files`) e botão **`Limpar Cache SQLite`** (com confirmação segura que invoca `FileCache.clear()`).
+    1. **`Log de Execução (tomus.log)`:** Visualizador monoespaçado em tempo real anexado ao logger do `tomus.core.logging`.
+    2. **`Estado do Cache SQLite (state.db)`:** Exibe o caminho `~/.cache/tomus/state.db`, tamanho em KB/MB, total de obras indexadas (`SELECT COUNT(*) FROM processed_files`) e botão **`Limpar Cache SQLite`** (com confirmação segura que invoca `FileCache.clear()`).
 
 ---
 
 ### 3.3. Wireframe do Modal de Preferências e Chaves de API (`PreferencesDialog`)
 
-Acessível pelo botão `Preferências` na toolbar ou pelo atalho padrão do sistema (`Cmd+,` no macOS / `Ctrl+,` no Windows e Linux), este diálogo modal lê e grava `~/.config/bibliotec/config.toml` (ou `./bibliotec.toml` local) preservando permissões restritas `0600` (`CONFIG_FILE_MODE`):
+Acessível pelo botão `Preferências` na toolbar ou pelo atalho padrão do sistema (`Cmd+,` no macOS / `Ctrl+,` no Windows e Linux), este diálogo modal lê e grava `~/.config/tomus/config.toml` (ou `./tomus.toml` local) preservando permissões restritas `0600` (`CONFIG_FILE_MODE`):
 
 ```text
 +--------------------------------------------------------------------------------------------------+
-| Preferencias e Credenciais — BiblioTEC                                                    [Fechar]|
+| Preferencias e Credenciais — Tomus                                                    [Fechar]|
 +--------------------------------------------------------------------------------------------------+
 | [ Provedores LLM & Fallback ]  [ Credenciais e Chaves de API ]  [ Pipeline, OCR & Cache ]        |
 +--------------------------------------------------------------------------------------------------+
-| ARQUIVO DE CONFIGURACAO ATIVO: ~/.config/bibliotec/config.toml (Permissao 0600 Segura)           |
+| ARQUIVO DE CONFIGURACAO ATIVO: ~/.config/tomus/config.toml (Permissao 0600 Segura)           |
 |--------------------------------------------------------------------------------------------------|
 | CREDENCIAIS DOS PROVEDORES DE CLASSIFICACAO (Stage 4)                                            |
 |                                                                                                  |
@@ -299,36 +299,36 @@ Acessível pelo botão `Preferências` na toolbar ou pelo atalho padrão do sist
 ```
 
 **Regras de Segurança e Precedência no `PreferencesDialog`:**
-1. **Respeito à Precedência `ENV > Local TOML > Global TOML`:** Para cada chave em `ApiKeysConfig`, o modal verifica se o valor ativo provém de uma variável de ambiente (ex.: `BIBLIOTEC_GEMINI_API_KEY` ou `GEMINI_API_KEY`). Quando uma variável de ambiente está ativa, o modal exibe um badge informativo `(Ativo via Variável de Ambiente)` ao lado do campo.
-2. **Gravação Limpa (`tomli_w`) com Permissão `0600`:** Ao clicar em `Salvar Configuração`, a GUI serializa as seções `[general]`, `[llm]` e `[api_keys]` em `~/.config/bibliotec/config.toml` e aplica `os.chmod(path, 0o600)` em sistemas POSIX (macOS/Linux), garantindo que strings vazias continuem sendo filtradas por `FilteredTomlSettingsSource`.
+1. **Respeito à Precedência `ENV > Local TOML > Global TOML`:** Para cada chave em `ApiKeysConfig`, o modal verifica se o valor ativo provém de uma variável de ambiente (ex.: `TOMUS_GEMINI_API_KEY` ou `GEMINI_API_KEY`). Quando uma variável de ambiente está ativa, o modal exibe um badge informativo `(Ativo via Variável de Ambiente)` ao lado do campo.
+2. **Gravação Limpa (`tomli_w`) com Permissão `0600`:** Ao clicar em `Salvar Configuração`, a GUI serializa as seções `[general]`, `[llm]` e `[api_keys]` em `~/.config/tomus/config.toml` e aplica `os.chmod(path, 0o600)` em sistemas POSIX (macOS/Linux), garantindo que strings vazias continuem sendo filtradas por `FilteredTomlSettingsSource`.
 
 ---
 
 ## 4. Fluxos de Interação de Ponta a Ponta
 
 ### 4.1. Fluxo 1: Seleção, Pré-Inspeção e Execução de Lote com Telemetria ao Vivo
-1. **Entrada Rápida:** O usuário arrasta uma pasta `~/Downloads/Artigos_Semestre` para a janela (ou seleciona via diálogo nativo) e define `~/Documentos/Biblioteca_Acadêmica` como destino.
+1. **Entrada Rápida:** O usuário arrasta uma pasta `~/Downloads/Artigos_Semestre` para a janela (ou seleciona via diálogo nativo) e define `~/Documentos/Tomusa_Acadêmica` como destino.
 2. **Início e Persistência de Sessão:** Ao clicar em **`Organizar Acervo`** (`Cmd+R` / `Ctrl+R`):
-   * A GUI salva imediatamente o estado em `.bibliotec_session.json` via `save_session(SessionState(...))` (espelhando o comportamento da CLI para garantir recuperação em caso de queda de energia).
+   * A GUI salva imediatamente o estado em `.tomus_session.json` via `save_session(SessionState(...))` (espelhando o comportamento da CLI para garantir recuperação em caso de queda de energia).
    * A grade central é limpa e entra em modo de recepção de eventos em tempo real.
 3. **Streaming de Eventos (`PipelineEvent` $\rightarrow$ Qt Signals):**
    * No `Stage 1 (scanner)`, assim que `scan_directory` conclui a triagem rápida, todas as entradas identificadas (PDFs válidos e não-PDFs ignorados) aparecem na grade com status inicial `Na Fila` (e `Ignorado` para não-PDFs), permitindo ao usuário visualizar imediatamente o tamanho real do lote.
    * À medida que cada PDF avança pelos estágios (`cache` $\rightarrow$ `extractor` $\rightarrow$ `enricher` $\rightarrow$ `llm` $\rightarrow$ `organizer`), a linha correspondente na grade atualiza seu estágio ao vivo (`Extraindo / OCR...`, `Consultando OpenAlex...`, `Classificando LLM...`) e, ao receber o evento terminal do arquivo, preenche instantaneamente `Título`, `Autor(es)`, `Ano`, `Grande Área / Área Básica`, `Tipo` e `Confiança`, incrementando os contadores da barra lateral CAPES/CNPq e a barra de progresso inferior.
 4. **Conclusão do Lote:**
-   * Quando `run_pipeline` retorna `ExecutionSummary`, a GUI reconcilia a tabela com `summary.entries`, remove `.bibliotec_session.json` via `clear_session()` (caso concluído sem cancelamento) e seleciona automaticamente o primeiro item organizado para exibir sua citação ABNT no Inspetor.
+   * Quando `run_pipeline` retorna `ExecutionSummary`, a GUI reconcilia a tabela com `summary.entries`, remove `.tomus_session.json` via `clear_session()` (caso concluído sem cancelamento) e seleciona automaticamente o primeiro item organizado para exibir sua citação ABNT no Inspetor.
 
 ### 4.2. Fluxo 2: Cancelamento Cooperativo Seguro (`cancel_event`)
 1. Durante o processamento de um lote longo (ex.: PDFs escaneados acionando Docling OCR ou múltiplas chamadas de rede), o usuário clica em **`Interromper Lote`** (ou pressiona `Esc`).
 2. A thread de UI chama `self._worker.request_cancel()`, que executa `self._cancel_event.set()`.
 3. A UI **não mata a thread à força** (`QThread.terminate()` é proibido pois corromperia o lock do SQLite WAL ou deixaria cópias de arquivos truncadas). Em vez disso, o botão exibe `Aguardando conclusão segura do arquivo atual...`.
-4. O `run_pipeline` detecta `cancel_event.is_set()` na fronteira do arquivo atual, grava o `manifest.json` e `relatorio_revisao.md` parciais, preserva `.bibliotec_session.json` em disco para retomada futura e emite o sinal `finished(summary, was_cancelled=True)`.
+4. O `run_pipeline` detecta `cancel_event.is_set()` na fronteira do arquivo atual, grava o `manifest.json` e `relatorio_revisao.md` parciais, preserva `.tomus_session.json` em disco para retomada futura e emite o sinal `finished(summary, was_cancelled=True)`.
 5. A GUI exibe o banner de sessão pausada permitindo retomar exatamente de onde parou com 1 clique (os arquivos já aprovados serão resolvidos em milissegundos via `Cache Hit` no SQLite).
 
 ### 4.3. Fluxo 3: Auditoria Pós-Execução e Triagem de `revisao_manual/`
 1. Ao final da execução (ou ao abrir uma pasta de destino que já contenha `manifest.json`), o usuário clica no filtro **`Revisão Manual (N)`** na barra lateral esquerda.
 2. A grade exibe apenas os documentos que ficaram abaixo de `confidence_min` (ou tiveram falha de extração).
 3. O usuário seleciona um PDF na grade, clica em **`Abrir PDF`** no Inspetor direito (ou pressiona `Barra de Espaço` na linha da tabela) para visualizar a capa do documento no leitor nativo do SO (`Preview.app` no macOS, `Edge/Acrobat` no Windows, `Evince/Okular` no Linux).
-4. No quadro **Triagem Manual Assistida** do Inspetor, o usuário escolhe a `Grande Área` e a `Área Básica` oficiais da CAPES/CNPq, ajusta `Título`, `Autor` e `Ano` (vendo a referência ABNT NBR 6023 ser formatada em tempo real logo acima) e clica em **`Aprovar e Materializar na Biblioteca`**.
+4. No quadro **Triagem Manual Assistida** do Inspetor, o usuário escolhe a `Grande Área` e a `Área Básica` oficiais da CAPES/CNPq, ajusta `Título`, `Autor` e `Ano` (vendo a referência ABNT NBR 6023 ser formatada em tempo real logo acima) e clica em **`Aprovar e Materializar na Tomusa`**.
 5. O item muda seu status para `Organizado`, é movido de `revisao_manual/` para a pasta temática correta acompanhado de seu `.md` companheiro ABNT, e a `Taxa de Revisão Manual` na barra inferior cai imediatamente.
 
 ---
@@ -345,10 +345,10 @@ Para atender simultaneamente ao rigor estético (**Editorial Academic Workbench*
 
 ---
 
-### 5.2. Estrutura Modular do Pacote `src/bibliotec/gui/`
+### 5.2. Estrutura Modular do Pacote `src/tomus/gui/`
 
 ```text
-src/bibliotec/gui/
+src/tomus/gui/
 ├── __init__.py              # Exporta launch_gui() e main()
 ├── app.py                   # Ponto de entrada (QApplication, High-DPI, Fusion style, CLI hook)
 ├── theme.py                 # ThemeTokens (Editorial Paper & Technical Graphite) + gerador QSS
@@ -356,7 +356,7 @@ src/bibliotec/gui/
 ├── os_integration.py        # Abstração multiplataforma (open_file, reveal_in_file_manager, paths)
 ├── worker.py                # PipelineWorker (QThread) + ManualTriageService + CacheStatsService
 ├── models.py                # DocumentTableModel (QAbstractTableModel) + DocumentFilterProxyModel
-├── main_window.py           # BiblioTECMainWindow (Workbench de 3 painéis, menus, atalhos, drag&drop)
+├── main_window.py           # TomusMainWindow (Workbench de 3 painéis, menus, atalhos, drag&drop)
 └── widgets/
     ├── __init__.py
     ├── toolbar.py           # OperationalToolbar + SessionResumeBanner
@@ -375,14 +375,14 @@ src/bibliotec/gui/
 sequenceDiagram
     autonumber
     participant User as Usuário (GUI 60fps)
-    participant MainWin as BiblioTECMainWindow (Main Thread)
+    participant MainWin as TomusMainWindow (Main Thread)
     participant Model as DocumentTableModel / Proxy
     participant Worker as PipelineWorker (QThread)
-    participant Core as bibliotec.core.pipeline.run_pipeline
+    participant Core as tomus.core.pipeline.run_pipeline
     participant Storage as FileCache (SQLite WAL) & LibraryOrganizer
 
     User->>MainWin: Clica "Organizar Acervo" (Cmd+R / Ctrl+R)
-    MainWin->>MainWin: save_session(.bibliotec_session.json)
+    MainWin->>MainWin: save_session(.tomus_session.json)
     MainWin->>Worker: Inicia PipelineWorker(source, target, config, cancel_event)
     activate Worker
     Worker->>Core: run_pipeline(..., event_callback=self._on_event, cancel_event=self.cancel_event)
@@ -415,7 +415,7 @@ sequenceDiagram
 
 ### 5.4. Contratos Técnicos dos Módulos da GUI
 
-#### 1. `src/bibliotec/gui/worker.py` — Execução Assíncrona e Cancelamento Cooperativo
+#### 1. `src/tomus/gui/worker.py` — Execução Assíncrona e Cancelamento Cooperativo
 ```python
 class PipelineWorker(QThread):
     """Executa run_pipeline em background sem bloquear a Event Loop do Qt."""
@@ -468,7 +468,7 @@ class PipelineWorker(QThread):
         self.event_received.emit(event)
 ```
 
-#### 2. `src/bibliotec/gui/os_integration.py` — Portabilidade macOS, Windows e Linux
+#### 2. `src/tomus/gui/os_integration.py` — Portabilidade macOS, Windows e Linux
 Encapsula todas as interações dependentes de sistema operacional usando `sys.platform` e `pathlib.Path`, sem jamais concatenar strings com `/` manualmente:
 
 | Operação | macOS (`darwin`) | Windows (`win32`) | Linux (`linux`) |
@@ -497,28 +497,28 @@ Todos os atalhos utilizam `QKeySequence` para mapear automaticamente `Cmd` (`⌘
 
 ---
 
-### 5.5. Pontos de Entrada (`pyproject.toml` e `bibliotec gui`)
+### 5.5. Pontos de Entrada (`pyproject.toml` e `tomus gui`)
 
 A interface gráfica integra-se ao ecossistema de linha de comando sem quebrar a execução headless do motor (caso `PySide6` seja importado apenas quando a GUI for invocada):
 
-1. **Subcomando na CLI (`src/bibliotec/cli/main.py`):**
-   * `bibliotec gui [--source <PATH>] [--target <PATH>] [--dark | --light]`: Abre a bancada desktop pré-populando opcionalmente os diretórios de origem e destino passados via terminal.
+1. **Subcomando na CLI (`src/tomus/cli/main.py`):**
+   * `tomus gui [--source <PATH>] [--target <PATH>] [--dark | --light]`: Abre a bancada desktop pré-populando opcionalmente os diretórios de origem e destino passados via terminal.
 2. **Script GUI Dedicado (`pyproject.toml`):**
    * Adição de `pyside6>=6.7.0` às dependências do projeto e registro de:
      ```toml
      [project.gui-scripts]
-     bibliotec-gui = "bibliotec.gui.app:main"
+     tomus-gui = "tomus.gui.app:main"
      ```
 
 ---
 
 ## 6. Checklist de Auditoria para a Passagem 2 (Implementação e Testes)
 
-Antes de concluir a Passagem 2, a implementação de `src/bibliotec/gui/` será validada contra os seguintes critérios objetivos:
+Antes de concluir a Passagem 2, a implementação de `src/tomus/gui/` será validada contra os seguintes critérios objetivos:
 
-- [ ] **Auditoria Anti-AI-Slop:** Verificação automatizada (`grep`/teste unitário) garantindo zero ocorrências de emojis Unicode nos módulos `src/bibliotec/gui/*.py` e zero gradientes lineares/radiais roxo/rosa no QSS.
+- [ ] **Auditoria Anti-AI-Slop:** Verificação automatizada (`grep`/teste unitário) garantindo zero ocorrências de emojis Unicode nos módulos `src/tomus/gui/*.py` e zero gradientes lineares/radiais roxo/rosa no QSS.
 - [ ] **Fidelidade das Paletas:** Testes unitários verificando todos os códigos hexadecimais de `EDITORIAL_PAPER_THEME` (`#F6F5F1`, `#FFFFFF`, `#EFECE6`, `#E2DFD7`, `#18181B`, `#52525B`, `#1E3A5F`) e `TECHNICAL_GRAPHITE_THEME` (`#141517`, `#1B1C1F`, `#232529`, `#2E3036`, `#F4F4F6`, `#9CA3AF`, `#4A7BB0`).
-- [ ] **Integração com `bibliotec.core`:** Testes com `pytest` (em modo `QT_QPA_PLATFORM=offscreen` para rodar em qualquer ambiente CI/CD ou terminal sem abrir janelas bloqueantes) validando:
+- [ ] **Integração com `tomus.core`:** Testes com `pytest` (em modo `QT_QPA_PLATFORM=offscreen` para rodar em qualquer ambiente CI/CD ou terminal sem abrir janelas bloqueantes) validando:
   - Fluxo completo do `PipelineWorker` emitindo `PipelineEvent` e populando o `DocumentTableModel`;
   - Cancelamento cooperativo via `cancel_event`;
   - Renderização e cópia da citação **ABNT NBR 6023** no `DocumentInspectorPanel`;

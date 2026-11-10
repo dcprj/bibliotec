@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "bibliotec"
-version = "1.1.1"
+name = "tomus"
+version = "1.1.0"
 description = "Tomus — Organizador Acadêmico de PDFs baseado na taxonomia CAPES/CNPq"
 requires-python = ">=3.11"
 authors = [
@@ -36,13 +36,13 @@ dev = [
 ]
 
 [project.scripts]
-bibliotec = "bibliotec.cli.main:app"
+tomus = "tomus.cli.main:app"
 
 [project.gui-scripts]
-bibliotec-gui = "bibliotec.gui.app:main"
+tomus-gui = "tomus.gui.app:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/bibliotec"]
+packages = ["src/tomus"]
 
 [tool.pytest.ini_options]
 markers = [

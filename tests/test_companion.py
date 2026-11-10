@@ -1,4 +1,4 @@
-"""Testes para o módulo de arquivo companheiro (.md) do BiblioTEC.
+"""Testes para o módulo de arquivo companheiro (.md) do Tomus.
 
 Cobre: formatação de autores ABNT NBR 6023, referência bibliográfica,
 front matter YAML, geração de markdown e integração com LibraryOrganizer.
@@ -10,14 +10,14 @@ from pathlib import Path
 
 import pytest
 
-from bibliotec.storage.companion import (
+from tomus.storage.companion import (
     format_abnt_authors,
     format_abnt_author,
     format_abnt_reference,
     generate_companion_markdown,
 )
-from bibliotec.storage.organizer import LibraryOrganizer
-from bibliotec.storage.namer import format_academic_filename
+from tomus.storage.organizer import LibraryOrganizer
+from tomus.storage.namer import format_academic_filename
 
 
 # --------------------------------------------------------------------------- #
@@ -418,7 +418,7 @@ def test_organizer_duplicata_move_limpa_origem(tmp_path: Path):
 
 def test_generate_duplicate_companion_markdown():
     """generate_duplicate_companion_markdown deve gerar front matter YAML correto."""
-    from bibliotec.storage.companion import generate_duplicate_companion_markdown
+    from tomus.storage.companion import generate_duplicate_companion_markdown
 
     md = generate_duplicate_companion_markdown(
         duplicate_source=Path("/source/b.pdf"),

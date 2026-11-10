@@ -42,16 +42,16 @@ Versão compacta com transparência alfa total aplicada na barra de ferramentas 
 
 | Artefato | Caminho |
 |----------|---------|
-| Ícone oficial (PNG 1024×1024) | `src/bibliotec/gui/resources/bibliotec_icon.png` |
+| Ícone oficial (PNG 1024×1024) | `src/tomus/gui/resources/tomus_icon.png` |
 | Ícone macOS (ICNS) | `packaging/icons/icon.icns` |
 | Ícone Windows (ICO) | `packaging/icons/icon.ico` |
 | Ícone Windows (ICO) | `logo_e_icone/icon.ico` |
 | Logotipo horizontal | `logo_e_icone/Logo.png` |
 | Logotipo horizontal (design) | `docs/designs/tomus_branding/tomus_horizontal_logo.jpg` |
-| Emblema da interface (web) | `src/bibliotec/gui/web/tomus_emblem.png` |
-| Logotipo da interface (web) | `src/bibliotec/gui/web/logo.png` |
-| Logotipo transparente (web) | `src/bibliotec/gui/web/logo_transparent.png` |
+| Emblema da interface (web) | `src/tomus/gui/web/tomus_emblem.png` |
+| Logotipo da interface (web) | `src/tomus/gui/web/logo.png` |
+| Logotipo transparente (web) | `src/tomus/gui/web/logo_transparent.png` |
 
 ---
 
-*Não há mais referências a "BiblioTEC" ou a artes antigas (Oxford, Swiss) neste repositório. Toda a identidade visual agora é exclusivamente Tomus.*
+*Não há mais referências a "Tomus" ou a artes antigas (Oxford, Swiss) neste repositório. Toda a identidade visual agora é exclusivamente Tomus.*

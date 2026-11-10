@@ -1,4 +1,4 @@
-"""Testes da Etapa 2 da Passagem 2 — componentes da GUI do BiblioTEC.
+"""Testes da Etapa 2 da Passagem 2 — componentes da GUI do Tomus.
 
 Valida:
 * DocumentTableModel (8 colunas, upsert a partir de PipelineEvent, replace_all);
@@ -23,16 +23,16 @@ import threading
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from bibliotec.core.config import AppConfig
-from bibliotec.core.models import (
+from tomus.core.config import AppConfig
+from tomus.core.models import (
     ExecutionSummary,
     FileManifestEntry,
     PipelineEvent,
     ProcessStatus,
 )
-from bibliotec.gui.models import DocumentTableModel
-from bibliotec.gui.theme import EDITORIAL_PAPER_THEME, generate_qss
-from bibliotec.gui.worker import ManualTriageService, PipelineWorker
+from tomus.gui.models import DocumentTableModel
+from tomus.gui.theme import EDITORIAL_PAPER_THEME, generate_qss
+from tomus.gui.worker import ManualTriageService, PipelineWorker
 
 __all__ = []
 
@@ -204,7 +204,7 @@ def test_qss_contem_tokens_do_tema():
 # --------------------------------------------------------------------------- #
 
 def test_toolbar_instancia(qapp):
-    from bibliotec.gui.widgets.toolbar import OperationalToolbar
+    from tomus.gui.widgets.toolbar import OperationalToolbar
 
     toolbar = OperationalToolbar()
     assert toolbar.provider_key() == "gemini"
@@ -214,7 +214,7 @@ def test_toolbar_instancia(qapp):
 
 
 def test_sidebar_instancia(qapp):
-    from bibliotec.gui.widgets.sidebar import CapesSidebarPanel
+    from tomus.gui.widgets.sidebar import CapesSidebarPanel
 
     sidebar = CapesSidebarPanel()
     sidebar.set_counters({"total": 10, "organized": 7, "error": 1})
@@ -227,7 +227,7 @@ def test_sidebar_instancia(qapp):
 
 
 def test_document_table_panel_instancia(qapp):
-    from bibliotec.gui.widgets.document_table import DocumentTablePanel
+    from tomus.gui.widgets.document_table import DocumentTablePanel
 
     panel = DocumentTablePanel()
     panel.clear()
@@ -235,7 +235,7 @@ def test_document_table_panel_instancia(qapp):
 
 
 def test_inspector_instancia(qapp):
-    from bibliotec.gui.widgets.inspector import DocumentInspectorPanel
+    from tomus.gui.widgets.inspector import DocumentInspectorPanel
 
     inspector = DocumentInspectorPanel()
     inspector.show_entry(None)
@@ -243,7 +243,7 @@ def test_inspector_instancia(qapp):
 
 
 def test_status_bar_instancia(qapp):
-    from bibliotec.gui.widgets.status_drawer import TelemetryStatusBar
+    from tomus.gui.widgets.status_drawer import TelemetryStatusBar
 
     bar = TelemetryStatusBar()
     bar.set_progress(50, 100)
@@ -253,7 +253,7 @@ def test_status_bar_instancia(qapp):
 
 
 def test_log_drawer_instancia(qapp):
-    from bibliotec.gui.widgets.status_drawer import LogCacheDrawer
+    from tomus.gui.widgets.status_drawer import LogCacheDrawer
 
     drawer = LogCacheDrawer()
     drawer.append_log("teste de log")
@@ -262,7 +262,7 @@ def test_log_drawer_instancia(qapp):
 
 
 def test_preferences_dialog_instancia(qapp):
-    from bibliotec.gui.widgets.preferences_dialog import PreferencesDialog
+    from tomus.gui.widgets.preferences_dialog import PreferencesDialog
 
     dlg = PreferencesDialog(AppConfig())
     assert dlg is not None

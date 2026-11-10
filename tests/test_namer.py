@@ -6,7 +6,7 @@ truncamento exato abaixo de 240 bytes UTF-8 com caracteres acentuados.
 
 from __future__ import annotations
 
-from bibliotec.storage.namer import format_academic_filename
+from tomus.storage.namer import format_academic_filename
 
 
 def test_um_autor():

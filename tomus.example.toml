@@ -1,0 +1,57 @@
+# Arquivo de configuração de EXEMPLO do Tomus
+# Copie para tomus.toml (local) ou ~/.config/tomus/config.toml (global)
+# e preencha com seus próprios valores. Este arquivo é apenas um modelo:
+# não contém chaves de API reais e não deve ser versionado com segredos.
+
+[general]
+# Modo de varredura da pasta de origem: true = recursivo (padrão), false = plano
+recursive = true
+# Operação padrão nos arquivos: "copy" (copiar) ou "move" (mover)
+file_operation = "copy"
+# Limiar mínimo de confiança (0.0 a 1.0) para organizar automaticamente
+confidence_min = 0.70
+# Número de workers (1 = execução sequencial padrão segura para OCR e SQLite)
+workers = 1
+# Ativar cache local SQLite por SHA-256 (~/.cache/tomus/state.db)
+use_cache = true
+
+[llm]
+# Provedor de classificação (MVP implementa "gemini")
+provider = "gemini"
+# Alias para provider (retrocompatibilidade)
+default_provider = "gemini"
+# Cadeia de fallback de provedores quando o padrão falha
+fallback_chain = ["groq", "nvidia", "deepseek"]
+# Modelo padrão do provedor
+model = "gemini-3.5-flash"
+
+# Configurações específicas por provedor (exemplos comentados)
+#[llm.providers.gemini]
+#model = "gemini-3.5-flash"
+
+#[llm.providers.groq]
+#model = "openai/gpt-oss-20b"
+
+#[llm.providers.nvidia]
+#model = "nvidia/nemotron-3.5-lightning-30b-a3b"
+
+#[llm.providers.deepseek]
+#model = "deepseek-flash"
+
+[api_keys]
+# Chave de API do provedor de LLM (Gemini) - OBTENHA em https://aistudio.google.com/
+gemini_api_key = ""
+# Chave de API do Google Books (opcional)
+google_books_api_key = ""
+# E-mail opcional para uso do Polite Pool do OpenAlex (até 10 req/s)
+openalex_polite_email = ""
+# Chave da API da NVIDIA (NVIDIA NIM / build.nvidia.com)
+nvidia_api_key = ""
+# Chave de API do DeepSeek
+deepseek_api_key = ""
+# Chave de API da Anthropic Claude (também aceita ANTHROPIC_API_KEY via env)
+claude_api_key = ""
+# Chave de API da Groq
+groq_api_key = ""
+# Token de acesso do GitHub (também aceita GITHUB_TOKEN / GH_TOKEN via env)
+github_token = ""

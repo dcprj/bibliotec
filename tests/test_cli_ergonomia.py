@@ -13,11 +13,11 @@ import shutil
 
 from typer.testing import CliRunner
 
-from bibliotec.cli.main import app
-from bibliotec.core.cache import FileCache
-from bibliotec.core.config import AppConfig
-from bibliotec.core.pipeline import run_pipeline
-from bibliotec.core.llm import MockLLMProvider
+from tomus.cli.main import app
+from tomus.core.cache import FileCache
+from tomus.core.config import AppConfig
+from tomus.core.pipeline import run_pipeline
+from tomus.core.llm import MockLLMProvider
 
 runner = CliRunner()
 
@@ -38,9 +38,9 @@ def _criar_pdf(caminho: Path, texto: str = "Título de teste Autor Silva, João 
 
 
 def test_raiz_curto_o_d_dry_run_chama_organize():
-    """bibliotec -o <origem> -d <destino> --dry-run executa organize."""
+    """tomus -o <origem> -d <destino> --dry-run executa organize."""
     origem, destino = _origem_destino()
-    with patch("bibliotec.cli.main._executar_organize") as mock_exec:
+    with patch("tomus.cli.main._executar_organize") as mock_exec:
         result = runner.invoke(app, ["-o", str(origem), "-d", str(destino), "--dry-run", "--no-cache"])
     assert result.exit_code == 0, result.output
     mock_exec.assert_called_once()
@@ -52,9 +52,9 @@ def test_raiz_curto_o_d_dry_run_chama_organize():
 
 
 def test_raiz_longo_origem_destino_dry_run_chama_organize():
-    """bibliotec --origem <origem> --destino <destino> --dry-run executa organize."""
+    """tomus --origem <origem> --destino <destino> --dry-run executa organize."""
     origem, destino = _origem_destino()
-    with patch("bibliotec.cli.main._executar_organize") as mock_exec:
+    with patch("tomus.cli.main._executar_organize") as mock_exec:
         result = runner.invoke(app, ["--origem", str(origem), "--destino", str(destino), "--dry-run"])
     assert result.exit_code == 0, result.output
     mock_exec.assert_called_once()
@@ -65,7 +65,7 @@ def test_raiz_longo_origem_destino_dry_run_chama_organize():
 
 
 def test_raiz_sem_subcomando_sem_opcoes_exibe_help():
-    """bibliotec (sem nada) exibe o help."""
+    """tomus (sem nada) exibe o help."""
     result = runner.invoke(app, [])
     # O Typer pode sair com código 0 ou 2 quando nenhum argumento é passado;
     # o importante é que o help seja exibido.
@@ -74,7 +74,7 @@ def test_raiz_sem_subcomando_sem_opcoes_exibe_help():
 
 
 def test_raiz_somente_origem_erro():
-    """bibliotec -o <origem> (sem -d) exibe erro e sai com código != 0."""
+    """tomus -o <origem> (sem -d) exibe erro e sai com código != 0."""
     origem, _ = _origem_destino()
     result = runner.invoke(app, ["-o", str(origem)])
     assert result.exit_code != 0
@@ -82,7 +82,7 @@ def test_raiz_somente_origem_erro():
 
 
 def test_raiz_somente_destino_erro():
-    """bibliotec -d <destino> (sem -o) exibe erro e sai com código != 0."""
+    """tomus -d <destino> (sem -o) exibe erro e sai com código != 0."""
     _, destino = _origem_destino()
     result = runner.invoke(app, ["-d", str(destino)])
     assert result.exit_code != 0
@@ -90,9 +90,9 @@ def test_raiz_somente_destino_erro():
 
 
 def test_organize_posicionais_chama_organize():
-    """bibliotec organize <ORIGEM> <DESTINO> --dry-run executa organize."""
+    """tomus organize <ORIGEM> <DESTINO> --dry-run executa organize."""
     origem, destino = _origem_destino()
-    with patch("bibliotec.cli.main._executar_organize") as mock_exec:
+    with patch("tomus.cli.main._executar_organize") as mock_exec:
         result = runner.invoke(app, ["organize", str(origem), str(destino), "--dry-run"])
     assert result.exit_code == 0, result.output
     mock_exec.assert_called_once()
@@ -102,9 +102,9 @@ def test_organize_posicionais_chama_organize():
 
 
 def test_organize_opcoes_o_d_chama_organize():
-    """bibliotec organize -o <origem> -d <destino> --dry-run executa organize."""
+    """tomus organize -o <origem> -d <destino> --dry-run executa organize."""
     origem, destino = _origem_destino()
-    with patch("bibliotec.cli.main._executar_organize") as mock_exec:
+    with patch("tomus.cli.main._executar_organize") as mock_exec:
         result = runner.invoke(app, ["organize", "-o", str(origem), "-d", str(destino), "--dry-run"])
     assert result.exit_code == 0, result.output
     mock_exec.assert_called_once()
@@ -114,9 +114,9 @@ def test_organize_opcoes_o_d_chama_organize():
 
 
 def test_organize_opcoes_source_target_chama_organize():
-    """bibliotec organize --source <origem> --target <destino> --dry-run executa organize."""
+    """tomus organize --source <origem> --target <destino> --dry-run executa organize."""
     origem, destino = _origem_destino()
-    with patch("bibliotec.cli.main._executar_organize") as mock_exec:
+    with patch("tomus.cli.main._executar_organize") as mock_exec:
         result = runner.invoke(app, ["organize", "--source", str(origem), "--target", str(destino), "--dry-run"])
     assert result.exit_code == 0, result.output
     mock_exec.assert_called_once()
@@ -130,7 +130,7 @@ def test_organize_opcoes_precedem_posicionais():
     origem_opt, destino_opt = _origem_destino()
     origem_pos = Path("/tmp/pos_origem")
     destino_pos = Path("/tmp/pos_destino")
-    with patch("bibliotec.cli.main._executar_organize") as mock_exec:
+    with patch("tomus.cli.main._executar_organize") as mock_exec:
         result = runner.invoke(
             app,
             ["organize", "--origem", str(origem_opt), "--destino", str(destino_opt),
@@ -143,7 +143,7 @@ def test_organize_opcoes_precedem_posicionais():
 
 
 def test_organize_falta_destino_erro():
-    """bibliotec organize -o <origem> (sem destino) exibe erro."""
+    """tomus organize -o <origem> (sem destino) exibe erro."""
     origem, _ = _origem_destino()
     result = runner.invoke(app, ["organize", "-o", str(origem)])
     assert result.exit_code != 0
@@ -151,7 +151,7 @@ def test_organize_falta_destino_erro():
 
 
 def test_organize_sem_nada_erro():
-    """bibliotec organize (sem origem nem destino) exibe erro."""
+    """tomus organize (sem origem nem destino) exibe erro."""
     result = runner.invoke(app, ["organize"])
     assert result.exit_code != 0
     assert "necessário informar" in result.output
@@ -160,7 +160,7 @@ def test_organize_sem_nada_erro():
 def test_flags_adicionais_sao_repassadas():
     """--move, --workers, --confidence-min, --model são repassados ao organize."""
     origem, destino = _origem_destino()
-    with patch("bibliotec.cli.main._executar_organize") as mock_exec:
+    with patch("tomus.cli.main._executar_organize") as mock_exec:
         result = runner.invoke(
             app,
             ["-o", str(origem), "-d", str(destino), "--move", "--workers", "4",

@@ -11,11 +11,11 @@ from pathlib import Path
 import fitz  # PyMuPDF
 import pytest
 
-from bibliotec.core.cache import FileCache
-from bibliotec.core.config import AppConfig
-from bibliotec.core.models import PipelineEvent, ProcessStatus
-from bibliotec.core.pipeline import run_pipeline
-from bibliotec.core.llm import ClassificationResult, MockLLMProvider
+from tomus.core.cache import FileCache
+from tomus.core.config import AppConfig
+from tomus.core.models import PipelineEvent, ProcessStatus
+from tomus.core.pipeline import run_pipeline
+from tomus.core.llm import ClassificationResult, MockLLMProvider
 
 
 def _criar_pdf(caminho: Path, texto: str = "Título de teste Autor Silva, João 2020") -> str:

@@ -20,11 +20,11 @@ from pathlib import Path
 import fitz  # PyMuPDF
 import pytest
 
-from bibliotec.core.config import AppConfig
-from bibliotec.core.cache import FileCache
-from bibliotec.core.pipeline import run_pipeline
-from bibliotec.core.llm import ClassificationResult, MockLLMProvider
-from bibliotec.storage.organizer import LibraryOrganizer
+from tomus.core.config import AppConfig
+from tomus.core.cache import FileCache
+from tomus.core.pipeline import run_pipeline
+from tomus.core.llm import ClassificationResult, MockLLMProvider
+from tomus.storage.organizer import LibraryOrganizer
 
 
 # --------------------------------------------------------------------------- #

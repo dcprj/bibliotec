@@ -1,4 +1,4 @@
-"""Testes para o módulo de sessão (src/bibliotec/core/session.py).
+"""Testes para o módulo de sessão (src/tomus/core/session.py).
 
 Cobre: save, load, clear, recuperação tolerante de arquivos corrompidos
 e inexistentes.
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from bibliotec.core.session import (
+from tomus.core.session import (
     SESSION_FILE,
     SessionState,
     save_session,
@@ -60,7 +60,7 @@ def test_session_state_todos_campos():
 
 def test_save_e_load_roundtrip(tmp_path: Path):
     """save_session seguido de load_session deve retornar o mesmo estado."""
-    session_path = tmp_path / ".bibliotec_session.json"
+    session_path = tmp_path / ".tomus_session.json"
     estado_original = SessionState(
         source_dir="/origem",
         target_dir="/destino",
@@ -91,21 +91,21 @@ def test_load_session_arquivo_inexistente_retorna_none(tmp_path: Path):
 
 def test_load_session_arquivo_corrompido_retorna_none(tmp_path: Path):
     """load_session deve retornar None quando o arquivo JSON está corrompido."""
-    session_path = tmp_path / ".bibliotec_session.json"
+    session_path = tmp_path / ".tomus_session.json"
     session_path.write_text("{json corrompido!!!", encoding="utf-8")
     assert load_session(path=session_path) is None
 
 
 def test_load_session_arquivo_invalido_retorna_none(tmp_path: Path):
     """load_session deve retornar None quando o JSON não é um SessionState válido."""
-    session_path = tmp_path / ".bibliotec_session.json"
+    session_path = tmp_path / ".tomus_session.json"
     session_path.write_text('{"source_dir": 123}', encoding="utf-8")  # source_dir deve ser str
     assert load_session(path=session_path) is None
 
 
 def test_clear_session_remove_arquivo(tmp_path: Path):
     """clear_session deve remover o arquivo de sessão."""
-    session_path = tmp_path / ".bibliotec_session.json"
+    session_path = tmp_path / ".tomus_session.json"
     estado = SessionState(source_dir="/o", target_dir="/d")
     save_session(estado, path=session_path)
     assert session_path.exists()
@@ -122,14 +122,14 @@ def test_clear_session_tolerante_arquivo_inexistente(tmp_path: Path):
 
 
 def test_session_file_constante():
-    """SESSION_FILE deve apontar para .bibliotec_session.json."""
-    assert SESSION_FILE == Path(".bibliotec_session.json")
-    assert SESSION_FILE.name == ".bibliotec_session.json"
+    """SESSION_FILE deve apontar para .tomus_session.json."""
+    assert SESSION_FILE == Path(".tomus_session.json")
+    assert SESSION_FILE.name == ".tomus_session.json"
 
 
 def test_save_session_cria_diretorio_pai(tmp_path: Path):
     """save_session deve criar o diretório pai se não existir."""
-    session_path = tmp_path / "sub" / "dir" / ".bibliotec_session.json"
+    session_path = tmp_path / "sub" / "dir" / ".tomus_session.json"
     estado = SessionState(source_dir="/o", target_dir="/d")
     save_session(estado, path=session_path)
     assert session_path.exists()
@@ -140,7 +140,7 @@ def test_save_session_cria_diretorio_pai(tmp_path: Path):
 
 def test_session_state_model_dump_roundtrip(tmp_path: Path):
     """model_dump(mode='json') seguido de SessionState(**data) deve ser consistente."""
-    session_path = tmp_path / ".bibliotec_session.json"
+    session_path = tmp_path / ".tomus_session.json"
     estado = SessionState(
         source_dir="/a",
         target_dir="/b",

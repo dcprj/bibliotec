@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Script de Empacotamento do BiblioTEC para Linux (AppImage universal)
+# Script de Empacotamento do Tomus para Linux (AppImage universal)
 # ==============================================================================
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-APP_NAME="BiblioTEC"
+APP_NAME="Tomus"
 
 # Ler a versão do pyproject.toml (mesma abordagem do build_macos.sh)
 if command -v python3 &> /dev/null; then
@@ -51,8 +51,8 @@ mkdir -p "${APP_DIR}/usr/share/icons/hicolor/512x512/apps"
 
 # Copiar ícone oficial
 if [ -f "${SCRIPT_DIR}/icons/icon.png" ]; then
-    cp "${SCRIPT_DIR}/icons/icon.png" "${APP_DIR}/usr/share/icons/hicolor/512x512/apps/bibliotec.png"
-    cp "${SCRIPT_DIR}/icons/icon.png" "${APP_DIR}/bibliotec.png"
+    cp "${SCRIPT_DIR}/icons/icon.png" "${APP_DIR}/usr/share/icons/hicolor/512x512/apps/tomus.png"
+    cp "${SCRIPT_DIR}/icons/icon.png" "${APP_DIR}/tomus.png"
     cp "${SCRIPT_DIR}/icons/icon.png" "${APP_DIR}/.DirIcon"
 fi
 
@@ -60,19 +60,19 @@ fi
 cp -R "${DIST_DIR}/${APP_NAME}/"* "${APP_DIR}/usr/bin/"
 
 # Criar arquivo .desktop
-cat <<EOF > "${APP_DIR}/usr/share/applications/bibliotec.desktop"
+cat <<EOF > "${APP_DIR}/usr/share/applications/tomus.desktop"
 [Desktop Entry]
 Type=Application
-Name=BiblioTEC
-Exec=BiblioTEC
-Icon=bibliotec
+Name=Tomus
+Exec=Tomus
+Icon=tomus
 Comment=Organizador Acadêmico de PDFs baseado na taxonomia CAPES/CNPq
 Categories=Education;Science;Office;
 Terminal=false
-StartupWMClass=BiblioTEC
+StartupWMClass=Tomus
 EOF
 
-cp "${APP_DIR}/usr/share/applications/bibliotec.desktop" "${APP_DIR}/bibliotec.desktop"
+cp "${APP_DIR}/usr/share/applications/tomus.desktop" "${APP_DIR}/tomus.desktop"
 
 # Criar AppRun
 cat <<'EOF' > "${APP_DIR}/AppRun"
@@ -80,7 +80,7 @@ cat <<'EOF' > "${APP_DIR}/AppRun"
 HERE="$(dirname "$(readlink -f "${0}")")"
 export PATH="${HERE}/usr/bin:${PATH}"
 export LD_LIBRARY_PATH="${HERE}/usr/lib:${HERE}/usr/bin:${LD_LIBRARY_PATH:-}"
-exec "${HERE}/usr/bin/BiblioTEC" "$@"
+exec "${HERE}/usr/bin/Tomus" "$@"
 EOF
 chmod +x "${APP_DIR}/AppRun"
 
