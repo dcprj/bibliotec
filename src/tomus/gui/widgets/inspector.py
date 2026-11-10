@@ -214,7 +214,7 @@ class ManualTriageBox(QFrame):
         layout.addWidget(self.prev_lbl)
 
         # Botão de aprovação.
-        self.btn_approve = QPushButton("Aprovar e Materializar na Tomusa")
+        self.btn_approve = QPushButton("Aprovar e Materializar na Biblioteca")
         self.btn_approve.setFixedWidth(220)
         self.btn_approve.setStyleSheet(
             "QPushButton { background: #1E3A8A; color: #FFFFFF; border: none; "

@@ -128,11 +128,11 @@ As três zonas centrais são gerenciadas por um `QSplitter(Qt.Orientation.Horizo
 +----------------------------------------------------------------------------------------------------------------------------------------+
 | Tomus                                                                                                            [_] [ ] [X]       |
 +----------------------------------------------------------------------------------------------------------------------------------------+
-| [ORIGEM]  ~/Downloads/Acervo_Bruto          [Procurar...]  |  [DESTINO] ~/Tomusa_CAPES          [Procurar...]                      |
+| [ORIGEM]  ~/Downloads/Acervo_Bruto          [Procurar...]  |  [DESTINO] ~/Biblioteca_CAPES          [Procurar...]                      |
 | [PROVEDOR] [ Gemini (gemini-3.5-flash)  v ] (* Chave OK)   |  [MODO: Copiar | Mover] [x] Recursivo [ ] Dry-Run                         |
 |                                                                             [Preferencias] [Cache]  [ |> Organizar Acervo (Cmd+R) ]    |
 +----------------------------------------------------------------------------------------------------------------------------------------+
-| (!) SESSAO INTERROMPIDA DETECTADA: ~/Downloads/Acervo_Bruto -> ~/Tomusa_CAPES (14/85 concluidos)  [Retomar Sessao] [Descartar]     |
+| (!) SESSAO INTERROMPIDA DETECTADA: ~/Downloads/Acervo_Bruto -> ~/Biblioteca_CAPES (14/85 concluidos)  [Retomar Sessao] [Descartar]     |
 +---------------------------+-----------------------------------------------------------------------+------------------------------------+
 | FILTROS & TAXONOMIA       | DOCUMENTOS DO LOTE                              [Buscar titulo/autor] | INSPETOR DA OBRA          [Fechar] |
 |---------------------------+-----------------------------------------------------------------------+------------------------------------|
@@ -242,7 +242,7 @@ O Inspetor adapta sua visualização automaticamente conforme o `ProcessStatus` 
        * Seletores acoplados ao catálogo oficial `taxonomy.py`: `ComboBox Grande Área` (`get_grandes_areas()`) $\rightarrow$ `ComboBox Área Básica` (`get_areas_basicas(grande_area)`) $\rightarrow$ `ComboBox Tipo` (`DocumentType`).
        * Campos editáveis preenchidos com a sugestão parcial do LLM (se houver): `Título`, `Subtítulo`, `Autor(es)` (separados por `;`) e `Ano`.
        * Pré-visualização ao vivo do novo nome padronizado (`format_academic_filename`) e da citação ABNT resultante.
-       * Botão **`Aprovar e Materializar na Tomusa`**: Executa a movimentação/cópia de `revisao_manual/` para a pasta temática `<Grande Área>/<Área Básica>/<Tipo>/`, gera o `.md` companheiro ABNT, grava a classificação revisada no `FileCache` SQLite (`confidence_score = 1.0`, `model_name = "manual_human_review"`) e atualiza `manifest.json` e `relatorio_revisao.md`.
+       * Botão **`Aprovar e Materializar na Biblioteca`**: Executa a movimentação/cópia de `revisao_manual/` para a pasta temática `<Grande Área>/<Área Básica>/<Tipo>/`, gera o `.md` companheiro ABNT, grava a classificação revisada no `FileCache` SQLite (`confidence_score = 1.0`, `model_name = "manual_human_review"`) e atualiza `manifest.json` e `relatorio_revisao.md`.
 
 3. **Modo 3: Duplicata Exata (`DUPLICATE_SKIPPED`) ou Não-PDF Ignorado (`IGNORED_NON_PDF`)**
    * Para **Duplicatas**: Exibe o hash `SHA-256` idêntico, o caminho da duplicata isolada em `<TARGET_DIR>/duplicatas/` e um link direto (`Selecionar Obra Canônica` / `Mostrar Obra Canônica na Pasta`) apontando para o PDF principal já organizado na árvore temática.
@@ -307,7 +307,7 @@ Acessível pelo botão `Preferências` na toolbar ou pelo atalho padrão do sist
 ## 4. Fluxos de Interação de Ponta a Ponta
 
 ### 4.1. Fluxo 1: Seleção, Pré-Inspeção e Execução de Lote com Telemetria ao Vivo
-1. **Entrada Rápida:** O usuário arrasta uma pasta `~/Downloads/Artigos_Semestre` para a janela (ou seleciona via diálogo nativo) e define `~/Documentos/Tomusa_Acadêmica` como destino.
+1. **Entrada Rápida:** O usuário arrasta uma pasta `~/Downloads/Artigos_Semestre` para a janela (ou seleciona via diálogo nativo) e define `~/Documentos/Biblioteca_Acadêmica` como destino.
 2. **Início e Persistência de Sessão:** Ao clicar em **`Organizar Acervo`** (`Cmd+R` / `Ctrl+R`):
    * A GUI salva imediatamente o estado em `.tomus_session.json` via `save_session(SessionState(...))` (espelhando o comportamento da CLI para garantir recuperação em caso de queda de energia).
    * A grade central é limpa e entra em modo de recepção de eventos em tempo real.
@@ -328,7 +328,7 @@ Acessível pelo botão `Preferências` na toolbar ou pelo atalho padrão do sist
 1. Ao final da execução (ou ao abrir uma pasta de destino que já contenha `manifest.json`), o usuário clica no filtro **`Revisão Manual (N)`** na barra lateral esquerda.
 2. A grade exibe apenas os documentos que ficaram abaixo de `confidence_min` (ou tiveram falha de extração).
 3. O usuário seleciona um PDF na grade, clica em **`Abrir PDF`** no Inspetor direito (ou pressiona `Barra de Espaço` na linha da tabela) para visualizar a capa do documento no leitor nativo do SO (`Preview.app` no macOS, `Edge/Acrobat` no Windows, `Evince/Okular` no Linux).
-4. No quadro **Triagem Manual Assistida** do Inspetor, o usuário escolhe a `Grande Área` e a `Área Básica` oficiais da CAPES/CNPq, ajusta `Título`, `Autor` e `Ano` (vendo a referência ABNT NBR 6023 ser formatada em tempo real logo acima) e clica em **`Aprovar e Materializar na Tomusa`**.
+4. No quadro **Triagem Manual Assistida** do Inspetor, o usuário escolhe a `Grande Área` e a `Área Básica` oficiais da CAPES/CNPq, ajusta `Título`, `Autor` e `Ano` (vendo a referência ABNT NBR 6023 ser formatada em tempo real logo acima) e clica em **`Aprovar e Materializar na Biblioteca`**.
 5. O item muda seu status para `Organizado`, é movido de `revisao_manual/` para a pasta temática correta acompanhado de seu `.md` companheiro ABNT, e a `Taxa de Revisão Manual` na barra inferior cai imediatamente.
 
 ---

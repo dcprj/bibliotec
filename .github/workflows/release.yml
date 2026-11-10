@@ -1,4 +1,4 @@
-name: Release Tomus
+name: Release Tomus macOS
 
 on:
   push:
@@ -7,12 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-release:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest]
+  build-macos:
+    runs-on: macos-latest
 
     steps:
       - name: Checkout do código
@@ -25,14 +21,8 @@ jobs:
           cache: "pip"
 
       - name: Instalar dependências do sistema (macOS)
-        if: runner.os == 'macOS'
         run: |
           brew install create-dmg || true
-
-      - name: Instalar dependências do sistema (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          choco install innosetup --yes
 
       - name: Instalar dependências Python
         run: |
@@ -40,63 +30,34 @@ jobs:
           pip install "setuptools<70"
           pip install -e ".[dev]"
           pip install pyinstaller
-          pip install rapidocr onnxruntime
 
-      - name: Executar testes (exclui GUI - validada localmente em offscreen)
+      - name: Executar testes
         shell: bash
         env:
           QT_QPA_PLATFORM: offscreen
-        continue-on-error: true
         run: |
-          pytest tests/ -m "not slow" \
-            --ignore=tests/test_gui_base.py \
-            --ignore=tests/test_gui_components.py \
-            --ignore=tests/test_gui_web_bridge.py \
-            -q
+          pytest tests/ -m "not slow" -q
 
       - name: Build macOS (DMG + .app)
-        if: runner.os == 'macOS'
         run: |
           chmod +x packaging/build_macos.sh
           ./packaging/build_macos.sh
 
-      - name: Build Windows (Inno Setup instalador .exe)
-        if: runner.os == 'Windows'
-        shell: cmd
-        run: |
-          echo 📦 Gerando binário com PyInstaller...
-          pyinstaller --clean -y packaging/pyinstaller.spec
-          echo 🔧 Gerando instalador Windows com Inno Setup...
-          rem Extrair versão da tag (ex: refs/tags/v1.0.1 -> 1.0.1)
-          set VERSION=%GITHUB_REF_NAME:v=%
-          echo Versão detectada: %VERSION%
-          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=%VERSION% packaging/windows_installer.iss
-
       - name: Listar artifacts gerados
         shell: bash
-        continue-on-error: true
         run: |
           echo "=== Arquivos em dist/ ==="
           ls -la dist/ 2>/dev/null || echo "dist/ não encontrado"
 
       - name: Upload artifact (macOS DMG)
-        if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
           name: tomus-macos-dmg
           path: dist/*.dmg
           retention-days: 30
 
-      - name: Upload artifact (Windows EXE instalador Inno Setup)
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: tomus-windows-exe
-          path: dist/*Setup*.exe
-          retention-days: 30
-
   release:
-    needs: build-and-release
+    needs: build-macos
     runs-on: ubuntu-latest
     if: always() && startsWith(github.ref, 'refs/tags/v')
     permissions:
@@ -107,34 +68,21 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Baixar artifacts (macOS DMG)
-        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: tomus-macos-dmg
           path: release-assets/macos
 
-      - name: Baixar artifacts (Windows EXE)
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: tomus-windows-exe
-          path: release-assets/windows
-
       - name: Listar assets disponíveis para release
-        continue-on-error: true
         run: |
           echo "=== Assets disponíveis ==="
-          find release-assets -type f 2>/dev/null || echo "Nenhum asset encontrado"
           ls -la release-assets/macos/ 2>/dev/null || true
-          ls -la release-assets/windows/ 2>/dev/null || true
 
       - name: Criar ou Atualizar Release no GitHub
-        continue-on-error: true
         uses: softprops/action-gh-release@v2
         with:
           files: |
             release-assets/macos/*.dmg
-            release-assets/windows/*.exe
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

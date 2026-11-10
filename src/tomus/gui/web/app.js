@@ -772,7 +772,11 @@
     const number = item.number || '';
     const year = item.year ? String(item.year) : 's.d.';
     const pages = item.pages ? (String(item.pages).match(/^\d+$/) ? `${item.pages} p.` : item.pages) : '';
-    const doi = item.doi ? (String(item.doi).startsWith('http') ? String(item.doi) : `https://doi.org/${item.doi}`) : '';
+    const doiRaw = item.doi ? String(item.doi) : '';
+    const doiUrl = doiRaw && (doiRaw.startsWith('http://') || doiRaw.startsWith('https://') || doiRaw.startsWith('10.'))
+      ? (doiRaw.startsWith('http') ? doiRaw : `https://doi.org/${doiRaw}`)
+      : '';
+    const doiText = doiRaw ? escapeHtml(doiRaw) : '';
     const isbn = item.isbn ? String(item.isbn) : '';
     const tipo = item.tipo || '';
 
@@ -832,7 +836,8 @@
     // Limpar pontos e juntar
     const cleanParts = parts.map(p => p.trim().replace(/\.+$/, '')).filter(Boolean);
     let citation = cleanParts.join('. ') + '.';
-    if (doi) citation += ` Disponível em: <a href="${escapeHtml(doi)}" target="_blank">${escapeHtml(doi)}</a>.`;
+    if (doiUrl) citation += ` Disponível em: <a href="${escapeHtml(doiUrl)}" target="_blank">${escapeHtml(doiUrl)}</a>.`;
+    else if (doiText) citation += ` Disponível em: ${doiText}.`;
     if (isbn) citation += ` ISBN ${escapeHtml(isbn)}.`;
 
     return citation;

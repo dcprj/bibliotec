@@ -45,6 +45,7 @@ from tomus.core.llm import (
     GeminiProvider,
     LLMProvider,
     MockLLMProvider,
+    _sanitize_error_message,
     create_provider_chain,
 )
 
@@ -208,7 +209,7 @@ def _process_one(
               completed_files=completed_count[0] if completed_count else None,
               total_files=total_files)
         with finalize_lock:
-            entry = organizer.add_error(source_path, sha256, f"Extração falhou: {exc}")
+            entry = organizer.add_error(source_path, sha256, f"Extração falhou: {_sanitize_error_message(str(exc))}")
         _emit_terminal("organizer", "error", f"Extração falhou: {exc}",
                        destination_path=entry.destination_path)
         return organizer.entries[-1]
@@ -247,7 +248,7 @@ def _process_one(
               completed_files=completed_count[0] if completed_count else None,
               total_files=total_files)
         with finalize_lock:
-            entry = organizer.add_error(source_path, sha256, f"LLM falhou: {exc}", used_ocr=doc.used_ocr)
+            entry = organizer.add_error(source_path, sha256, f"LLM falhou: {_sanitize_error_message(str(exc))}", used_ocr=doc.used_ocr)
         _emit_terminal("organizer", "error", f"LLM falhou: {exc}",
                        destination_path=entry.destination_path)
         return organizer.entries[-1]
@@ -356,7 +357,7 @@ def run_pipeline(
 
     Parâmetros:
         source_dir: diretório de origem com os PDFs brutos.
-        target_dir: diretório de destino da tomusa organizada.
+        target_dir: diretório de destino da biblioteca organizada.
         config: configuração ativa (AppConfig).
         provider: provedor LLM (padrão create_provider_chain se houver API key, senão Mock).
         cache: instância de FileCache (criada se None).
@@ -395,7 +396,7 @@ def run_pipeline(
                                     destination_path=None,
                                     sha256="",
                                     status=ProcessStatus.ERROR,
-                                    error_message=str(exc),
+                                    error_message=_sanitize_error_message(str(exc)),
                                 )])
 
     # Registrar não-PDFs ignorados.

@@ -28,17 +28,18 @@ test_output/
 test-results/
 
 # Arquivo de configuração local com chaves de API
-bibliotec.toml
-.bibliotec.example.toml
+tomus.toml
+.tomus.example.toml
 
 # Repositório de PDFs de teste (1.1 GB - não versionar)
 repositorio_de_pdfs_para_testes/
 
-# Logs
+# Logs e relatórios de auditoria local
 *.log
+RELATORIO_AUDITORIA_SEGURANCA.md
 
 # Sessão e diretórios de build
-.bibliotec_session.json
+.tomus_session.json
 .claude/
 dist/
 build/

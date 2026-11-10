@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from pathlib import Path
 
 # Loggers de terceiros a serem silenciados/redirecionados para arquivo.
@@ -24,6 +25,36 @@ _THIRD_PARTY_LOGGERS = (
 
 # Formato padrão para o arquivo de log.
 _LOG_FORMAT = "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
+
+# Padrões de segredos a mascarar nos arquivos de log.
+# Cobre: key=API_KEY, sk-..., nvapi-..., gsk-..., token=...
+_SECRET_PATTERNS = [
+    (re.compile(r"(key=|api_key=|authorization: bearer\s*)([A-Za-z0-9._-]{8,})", re.IGNORECASE),
+     lambda m: m.group(1) + "***REDACTED***"),
+    (re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"), "sk-***REDACTED***"),
+    (re.compile(r"\bnvapi-[A-Za-z0-9._-]{20,}\b"), "nvapi-***REDACTED***"),
+    (re.compile(r"\bgsk-[A-Za-z0-9._-]{20,}\b"), "gsk-***REDACTED***"),
+    (re.compile(r"\btoken=([A-Za-z0-9._-]{8,})", re.IGNORECASE),
+     lambda m: "token=***REDACTED***"),
+]
+
+
+class RedactingFilter(logging.Filter):
+    """Filtro de logging que mascara chaves de API e tokens nas mensagens."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Mascarar segredos na mensagem do registro de log."""
+        if record.getMessage():
+            record.msg = _redact_secrets(record.getMessage())
+            record.args = ()
+        return True
+
+
+def _redact_secrets(text: str) -> str:
+    """Aplicar máscara a chaves de API e tokens em um texto de log."""
+    for pattern, replacement in _SECRET_PATTERNS:
+        text = pattern.sub(replacement, text)
+    return text
 
 
 def setup_logging(
@@ -67,6 +98,7 @@ def setup_logging(
         file_handler = logging.FileHandler(log_path, encoding="utf-8")
         file_handler.setLevel(level)
         file_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+        file_handler.addFilter(RedactingFilter())
         root_logger.addHandler(file_handler)
     except Exception:
         # Fallback: adicionar NullHandler para não quebrar a aplicação.
@@ -83,6 +115,7 @@ def setup_logging(
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(level)
         stream_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+        stream_handler.addFilter(RedactingFilter())
         root_logger.addHandler(stream_handler)
 
     # --- Silenciar loggers de terceiros --------------------------------------
@@ -90,6 +123,11 @@ def setup_logging(
         logger = logging.getLogger(name)
         logger.setLevel(level)
         logger.propagate = True  # faz com que mensagens subam para o root
+
+    # --- Limitar logger do httpx a WARNING para não gravar URLs com chaves ---
+    httpx_logger = logging.getLogger("httpx")
+    httpx_logger.setLevel(logging.WARNING)
+    httpx_logger.propagate = False  # não propagar para o root (evitar duplicação)
 
     # --- Caso especial: RapidOCR --------------------------------------------
     # O logger "RapidOCR" (em rapidocr.utils.log) adiciona seu próprio

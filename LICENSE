@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 BiblioTEC Contributors and Maintainers.
+Copyright (c) 2026 Tomus Contributors and Maintainers.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@ TERMOS COMPLEMENTARES E CONDIÇÕES DE USO (BRASIL / JURISDIÇÃO LOCAL)
 ================================================================================
 
 1. NATUREZA DA DISTRIBUIÇÃO E GRATUIDADE
-O BiblioTEC é um programa de computador distribuído no modelo de código aberto
+O Tomus é um programa de computador distribuído no modelo de código aberto
 e utilitário freeware (100% gratuito), regido pela Lei Federal nº 9.609/1998
 (Lei do Software) e Lei Federal nº 9.610/1998 (Direitos Autorais). Não há
 qualquer cobrança compulsória para o seu uso ou instalação.
@@ -34,7 +34,7 @@ qualquer cobrança compulsória para o seu uso ou instalação.
 O SOFTWARE FOI CONCEBIDO PARA REALIZAR OPERAÇÕES DE LEITURA, CLASSIFICAÇÃO,
 RENOMEAÇÃO E ORGANIZAÇÃO DE ARQUIVOS DIGITAIS DIRETAMENTE NO DISPOSITIVO LOCAL
 DO USUÁRIO. EM NENHUMA HIPÓTESE OS AUTORES, COLABORADORES OU DISTRIBUIDORES
-DO BIBLIOTEC SERÃO RESPONSÁVEIS POR:
+DO TOMUS SERÃO RESPONSÁVEIS POR:
 (I) QUAISQUER DANOS DIRETOS, INDIRETOS, INCIDENTAIS OU EMERGENTES,
 (II) CORRUPÇÃO, PERDA, APAGAMENTO INVOLUNTÁRIO OU RENOMEAÇÃO IMPRÓPRIA DE
      DOCUMENTOS OU DIRETÓRIOS,
@@ -44,7 +44,7 @@ DO BIBLIOTEC SERÃO RESPONSÁVEIS POR:
 ATUALIZADAS DE SEUS ARQUIVOS ANTES DE INICIAR QUALQUER PROCESSO EM LOTE.
 
 3. PRIVACIDADE E PROTEÇÃO DE DADOS (LGPD - LEI Nº 13.709/2018)
-O BiblioTEC opera exclusivamente no dispositivo local do usuário. Não há coleta,
+O Tomus opera exclusivamente no dispositivo local do usuário. Não há coleta,
 telemetria ou tráfego de dados para servidores dos desenvolvedores. O usuário
 é qualificado como único Controlador perante a LGPD em relação aos dados
 contidos nos arquivos manipulados e às requisições enviadas por meio de suas

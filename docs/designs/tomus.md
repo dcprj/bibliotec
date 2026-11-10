@@ -9,7 +9,7 @@
 
 Estudantes, professores e pesquisadores acumulam centenas de arquivos PDF (livros, artigos científicos, fascículos de periódicos, teses, dissertações, TCCs e materiais de aula) baixados de diferentes portais acadêmicos, repositórios institucionais e pastas compartilhadas. Esses arquivos chegam com nomes arbitrários (como códigos numéricos de submissão, siglas ou títulos truncados), frequentemente não possuem metadados internos padronizados e, no caso de obras antigas ou digitalizadas, consistem apenas em imagens escaneadas sem camada de texto selecionável.
 
-Organizar esse acervo manualmente exige abrir cada arquivo, identificar autor, título, ano, natureza da publicação e área do conhecimento, renomear o PDF e movê-lo para a pasta correspondente. À medida que a tomusa passa de dezenas para centenas de documentos, a triagem manual torna-se inviável e propensa a inconsistências.
+Organizar esse acervo manualmente exige abrir cada arquivo, identificar autor, título, ano, natureza da publicação e área do conhecimento, renomear o PDF e movê-lo para a pasta correspondente. À medida que a biblioteca passa de dezenas para centenas de documentos, a triagem manual torna-se inviável e propensa a inconsistências.
 
 As soluções existentes não resolvem esse fluxo diretamente no sistema de arquivos:
 1. Gerenciadores bibliográficos (como Zotero e Calibre) exigem a manutenção de um banco de dados próprio e focam em metadados de citação, sem classificar automaticamente o acervo em uma árvore física de diretórios baseada nas áreas oficiais do conhecimento acadêmico brasileiro.
@@ -18,7 +18,7 @@ As soluções existentes não resolvem esse fluxo diretamente no sistema de arqu
 
 ## Overview
 
-O **Tomus** é uma aplicação que automatiza a triagem, classificação temática, padronização de nomes e organização física de tomusas acadêmicas de PDFs. O sistema recebe um diretório de origem contendo arquivos desorganizados e produz, em um diretório de destino, uma tomusa estruturada em três níveis hierárquicos baseados na Tabela de Áreas do Conhecimento da CAPES/CNPq:
+O **Tomus** é uma aplicação que automatiza a triagem, classificação temática, padronização de nomes e organização física de bibliotecas acadêmicas de PDFs. O sistema recebe um diretório de origem contendo arquivos desorganizados e produz, em um diretório de destino, uma biblioteca estruturada em três níveis hierárquicos baseados na Tabela de Áreas do Conhecimento da CAPES/CNPq:
 
 `<Grande Área>/<Área Básica>/<Tipo>/<autor> - <titulo> - <subtitulo> - <ano>.pdf`
 
@@ -53,7 +53,7 @@ A arquitetura separa o motor central (`tomus.core`, `tomus.extractors`, `tomus.s
 
 ### 1. Arquitetura do Sistema e Fluxo de Dados
 
-O sistema é organizado em três pacotes de domínio independentes de interface (`tomus.core`, `tomus.extractors`, `tomus.storage`) e um pacote de apresentação (`tomus.cli`), que consome os eventos do motor e exibe o progresso em tempo real sem poluir o terminal com logs de tomusas externas.
+O sistema é organizado em três pacotes de domínio independentes de interface (`tomus.core`, `tomus.extractors`, `tomus.storage`) e um pacote de apresentação (`tomus.cli`), que consome os eventos do motor e exibe o progresso em tempo real sem poluir o terminal com logs de bibliotecas externas.
 
 ```mermaid
 flowchart TD
@@ -214,7 +214,7 @@ Comandos de Sessão, Configuração e Cache:
 
 Opções de Organização:
   -o, --origem, --source PATH          Diretório de origem contendo os PDFs brutos
-  -d, --destino, --target PATH         Diretório de destino da tomusa organizada
+  -d, --destino, --target PATH         Diretório de destino da biblioteca organizada
   -p, --provider TEXT                  Provedor LLM: gemini, groq, nvidia, deepseek, claude, github
   --model TEXT                         Nome do modelo LLM (sobrescreve config.toml)
   --api-key TEXT                       Chave de API do provedor (sobrescreve config.toml e ambiente)
@@ -268,7 +268,7 @@ Abaixo está o inventário completo dos módulos de produção, configuração e
    * **Por que é necessário:** Fornece documentação operacional atualizada e rastreabilidade de mudanças entre versões.
 
 4. **[src/tomus/__init__.py](../../src/tomus/__init__.py) (Implementado — v0.4.0)**
-   * **Responsabilidade:** Define `__version__ = "0.4.0"`, configura variáveis de ambiente defensivas (`HF_HUB_DISABLE_PROGRESS_BARS = "1"`, `TOKENIZERS_PARALLELISM = "false"`) e aplica filtros `warnings.filterwarnings` para silenciar avisos de tomusas externas (`google.*`, `fitz.*`, `urllib3`, `SwigPy`/`swigvarlink`, `torch.*`) no carregamento do pacote.
+   * **Responsabilidade:** Define `__version__ = "0.4.0"`, configura variáveis de ambiente defensivas (`HF_HUB_DISABLE_PROGRESS_BARS = "1"`, `TOKENIZERS_PARALLELISM = "false"`) e aplica filtros `warnings.filterwarnings` para silenciar avisos de bibliotecas externas (`google.*`, `fitz.*`, `urllib3`, `SwigPy`/`swigvarlink`, `torch.*`) no carregamento do pacote.
    * **Por que é necessário:** Centraliza a versão do pacote (consumida pelo cabeçalho `User-Agent` em `enrichers.py`) e garante inicialização silenciosa no terminal.
 
 5. **[src/tomus/core/__init__.py](../../src/tomus/core/__init__.py) (Implementado — v0.4.0)**
@@ -300,7 +300,7 @@ Abaixo está o inventário completo dos módulos de produção, configuração e
     * **Por que é necessário:** Garante idempotência thread-safe sem persistir no cache falhas transitórias ou dados simulados de testes.
 
 12. **[src/tomus/core/logging.py](../../src/tomus/core/logging.py) (Implementado — v0.4.0)**
-    * **Responsabilidade:** Implementa `setup_logging(log_file="tomus.log", verbose=False, level=logging.INFO)` e `get_logger(name)`: define variáveis de ambiente defensivas (`GLOG_minloglevel="2"`, `TORCH_CPP_LOG_LEVEL="ERROR"`), redireciona logs de tomusas externas (`RapidOCR`, `docling`, `transformers`, `torch`, `urllib3`, `httpx`, `fitz`) para `tomus.log` e anexa `StreamHandler` ao console apenas quando `verbose=True`.
+    * **Responsabilidade:** Implementa `setup_logging(log_file="tomus.log", verbose=False, level=logging.INFO)` e `get_logger(name)`: define variáveis de ambiente defensivas (`GLOG_minloglevel="2"`, `TORCH_CPP_LOG_LEVEL="ERROR"`), redireciona logs de bibliotecas externas (`RapidOCR`, `docling`, `transformers`, `torch`, `urllib3`, `httpx`, `fitz`) para `tomus.log` e anexa `StreamHandler` ao console apenas quando `verbose=True`.
     * **Por que é necessário:** Mantém a renderização da barra de progresso do Rich livre de interferências no terminal, preservando o rastreamento completo em arquivo.
 
 13. **[src/tomus/core/session.py](../../src/tomus/core/session.py) (Implementado — v0.4.0)**

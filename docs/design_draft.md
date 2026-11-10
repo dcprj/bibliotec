@@ -8,7 +8,7 @@
 
 Estudantes, professores e pesquisadores acumulam centenas de arquivos PDF (livros, artigos científicos, fascículos de periódicos, teses, dissertações, TCCs e materiais de aula) baixados de diferentes portais acadêmicos, repositórios institucionais e pastas compartilhadas. Esses arquivos chegam com nomes arbitrários (como códigos numéricos de submissão, siglas ou títulos truncados), frequentemente não possuem metadados internos padronizados e, no caso de obras antigas ou digitalizadas, consistem apenas em imagens escaneadas sem camada de texto selecionável.
 
-Organizar esse acervo manualmente exige abrir cada arquivo, identificar autor, título, ano, natureza da publicação e área do conhecimento, renomear o PDF e movê-lo para a pasta correspondente. À medida que a tomusa passa de dezenas para centenas de documentos, a triagem manual torna-se inviável e propensa a inconsistências.
+Organizar esse acervo manualmente exige abrir cada arquivo, identificar autor, título, ano, natureza da publicação e área do conhecimento, renomear o PDF e movê-lo para a pasta correspondente. À medida que a biblioteca passa de dezenas para centenas de documentos, a triagem manual torna-se inviável e propensa a inconsistências.
 
 As soluções existentes não resolvem esse fluxo diretamente no sistema de arquivos:
 1. Gerenciadores bibliográficos (como Zotero e Calibre) exigem a manutenção de um banco de dados próprio e focam em metadados de citação, sem classificar automaticamente o acervo em uma árvore física de diretórios baseada nas áreas oficiais do conhecimento acadêmico brasileiro.
@@ -17,7 +17,7 @@ As soluções existentes não resolvem esse fluxo diretamente no sistema de arqu
 
 ## Overview
 
-O **Tomus** é uma aplicação que automatiza a triagem, classificação temática, padronização de nomes e organização física de tomusas acadêmicas de PDFs. O sistema recebe um diretório de origem contendo arquivos desorganizados e produz, em um diretório de destino, uma tomusa estruturada em três níveis hierárquicos baseados na Tabela de Áreas do Conhecimento da CAPES/CNPq:
+O **Tomus** é uma aplicação que automatiza a triagem, classificação temática, padronização de nomes e organização física de bibliotecas acadêmicas de PDFs. O sistema recebe um diretório de origem contendo arquivos desorganizados e produz, em um diretório de destino, uma biblioteca estruturada em três níveis hierárquicos baseados na Tabela de Áreas do Conhecimento da CAPES/CNPq:
 
 `<Grande Área>/<Área Básica>/<Tipo>/<autor> - <titulo> - <subtitulo> - <ano>.pdf`
 
@@ -293,7 +293,7 @@ Abaixo está a lista unificada de todos os arquivos que serão criados para impl
 
 1. **[pyproject.toml](./pyproject.toml) (Criar)**
    * **O que muda:** Define os metadados do pacote Python (`tomus`, Python $\ge 3.11$), o sistema de build (`hatchling`), o ponto de entrada executável da CLI (`tomus = "tomus.cli.main:app"`) e as dependências de produção (`pymupdf`, `docling`, `httpx`, `tenacity`, `rapidfuzz`, `pydantic`, `google-genai`, `openai`, `anthropic`, `typer`, `rich`, `tomli-w`) e de desenvolvimento (`pytest`, `pytest-asyncio`, `respx`, `ruff`).
-   * **Por que é necessário:** Padroniza a instalação reproduzível do ambiente, registra o binário `tomus` no PATH do usuário e fixa as versões mínimas das tomusas de extração, OCR, rede e validação.
+   * **Por que é necessário:** Padroniza a instalação reproduzível do ambiente, registra o binário `tomus` no PATH do usuário e fixa as versões mínimas das bibliotecas de extração, OCR, rede e validação.
 
 2. **[.gitignore](./.gitignore) (Criar)**
    * **O que muda:** Ignora ambientes virtuais (`.venv/`), caches Python (`__pycache__/`, `.pytest_cache/`, `.ruff_cache/`), arquivos de sistema (`.DS_Store`), bancos de dados SQLite locais (`*.db`), diretórios de saída de testes e o arquivo de configuração local contendo chaves de API (`tomus.toml`, `.env`).
@@ -301,7 +301,7 @@ Abaixo está a lista unificada de todos os arquivos que serão criados para impl
 
 3. **[README.md](./README.md) (Criar)**
    * **O que muda:** Documenta a instalação, a configuração inicial via `tomus config init`, a estrutura de configuração do `config.toml`, os exemplos de uso de `tomus organize` (incluindo `--dry-run`, `--move`, `--flat`) e a arquitetura em 5 estágios.
-   * **Por que é necessário:** Fornece instruções operacionais diretas para que o usuário configure suas chaves de API e execute a organização sobre sua tomusa.
+   * **Por que é necessário:** Fornece instruções operacionais diretas para que o usuário configure suas chaves de API e execute a organização sobre sua biblioteca.
 
 4. **[src/tomus/__init__.py](./src/tomus/__init__.py) (Criar)**
    * **O que muda:** Define a constante `__version__ = "0.1.0"` e expõe a API pública de alto nível do pacote.

@@ -174,12 +174,12 @@ Conforme decisão de produto, o lançamento inicial foca na estabilização dos 
 ### 1. Para que a chave é necessária no Tomus
 1. **Enriquecimento Bibliográfico Oficial:** O extrator `metadata_google_books.py` consulta o catálogo mundial do Google Books para enriquecer livros e e-books com metadados canônicos (título padronizado, nomes completos dos autores, editora, cidade, ano de publicação exato, sinopse e categorização temática), além de validar e formatar o ISBN-13.
 2. **Prevenção de Rate Limiting (HTTP 429):** Requisições anônimas (sem chave) compartilham um pool restrito de cotas baseado em IP público. Em varreduras de pastas com dezenas de PDFs acadêmicos, requisições repetidas sem chave sofrem bloqueio temporário (erro `429 Too Many Requests`). A chave pessoal garante requisições dedicadas e sem bloqueio.
-3. **Cota Diária Gratuita:** O Google Cloud oferece gratuitamente uma cota de 1.000 requisições por dia por projeto, o que cobre com folga qualquer tomusa pessoal ou acadêmica.
+3. **Cota Diária Gratuita:** O Google Cloud oferece gratuitamente uma cota de 1.000 requisições por dia por projeto, o que cobre com folga qualquer biblioteca pessoal ou acadêmica.
 
 ### 2. Passo a Passo para Gerar a Chave no Google Cloud Console
 1. Acesse o [Google Cloud Console](https://console.cloud.google.com/) com a sua conta Google.
 2. Selecione ou crie um projeto (ex.: `Tomus`).
-3. No menu de navegação lateral (☰), vá em **APIs e Serviços** > **Tomusa**.
+3. No menu de navegação lateral (☰), vá em **APIs e Serviços** > **Biblioteca**.
 4. No campo de busca, pesquise por **Books API** (ou **Google Books API**) e clique em **Ativar** (Enable).
 5. Após ativada, vá em **APIs e Serviços** > **Credenciais**.
 6. Clique no botão superior **+ Criar Credenciais** e selecione **Chave de API**.

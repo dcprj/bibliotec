@@ -7,6 +7,7 @@ e receba eventos de streaming de processamento em tempo real.
 from __future__ import annotations
 
 import json
+import logging
 import subprocess
 import sys
 from pathlib import Path
@@ -19,6 +20,83 @@ from PySide6.QtWidgets import QFileDialog, QMessageBox, QWidget
 from tomus.core.config import AppConfig
 from tomus.core.models import FileManifestEntry, PipelineEvent, ProcessStatus
 from tomus.gui.worker import ManualTriageService, PipelineWorker
+
+_logger = logging.getLogger("tomus.gui.bridge")
+
+# Pastas do usuário consideradas seguras para operações de arquivo.
+_USER_SAFE_DIRS = (
+    Path.home() / "Documents",
+    Path.home() / "Desktop",
+    Path.home() / "Downloads",
+    Path.home() / "Movies",
+    Path.home() / "Pictures",
+)
+
+# Nomes de pastas/arquivos sensíveis que devem ser bloqueados.
+_PROTECTED_NAMES = (
+    ".ssh", ".gnupg", ".aws", ".bashrc", ".bash_profile", ".zshrc",
+    ".config", ".local/share", ".cache",
+)
+
+# Pastas do sistema que nunca devem ser expostas.
+_SYSTEM_ROOTS = (
+    Path("/etc"),
+    Path("/var"),
+    Path("/usr"),
+    Path("/bin"),
+    Path("/sbin"),
+    Path("/boot"),
+    Path("/root"),
+)
+
+
+def _is_safe_path(p: Path, allowed_roots: list[Path]) -> bool:
+    """Verificar se o caminho resolvido está dentro de raízes permitidas.
+
+    Bloqueia expressamente dotfiles, diretórios sensíveis (.ssh, .gnupg, .aws,
+    .bashrc, etc.) e pastas do sistema (/etc, /var, /usr, etc.) e travessias
+    com '..'.
+    """
+    try:
+        resolved = p.resolve(strict=False)
+    except (OSError, ValueError):
+        return False
+
+    # Verificar containment nas raízes permitidas.
+    for root in allowed_roots:
+        try:
+            root_resolved = root.resolve(strict=False)
+        except (OSError, ValueError):
+            continue
+        try:
+            resolved.relative_to(root_resolved)
+        except ValueError:
+            continue
+        # Caminho está dentro de uma raiz permitida; agora verificar se
+        # não é um caminho protegido internamente.
+        try:
+            rel = resolved.relative_to(root_resolved)
+        except ValueError:
+            rel = Path(".")
+        # Verificar se algum componente do caminho relativo é sensível.
+        for part in rel.parts:
+            if part in _PROTECTED_NAMES or part.startswith("."):
+                return False
+        return True
+
+    # Se não está em nenhuma raiz permitida, verificar se não é uma raiz do sistema.
+    for sys_root in _SYSTEM_ROOTS:
+        try:
+            sys_resolved = sys_root.resolve(strict=False)
+        except (OSError, ValueError):
+            continue
+        try:
+            resolved.relative_to(sys_resolved)
+            return False  # está dentro de uma pasta do sistema
+        except ValueError:
+            pass
+
+    return False
 
 
 class WebBridge(QObject):
@@ -125,7 +203,7 @@ class WebBridge(QObject):
     def browseTarget(self) -> str:
         path = QFileDialog.getExistingDirectory(
             self.parent_widget,
-            "Selecionar Diretório de Destino da Tomusa",
+            "Selecionar Diretório de Destino da Biblioteca",
             self.target_dir or str(Path.home()),
         )
         if path:
@@ -198,7 +276,7 @@ class WebBridge(QObject):
     def _on_worker_event(self, event: PipelineEvent) -> None:
         try:
             payload = event.model_dump()
-            payload_json = json.dumps(payload)
+            payload_json = json.dumps(payload, ensure_ascii=False)
             self.pipelineEvent.emit(payload_json)
 
             # Invocação direta no V8 do Chromium para entrega imediata garantida
@@ -221,7 +299,7 @@ class WebBridge(QObject):
                 "exceeded_manual_review_ceiling": summary.exceeded_manual_review_ceiling,
                 "was_cancelled": was_cancelled,
             }
-            data_json = json.dumps(data)
+            data_json = json.dumps(data, ensure_ascii=False)
             self.pipelineFinished.emit(data_json)
 
             if self.parent_widget and hasattr(self.parent_widget, "web_view"):
@@ -236,7 +314,7 @@ class WebBridge(QObject):
                 "error": error_msg,
                 "was_cancelled": False,
             }
-            data_json = json.dumps(data)
+            data_json = json.dumps(data, ensure_ascii=False)
             self.pipelineFinished.emit(data_json)
 
             if self.parent_widget and hasattr(self.parent_widget, "web_view"):
@@ -256,18 +334,27 @@ class WebBridge(QObject):
         p = Path(path)
         if not p.exists():
             return
+        if not _is_safe_path(p, [self.source_dir, self.target_dir, Path.home()]):
+            _logger.warning("rejeitado openPdf em caminho não seguro: %s", path)
+            return
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(p.resolve())))
 
     @Slot(str)
     def revealPath(self, path: str) -> None:
         if not path:
             return
-        p = Path(path).resolve()
-        target = p if p.exists() else p.parent
+        p = Path(path)
+        if not p.exists():
+            return
+        if not _is_safe_path(p, [self.source_dir, self.target_dir, Path.home()]):
+            _logger.warning("rejeitado revealPath em caminho não seguro: %s", path)
+            return
+        p_resolved = p.resolve()
+        target = p_resolved if p_resolved.exists() else p_resolved.parent
         if sys.platform == "darwin":
-            subprocess.run(["open", "-R", str(p if p.exists() else target)])
+            subprocess.run(["open", "-R", str(target)])
         elif sys.platform == "win32":
-            subprocess.run(["explorer", f"/select,{p}"])
+            subprocess.run(["explorer", f"/select,{target}"])
         else:
             subprocess.run(["xdg-open", str(target)])
 

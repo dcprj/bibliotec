@@ -22,6 +22,7 @@ from typing import Any, Protocol, runtime_checkable
 import httpx
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
+from tomus.core.config import mask_key
 from tomus.core.models import ExternalMetadata, LLMClassificationOutput
 from tomus.core.prompts import (
     build_context_payload,
@@ -38,6 +39,33 @@ GENERIC_TITLE_CONFIDENCE_CAP = 0.50
 
 # Limiar de confiança para organização automática.
 CONFIDENCE_MIN = 0.70
+
+
+def _sanitize_error_message(message: str) -> str:
+    """Mascarar chaves de API e tokens em mensagens de erro antes de exibi-las."""
+    if not message:
+        return message
+    # Mascarar padrões conhecidos de chaves de API.
+    import re as _re
+    text = _re.sub(
+        r"(sk-[A-Za-z0-9]{20,})", "sk-***REDACTED***", message
+    )
+    text = _re.sub(
+        r"(nvapi-[A-Za-z0-9._-]{20,})", "nvapi-***REDACTED***", text
+    )
+    text = _re.sub(
+        r"(gsk-[A-Za-z0-9._-]{20,})", "gsk-***REDACTED***", text
+    )
+    text = _re.sub(
+        r"(gsh_[A-Za-z0-9._-]{20,})", "gsh-***REDACTED***", text
+    )
+    # Usar mask_key para padrões genéricos que terminam com 4 caracteres visíveis.
+    for m in _re.finditer(r"[A-Za-z0-9._-]{20,}", message):
+        masked = mask_key(m.group(0))
+        if masked != m.group(0):
+            text = text.replace(m.group(0), masked)
+    return text
+
 
 def _alphanumeric_count(text: str) -> int:
     """Contar caracteres alfanuméricos úteis em um texto."""
@@ -333,7 +361,7 @@ class GeminiProvider:
                 subtitle="",
                 year=None,
                 confidence_score=0.0,
-                reasoning=f"Falha na chamada ao LLM: {exc}",
+                reasoning=f"Falha na chamada ao LLM: {_sanitize_error_message(str(exc))}",
                 used_ocr=used_ocr,
                 provider_name="gemini",
                 model_name=self._model,
@@ -468,7 +496,7 @@ class NvidiaProvider:
                 subtitle="",
                 year=None,
                 confidence_score=0.0,
-                reasoning=f"Falha na chamada ao LLM NVIDIA: {exc}",
+                reasoning=f"Falha na chamada ao LLM NVIDIA: {_sanitize_error_message(str(exc))}",
                 used_ocr=used_ocr,
             )
 
@@ -580,7 +608,7 @@ class DeepSeekProvider:
                 subtitle="",
                 year=None,
                 confidence_score=0.0,
-                reasoning=f"Falha na chamada ao LLM DeepSeek: {exc}",
+                reasoning=f"Falha na chamada ao LLM DeepSeek: {_sanitize_error_message(str(exc))}",
                 used_ocr=used_ocr,
             )
 
@@ -678,7 +706,7 @@ class ClaudeProvider:
                 subtitle="",
                 year=None,
                 confidence_score=0.0,
-                reasoning=f"Falha na chamada ao LLM Claude: {exc}",
+                reasoning=f"Falha na chamada ao LLM Claude: {_sanitize_error_message(str(exc))}",
                 used_ocr=used_ocr,
             )
 
@@ -791,7 +819,7 @@ class GroqProvider:
                 subtitle="",
                 year=None,
                 confidence_score=0.0,
-                reasoning=f"Falha na chamada ao LLM Groq: {exc}",
+                reasoning=f"Falha na chamada ao LLM Groq: {_sanitize_error_message(str(exc))}",
                 used_ocr=used_ocr,
             )
 
@@ -904,7 +932,7 @@ class GitHubModelsProvider:
                 subtitle="",
                 year=None,
                 confidence_score=0.0,
-                reasoning=f"Falha na chamada ao LLM GitHub Models: {exc}",
+                reasoning=f"Falha na chamada ao LLM GitHub Models: {_sanitize_error_message(str(exc))}",
                 used_ocr=used_ocr,
             )
 
@@ -998,7 +1026,7 @@ class FallbackLLMDispatcher:
                     subtitle="",
                     year=None,
                     confidence_score=0.0,
-                    reasoning=f"Falha na chamada ao LLM {nome}: {exc}",
+                    reasoning=f"Falha na chamada ao LLM {nome}: {_sanitize_error_message(str(exc))}",
                     used_ocr=used_ocr,
                 )
                 continue
@@ -1040,7 +1068,7 @@ class FallbackLLMDispatcher:
             subtitle="",
             year=None,
             confidence_score=0.0,
-            reasoning=f"Falha na chamada ao LLM: {ultimo_erro or 'provedor desconhecido'}",
+            reasoning=f"Falha na chamada ao LLM: {_sanitize_error_message(str(ultimo_erro or 'provedor desconhecido'))}",
             used_ocr=used_ocr,
         )
 

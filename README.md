@@ -77,7 +77,7 @@ O Tomus funciona localmente com simulação e extração heurística, mas alcan�
 1. **Google Gemini (Recomendado — Gratuito):**
    * Acesse o [Google AI Studio](https://aistudio.google.com/).
    * Faça login com sua conta Google e clique em **"Create API Key"**.
-   * Cota gratuita generosa para catalogação de tomusas inteiras.
+   * Cota gratuita generosa para catalogação de bibliotecas inteiras.
 2. **Groq (Llama 3.3 70B — Ultrarrápido e Gratuito):**
    * Crie sua conta em [Groq Console](https://console.groq.com/).
    * Gere uma chave em **API Keys**.

@@ -32,7 +32,7 @@ Contudo, o documento de design permanece congelado no estado inicial do MVP (`v0
   1. O módulo [src/tomus/storage/companion.py](file:///Users/dario/Projetos-de-aplicativos/tomus/src/tomus/storage/companion.py) gera um arquivo Markdown companheiro (`<nome>.md`) com *front matter* YAML e referência ABNT NBR 6023 ao lado de cada PDF organizado ([`LibraryOrganizer.add_organized`](file:///Users/dario/Projetos-de-aplicativos/tomus/src/tomus/storage/organizer.py#L256-L268)).
   2. Duplicatas exatas (`duplicate_skipped`) são copiadas/movidas fisicamente para `<TARGET_DIR>/duplicatas/` acompanhadas de um `.md` companheiro explicativo apontando para a obra canônica ([`LibraryOrganizer.add_organized`](file:///Users/dario/Projetos-de-aplicativos/tomus/src/tomus/storage/organizer.py#L220-L250)).
   3. O diagnóstico tipado de arquivos não-PDF (`.webloc`, `.url`, `.epub`, etc. — entrega `[DIAG-06]` da `v0.4.0`) em [`LibraryOrganizer.add_ignored_non_pdf`](file:///Users/dario/Projetos-de-aplicativos/tomus/src/tomus/storage/organizer.py#L327-L363) e a seção dedicada em `relatorio_revisao.md` não constam no design.  
-  Como a futura GUI exibirá o resultado da tomusa, duplicatas e arquivos companheiros, o Stage 5 e o `DetailedRange` precisam documentar `companion.py`, o diretório `duplicatas/` e o diagnóstico de não-PDFs.
+  Como a futura GUI exibirá o resultado da biblioteca, duplicatas e arquivos companheiros, o Stage 5 e o `DetailedRange` precisam documentar `companion.py`, o diretório `duplicatas/` e o diagnóstico de não-PDFs.
 
 ### 4. Módulos de Infraestrutura e Ergonomia de CLI da `v0.4.0` Omitidos (`logging.py`, `session.py`, `resume`, `cache`)
 * **Severity:** Major

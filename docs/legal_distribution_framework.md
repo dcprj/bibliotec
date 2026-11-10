@@ -155,7 +155,7 @@ garantem pedidos de funcionalidades exclusivas e não são passíveis de estorno
 > Embora o software incorpore rotinas estritas de segurança (como verificação de integridade antes da renomeação, sanitização de caracteres proibidos pelo sistema operacional e modo de simulação/visualização prévia):
 > 
 > * **A realização prévia de backup é de responsabilidade estrita e indelegável do usuário.**
-> * **Recomenda-se enfaticamente testar o processamento primeiramente em uma pasta de amostra reduzida** antes de aplicar a renomeação a tomusas acadêmicas massivas.
+> * **Recomenda-se enfaticamente testar o processamento primeiramente em uma pasta de amostra reduzida** antes de aplicar a renomeação a bibliotecas acadêmicas massivas.
 > * Os desenvolvedores, colaboradores e instituições associadas ao Tomus **ficam isentos de toda e qualquer responsabilidade civil ou patrimonial** decorrente de interrupções de energia, falhas de disco, permissões concorrentes de acesso, substituição acidental de arquivos ou comportamento inadequado gerado por interpretações automatizadas de modelos de inteligência artificial.
 
 ---
@@ -165,7 +165,7 @@ garantem pedidos de funcionalidades exclusivas e não são passíveis de estorno
 ### 4.1. Fundamentos e Filosofia "Zero Telemetria"
 * **Sem Rastreadores (No Trackers)**: O Tomus não possui SDKs de analytics (Google Analytics, Sentry, Mixpanel, etc.).
 * **Sem Servidores Proprietários**: O software não se comunica com nenhum servidor pertencente aos criadores do Tomus. Nenhuma chamada HTTP "home" é realizada para verificar licença ou registrar uso.
-* **Execução Local (On-Device Processing)**: A extração do texto dos PDFs é realizada integralmente no processador e na memória do computador do usuário por tomusas nativas de código aberto.
+* **Execução Local (On-Device Processing)**: A extração do texto dos PDFs é realizada integralmente no processador e na memória do computador do usuário por bibliotecas nativas de código aberto.
 
 ### 4.2. Fluxo de Dados e Credenciais de APIs Externas
 1. **Credenciais Pessoais (BYOK - Bring Your Own Key)**:

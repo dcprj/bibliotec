@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import warnings
 
-# Silenciar avisos de tomusas externas antes de qualquer outro import.
+# Silenciar avisos de bibliotecas externas antes de qualquer outro import.
 warnings.filterwarnings("ignore", category=FutureWarning, module=r"google\..*")
 warnings.filterwarnings("ignore", category=FutureWarning, module=r"fitz.*")
 warnings.filterwarnings(
@@ -374,7 +374,7 @@ def _root_callback(
     ),
     destino: Optional[Path] = Option(
         None, "--destino", "-d", "--target",
-        help="Diretório de destino da tomusa.",
+        help="Diretório de destino da biblioteca.",
     ),
     config: Optional[Path] = Option(
         None, "--config", help="Caminho para um config.toml customizado.",
@@ -395,10 +395,12 @@ def _root_callback(
         None, "--model", help="Nome do modelo Gemini.",
     ),
     api_key: Optional[str] = Option(
-        None, "--api-key", help="Chave de API do Gemini.",
+        None, "--api-key",
+        help="Chave de API do Gemini. Preferir variável de ambiente TOMUS_GEMINI_API_KEY.",
     ),
     google_books_key: Optional[str] = Option(
-        None, "--google-books-key", help="Chave de API do Google Books.",
+        None, "--google-books-key",
+        help="Chave de API do Google Books. Preferir variável de ambiente TOMUS_GOOGLE_BOOKS_API_KEY.",
     ),
     confidence_min: Optional[float] = Option(
         None, "--confidence-min",
@@ -467,13 +469,13 @@ def organize(
     ),
     target_dir: Optional[Path] = Option(
         None, "--destino", "-d", "--target",
-        help="Diretório de destino da tomusa.",
+        help="Diretório de destino da biblioteca.",
     ),
     pos_source: Optional[Path] = typer.Argument(
         None, help="Diretório de origem com PDFs (posicional).",
     ),
     pos_target: Optional[Path] = typer.Argument(
-        None, help="Diretório de destino da tomusa (posicional).",
+        None, help="Diretório de destino da biblioteca (posicional).",
     ),
     config: Optional[Path] = Option(
         None, "--config", help="Caminho para um config.toml customizado.",
@@ -494,10 +496,12 @@ def organize(
         None, "--model", help="Nome do modelo Gemini.",
     ),
     api_key: Optional[str] = Option(
-        None, "--api-key", help="Chave de API do Gemini.",
+        None, "--api-key",
+        help="Chave de API do Gemini. Preferir variável de ambiente TOMUS_GEMINI_API_KEY.",
     ),
     google_books_key: Optional[str] = Option(
-        None, "--google-books-key", help="Chave de API do Google Books.",
+        None, "--google-books-key",
+        help="Chave de API do Google Books. Preferir variável de ambiente TOMUS_GOOGLE_BOOKS_API_KEY.",
     ),
     confidence_min: Optional[float] = Option(
         None, "--confidence-min",
@@ -518,7 +522,7 @@ def organize(
         help="Provedor de LLM (gemini, nvidia, deepseek, claude, groq, github).",
     ),
 ) -> None:
-    """Organizar uma tomusa de PDFs (5 estágios).
+    """Organizar uma biblioteca de PDFs (5 estágios).
 
     A origem e o destino podem ser informados como argumentos posicionais
     (`tomus organize <ORIGEM> <DESTINO>`) ou via opções

@@ -99,8 +99,8 @@ def test_setup_logging_silencia_terceiros(tmp_path: Path, monkeypatch):
     setup_logging(log_file=log_file, verbose=False, level=logging.WARNING)
 
     for nome in _THIRD_PARTY_LOGGERS:
-        if nome == "RapidOCR":
-            continue  # RapidOCR é tratado separadamente (propagate=False)
+        if nome in ("RapidOCR", "httpx"):
+            continue  # RapidOCR e httpx são tratados separadamente (propagate=False)
         logger = logging.getLogger(nome)
         assert logger.propagate is True, f"{nome} deve ter propagate=True"
 

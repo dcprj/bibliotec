@@ -113,7 +113,7 @@ class PipelineWorker(QThread):
 
 
 class ManualTriageService(QObject):
-    """Aprovar e materializar um item de revisão manual na tomusa temática.
+    """Aprovar e materializar um item de revisão manual na biblioteca temática.
 
     O serviço move/copia o arquivo de ``revisao_manual/`` para a pasta temática
     correta ``<Grande Área>/<Área Básica>/<Tipo>/``, gera o ``.md`` companheiro
@@ -151,7 +151,7 @@ class ManualTriageService(QObject):
         authors: list[str],
         year: int | None,
     ) -> FileManifestEntry:
-        """Aprovar classificação manual e materializar o item na tomusa."""
+        """Aprovar classificação manual e materializar o item na biblioteca."""
         # Validar/reparar o par CAPES/CNPq.
         par = validate_or_repair_pair(grande_area, area_basica)
         if par is None:

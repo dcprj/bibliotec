@@ -5,7 +5,7 @@ import warnings
 os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-# Silenciar avisos de tomusas externas antes de qualquer outro import do pacote.
+# Silenciar avisos de bibliotecas externas antes de qualquer outro import do pacote.
 warnings.filterwarnings("ignore", category=FutureWarning, module=r"google\..*")
 warnings.filterwarnings("ignore", category=FutureWarning, module=r"fitz.*")
 warnings.filterwarnings(

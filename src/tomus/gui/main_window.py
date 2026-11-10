@@ -27,9 +27,16 @@ _DEFAULT_SIZE = (1360, 840)
 class TomusWebPage(QWebEnginePage):
     """Página customizada que repassa logs e erros do console JS para o terminal Python."""
 
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._verbose = False
+
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
         src_name = Path(sourceID).name if sourceID else "inline"
-        print(f"[Tomus-JS] ({src_name}:{lineNumber}) {message}")
+        # Imprimir logs de console JS apenas em modo verbose para evitar
+        # vazamento acidental de dados sensíveis no terminal.
+        if self._verbose:
+            print(f"[Tomus-JS] ({src_name}:{lineNumber}) {message}")
 
 
 class TomusMainWindow(QMainWindow):
@@ -41,11 +48,13 @@ class TomusMainWindow(QMainWindow):
         source_dir: Path | str | None = None,
         target_dir: Path | str | None = None,
         parent: QWidget | None = None,
+        verbose: bool = False,
     ) -> None:
         super().__init__(parent)
         self._config = config
         self._source_dir = Path(source_dir) if source_dir else None
         self._target_dir = Path(target_dir) if target_dir else None
+        self._verbose = verbose
 
         self.setWindowTitle("Tomus — Organizador Acadêmico de PDFs")
         self.setMinimumSize(*_MIN_SIZE)
@@ -53,6 +62,7 @@ class TomusMainWindow(QMainWindow):
 
         # Configurar WebEngineView com página de logging personalizada
         self.web_page = TomusWebPage(self)
+        self.web_page._verbose = verbose
         self.web_view = QWebEngineView(self)
         self.web_view.setPage(self.web_page)
         self.setCentralWidget(self.web_view)

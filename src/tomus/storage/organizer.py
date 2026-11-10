@@ -1,4 +1,4 @@
-"""Materializador de diretórios da tomusa (Item 21).
+"""Materializador de diretórios da biblioteca (Item 21).
 
 Organiza arquivos aprovados em
 <TARGET_DIR>/<Grande Área>/<Área Básica>/<Tipo>/<nome_formatado>.pdf e
