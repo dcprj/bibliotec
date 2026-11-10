@@ -3,85 +3,373 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Tomus — Organizador Acadêmico de PDFs. Catalogação inteligente, renomeação padronizada e fichamento ABNT NBR 6023 diretamente no seu computador.">
-  <title>Tomus — Organizador Acadêmico de PDFs</title>
+  <meta name="description" content="Tomus — O Organizador Acadêmico de PDFs. Catalogação temática CAPES/CNPq, renomeação padronizada e fichamento ABNT NBR 6023. Software livre, 100% local para macOS.">
+  <meta name="keywords" content="Tomus, organizador de pdfs, capes, cnpq, abnt nbr 6023, catalogaçao academica, software livre, macos, apple vision ocr">
+  <meta property="og:title" content="Tomus — Organizador Acadêmico de PDFs">
+  <meta property="og:description" content="Catalogação temática oficial CAPES/CNPq e fichamento ABNT NBR 6023 para o seu acervo científico. 100% local no macOS.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dcprj.github.io/tomus/">
+  <meta property="og:image" content="https://dcprj.github.io/tomus/site_assets/logo.png">
+  <title>Tomus — O Organizador Acadêmico de PDFs</title>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="site_assets/style.css">
-  <link rel="icon" type="image/png" href="site_assets/tomus-icon-32.png">
+  <link rel="icon" type="image/png" href="site_assets/tomus_emblem.png">
 </head>
 <body>
 
   <!-- ========================================= -->
-  <!-- HEADER / NAVBAR                           -->
+  <!-- TOPO: NAVBAR TRANSPARENTE E ELEGANTE      -->
   <!-- ========================================= -->
   <header class="navbar" id="navbar">
     <div class="nav-container">
-      <a href="#" class="nav-brand" aria-label="Página inicial do Tomus">
-        <img src="../logo_e_icone/Logo.png" alt="Tomus" class="nav-logo">
-        <span class="nav-name">Tomus</span>
+      <a href="#" class="nav-brand" aria-label="Tomus Início">
+        <img src="site_assets/tomus_emblem.png" alt="Tomus Emblema" class="nav-emblem">
+        <span class="nav-brand-title">TOMUS</span>
       </a>
 
-      <nav class="nav-menu" id="nav-menu">
+      <nav class="nav-menu" id="navMenu">
         <ul class="nav-list">
-          <li><a href="#funcionalidades" class="nav-link">Funcionalidades</a></li>
+          <li><a href="#genese" class="nav-link">Histórico &amp; Gênese</a></li>
           <li><a href="#metodologia" class="nav-link">Metodologia CAPES</a></li>
-          <li><a href="#privacidade" class="nav-link">Privacidade</a></li>
-          <li><a href="#documentacao" class="nav-link">Documentação</a></li>
-          <li><a href="#download" class="nav-link nav-link-download">Download macOS</a></li>
-          <li><a href="https://github.com/dcprj/tomus" class="nav-link nav-link-github" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="#arquitetura" class="nav-link">Arquitetura Técnica</a></li>
+          <li><a href="#privacidade" class="nav-link">Privacidade Local</a></li>
+          <li><a href="#apoie" class="nav-link">Apoie o Projeto</a></li>
         </ul>
       </nav>
 
-      <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu">
-        <span class="hamburger"></span>
-        <span class="hamburger"></span>
-        <span class="hamburger"></span>
-      </button>
+      <div class="nav-actions">
+        <a href="https://github.com/dcprj/tomus" class="btn btn-ghost btn-sm" target="_blank" rel="noopener">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>GitHub</span>
+        </a>
+        <a href="#download" class="btn btn-primary btn-sm">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Baixar .dmg</span>
+        </a>
+      </div>
     </div>
   </header>
 
   <!-- ========================================= -->
-  // HERO SECTION                               -->
+  <!-- HERO SECTION: IMPACTO ACADÊMICO & MOCKUP  -->
   <!-- ========================================= -->
-  <section class="hero" id="hero">
-    <div class="hero-content">
-      <span class="hero-badge">🍎 Exclusivo para macOS</span>
-      <h1 class="hero-title">
-        Tomus — O Organizador Acadêmico de PDFs
+  <section class="hero-section">
+    <div class="hero-bg-glow"></div>
+    <div class="container hero-container">
+      
+      <div class="hero-badge-pill">
+        <span class="badge-dot"></span>
+        <span class="badge-text">Engenharia Acadêmica Feita para Pesquisadores</span>
+        <span class="badge-chip">macOS 14+</span>
+      </div>
+
+      <h1 class="hero-headline">
+        O caos da sua biblioteca acadêmica,<br>
+        organizado com rigor catalográfico.
       </h1>
-      <p class="hero-subtitle">
-        Catalogação inteligente, renomeação padronizada e fichamento ABNT NBR 6023 diretamente no seu computador.
+
+      <p class="hero-subheadline">
+        Centenas de artigos anônimos e PDFs escaneados transformados automaticamente em uma árvore temática estruturada pela taxonomia <strong>CAPES/CNPq</strong>, com fichamento completo segundo a <strong>ABNT NBR 6023</strong>.
       </p>
-      <div class="hero-cta">
-        <a href="#download" class="btn btn-primary btn-large">
-          <span class="btn-icon">⬇</span>
-          Baixar para macOS (.dmg)
+
+      <div class="hero-cta-group">
+        <a href="#download" class="btn btn-hero-primary">
+          <svg class="btn-apple-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.4c.64-.78 1.08-1.86.96-2.95-1 .04-2.12.67-2.77 1.45-.58.68-1.08 1.77-.95 2.83 1.11.09 2.15-.59 2.76-1.33z"/>
+          </svg>
+          <div class="btn-hero-text">
+            <span class="btn-hero-label">Baixar Tomus para macOS</span>
+            <span class="btn-hero-sub">Versão 1.1.0 (.dmg universal para Apple Silicon e Intel)</span>
+          </div>
         </a>
-        <span class="chip apple-chip">
-          <span class="chip-dot"></span>
-          Apple Silicon / Intel
-        </span>
-      </div>
-      <p class="hero-note">Código aberto · 100% gratuito · Privacidade 100% local</p>
-    </div>
 
-    <div class="hero-visual">
-      <div class="hero-card">
-        <img src="../logo_e_icone/Logo.png" alt="Tomus Logo" class="hero-logo-img">
-        <div class="hero-card-grid">
-          <div class="stat">
-            <span class="stat-number">100%</span>
-            <span class="stat-label">Local</span>
+        <div class="hero-guarantees">
+          <div class="guarantee-item">
+            <svg class="guarantee-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>100% Local (Zero Nuvem)</span>
           </div>
-          <div class="stat">
-            <span class="stat-number">0</span>
-            <span class="stat-label">Telemetria</span>
+          <div class="guarantee-dot">•</div>
+          <div class="guarantee-item">
+            <svg class="guarantee-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+            <span>Sem Telemetria ou Rastreadores</span>
           </div>
-          <div class="stat">
-            <span class="stat-number">5</span>
-            <span class="stat-label">Etapas</span>
+          <div class="guarantee-dot">•</div>
+          <div class="guarantee-item">
+            <svg class="guarantee-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Suas Chaves no seu Mac (BYOK)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- WORKBENCH MOCKUP DE ALTA FIDELIDADE -->
+      <div class="mockup-window-wrap">
+        <div class="mockup-window">
+          <!-- macOS Window Titlebar -->
+          <div class="window-titlebar">
+            <div class="window-traffic-lights">
+              <span class="traffic-dot dot-close"></span>
+              <span class="traffic-dot dot-min"></span>
+              <span class="traffic-dot dot-expand"></span>
+            </div>
+            <div class="window-title">
+              <span class="window-app-name">Tomus</span>
+              <span class="window-sep">—</span>
+              <span class="window-doc-path">~/Documentos/Acervo_Academico</span>
+            </div>
+            <div class="window-actions">
+              <span class="badge-status-ready">Pronto para Varredura</span>
+            </div>
+          </div>
+
+          <!-- Window Inner Content (3 Painéis) -->
+          <div class="window-workbench">
+            <!-- Coluna 1: Árvore CAPES / Filtros -->
+            <div class="wb-sidebar">
+              <div class="wb-sidebar-header">Taxonomia CAPES/CNPq</div>
+              <ul class="wb-tree">
+                <li class="wb-tree-node active">
+                  <span class="node-arrow">▼</span>
+                  <span class="node-folder">📁</span>
+                  <span class="node-text">Ciências Humanas</span>
+                  <span class="node-count">38</span>
+                </li>
+                <ul class="wb-sub-tree">
+                  <li class="wb-sub-node active">
+                    <span class="sub-line">├─</span>
+                    <span class="node-folder">📁</span>
+                    <span class="sub-text">Filosofia</span>
+                    <span class="sub-count">19</span>
+                  </li>
+                  <li class="wb-sub-node">
+                    <span class="sub-line">├─</span>
+                    <span class="node-folder">📁</span>
+                    <span class="sub-text">História</span>
+                    <span class="sub-count">11</span>
+                  </li>
+                  <li class="wb-sub-node">
+                    <span class="sub-line">└─</span>
+                    <span class="node-folder">📁</span>
+                    <span class="sub-text">Sociologia</span>
+                    <span class="sub-count">8</span>
+                  </li>
+                </ul>
+                <li class="wb-tree-node">
+                  <span class="node-arrow">▶</span>
+                  <span class="node-folder">📁</span>
+                  <span class="node-text">Ciências Exatas e da Terra</span>
+                  <span class="node-count">42</span>
+                </li>
+                <li class="wb-tree-node">
+                  <span class="node-arrow">▶</span>
+                  <span class="node-folder">📁</span>
+                  <span class="node-text">Ciências Sociais Aplicadas</span>
+                  <span class="node-count">24</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Coluna 2: Grade de Obras Classificadas -->
+            <div class="wb-main-table">
+              <div class="table-header-row">
+                <span class="th col-status">Status</span>
+                <span class="th col-title">Obra Catalogada</span>
+                <span class="th col-author">Autor(es)</span>
+                <span class="th col-year">Ano</span>
+                <span class="th col-conf">Confiança</span>
+              </div>
+
+              <div class="table-body">
+                <div class="table-row selected">
+                  <span class="col-status"><span class="pill pill-success">✔ Organizado</span></span>
+                  <span class="col-title"><strong>Uma Teoria da Justiça</strong></span>
+                  <span class="col-author">RAWLS, John</span>
+                  <span class="col-year">1971</span>
+                  <span class="col-conf"><span class="conf-high">99%</span></span>
+                </div>
+                <div class="table-row">
+                  <span class="col-status"><span class="pill pill-success">✔ Organizado</span></span>
+                  <span class="col-title"><strong>Vigiar e Punir: Nascimento da Prisão</strong></span>
+                  <span class="col-author">FOUCAULT, Michel</span>
+                  <span class="col-year">1975</span>
+                  <span class="col-conf"><span class="conf-high">98%</span></span>
+                </div>
+                <div class="table-row">
+                  <span class="col-status"><span class="pill pill-success">✔ Organizado</span></span>
+                  <span class="col-title"><strong>Estrutura das Revoluções Científicas</strong></span>
+                  <span class="col-author">KUHN, Thomas S.</span>
+                  <span class="col-year">1962</span>
+                  <span class="col-conf"><span class="conf-high">97%</span></span>
+                </div>
+                <div class="table-row">
+                  <span class="col-status"><span class="pill pill-review">⚠ Revisão</span></span>
+                  <span class="col-title">Caderno de Notas de Pesquisa Sem Título</span>
+                  <span class="col-author">—</span>
+                  <span class="col-year">2019</span>
+                  <span class="col-conf"><span class="conf-low">45%</span></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Coluna 3: Ficha Catalográfica e ABNT NBR 6023 -->
+            <div class="wb-inspector">
+              <div class="inspector-card">
+                <div class="inspector-badge">Fichamento ABNT NBR 6023</div>
+                <div class="abnt-citation-box">
+                  <p class="abnt-citation">
+                    <strong>RAWLS, John</strong>. <em>Uma Teoria da Justiça</em>. Tradução de Almiro Pisetta e Lenita Maria Rímoli Esteves. São Paulo: Martins Fontes, 1997. 708 p. ISBN 85-336-0681-X.
+                  </p>
+                </div>
+                
+                <div class="inspector-meta-grid">
+                  <div class="meta-row">
+                    <span class="meta-label">Grande Área:</span>
+                    <span class="meta-val">Ciências Humanas</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Área Básica:</span>
+                    <span class="meta-val">Filosofia (Ética / Política)</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Arquivo Físico:</span>
+                    <span class="meta-val meta-code">Rawls - Uma Teoria da Justiça - 1971.pdf</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Companheiro:</span>
+                    <span class="meta-val meta-code">Rawls - Uma Teoria da Justiça - 1971.md</span>
+                  </div>
+                </div>
+
+                <div class="inspector-actions">
+                  <button class="btn btn-inspect-copy" id="demoCopyBtn">
+                    <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span>Copiar Citação Formatada</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================= -->
+  <!-- SEÇÃO 1: A GÊNESE E O HISTÓRICO           -->
+  <!-- ========================================= -->
+  <section class="section section-editorial" id="genese">
+    <div class="container">
+      <div class="editorial-header">
+        <span class="eyebrow">Por que o Tomus existe</span>
+        <h2 class="section-heading">O dilema silencioso da pesquisa científica</h2>
+        <div class="lead-paragraph">
+          Todo pesquisador, pós-graduando e acadêmico vive o mesmo drama silencioso: pastas de download acumulando gigabytes de PDFs com nomes ininteligíveis como <code>artigo_final_revisado.pdf</code>, <code>1-s2.0-S0140673620301835-main.pdf</code> ou <code>capitulo_livro_scan_1998.pdf</code>.
+        </div>
+      </div>
+
+      <div class="story-grid">
+        <div class="story-card">
+          <div class="story-icon-wrap">
+            <svg class="story-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <h3 class="story-card-title">A Dor do Trabalho Braçal</h3>
+          <p class="story-card-text">
+            Abrir centenas de arquivos individualmente, decifrar o autor na folha de rosto, encontrar o título exato, buscar a data da edição, conferir o DOI, renomear manualmente e arrastar para subpastas consome semanas de trabalho que deveriam ser dedicadas à produção científica.
+          </p>
+        </div>
+
+        <div class="story-card">
+          <div class="story-icon-wrap">
+            <svg class="story-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <h3 class="story-card-title">A Falha dos Softwares SaaS</h3>
+          <p class="story-card-text">
+            Soluções comerciais exigem que você envie toda a sua produção intelectual para servidores em nuvem de terceiros, cobram assinaturas recorrentes em dólar e impõem limites de espaço. Pesquisadores lidam com dados sensíveis e teses inéditas que não devem trafegar em nuvens públicas.
+          </p>
+        </div>
+
+        <div class="story-card highlight">
+          <div class="story-icon-wrap">
+            <svg class="story-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <h3 class="story-card-title">A Solução Tomus</h3>
+          <p class="story-card-text">
+            Construído como uma ferramenta de utilidade pública: gratuito, de código aberto, 100% executado no processador do seu Mac. Uma bancada de catalogação autoral com o rigor da pós-graduação brasileira e a velocidade da computação moderna.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================= -->
+  <!-- SEÇÃO 2: A METODOLOGIA CAPES & RIGOR     -->
+  <!-- ========================================= -->
+  <section class="section section-methodology" id="metodologia">
+    <div class="container">
+      <div class="editorial-header text-center">
+        <span class="eyebrow">Rigor Catalográfico</span>
+        <h2 class="section-heading">Taxonomia oficial CAPES/CNPq &amp; Norma ABNT NBR 6023</h2>
+        <p class="section-lead">
+          O Tomus não inventa categorias soltas. Ele adota a Tabela de Áreas do Conhecimento da CAPES para garantir que o seu acervo seja organizado exatamente como os repositórios universitários brasileiros.
+        </p>
+      </div>
+
+      <div class="capes-timeline">
+        <div class="step-card">
+          <div class="step-marker">01</div>
+          <div class="step-content">
+            <h4 class="step-title">Varredura e Identificação Inicial</h4>
+            <p class="step-desc">
+              O motor inspeciona recursivamente sua pasta de origem sem alterar nenhum arquivo. Arquivos corrompidos ou não-PDFs são diagnosticados com segurança.
+            </p>
+            <div class="step-tag">Isolamento Local</div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-marker">02</div>
+          <div class="step-content">
+            <h4 class="step-title">OCR Híbrido com Apple Vision Nativo</h4>
+            <p class="step-desc">
+              PDFs escaneados ou fac-símiles sem camada de texto passam pelo motor acelerado por hardware no Apple Silicon, extraindo fólios, fichas catalográficas CIP e sumários em milissegundos.
+            </p>
+            <div class="step-tag">Apple Vision Framework</div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-marker">03</div>
+          <div class="step-content">
+            <h4 class="step-title">Enriquecimento Bibliográfico Canônico</h4>
+            <p class="step-desc">
+              Identificadores formais (DOI, ISBN-10, ISBN-13) são validados matematicamente por checksum e consultados nas bases canônicas Crossref, OpenAlex e Google Books.
+            </p>
+            <div class="step-tag">Checksum &amp; Metadados</div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-marker">04</div>
+          <div class="step-content">
+            <h4 class="step-title">Classificação Temática Estrita</h4>
+            <p class="step-desc">
+              Com o texto das primeiras e últimas páginas, o classificador mapeia a obra na hierarquia oficial: <em>Grande Área &gt; Área Básica &gt; Tipo de Publicação (Livro, Artigo, Tese)</em>.
+            </p>
+            <div class="step-tag">Taxonomia CAPES 2026</div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-marker">05</div>
+          <div class="step-content">
+            <h4 class="step-title">Materialização &amp; Fichamento ABNT</h4>
+            <p class="step-desc">
+              O arquivo é padronizado (<code>Autor - Título - Ano.pdf</code>) e um arquivo companheiro <code>.md</code> com a referência formatada da ABNT NBR 6023 é gerado ao lado para fácil importação no Zotero, Obsidian ou Notion.
+            </p>
+            <div class="step-tag">Arquivo Companheiro .md</div>
           </div>
         </div>
       </div>
@@ -89,27 +377,56 @@
   </section>
 
   <!-- ========================================= -->
-  <!-- SEÇÃO: MOTIVAÇÃO E GÊNESE                 -->
+  <!-- SEÇÃO 3: ENGENHARIA, PERFORMANCE & PRIVACIDADE -->
   <!-- ========================================= -->
-  <section class="section section-motivacao" id="motivacao">
+  <section class="section section-engineering" id="arquitetura">
     <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">A Motivação e a Gênese</h2>
-        <p class="section-subtitle">Por que o Tomus existe.</p>
+      <div class="editorial-header">
+        <span class="eyebrow">Engenharia Sob o Capô</span>
+        <h2 class="section-heading">Cuidados de segurança e integridade de dados</h2>
+        <p class="section-lead">
+          Catalogar livros de décadas e teses inéditas exige tolerância zero a corrupção de arquivos ou perda de dados.
+        </p>
       </div>
 
-      <div class="motivacao-grid">
-        <div class="card card-dor">
-          <h3 class="card-title">A dor dos pesquisadores</h3>
-          <p class="card-text">
-            Arquivos anônimos de repositórios (SciELO, CAPES, arXiv, JSTOR) chegam com nomes como <code>documento_final_v2.pdf</code> ou <code>artigo_scielo_2024.pdf</code>. Sem título, sem autor, sem ano. Catalogar manualmente centenas deles consome horas que deveriam ser dedicadas à pesquisa.
+      <div class="eng-grid">
+        <div class="eng-card">
+          <div class="eng-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          </div>
+          <h3 class="eng-title">Operação Segura de Cópia</h3>
+          <p class="eng-desc">
+            Por padrão, o Tomus opera em modo <strong>Copiar</strong>. Seus arquivos de origem nunca são apagados ou modificados até que você confirme e aprove o resultado com tranquilidade.
           </p>
         </div>
 
-        <div class="card card-compromisso">
-          <h3 class="card-title">O compromisso do Tomus</h3>
-          <p class="card-text">
-            Software livre, 100% local, independente e gratuito. Cada PDF é lido, classificado e nomeado automaticamente — sem nunca sair do seu computador. Sua biblioteca acadêmica, organizada com precisão catalográfica.
+        <div class="eng-card">
+          <div class="eng-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3 class="eng-title">Auditoria de Segurança AppSec</h3>
+          <p class="eng-desc">
+            Submetido a auditoria estrita: contenção de caminhos contra <em>Path Traversal</em>, blindagem do canal IPC QtWebChannel, silenciamento de logs no terminal e sanitização de exceções em tempo de execução.
+          </p>
+        </div>
+
+        <div class="eng-card">
+          <div class="eng-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          </div>
+          <h3 class="eng-title">Cache Determinístico SQLite</h3>
+          <p class="eng-desc">
+            Cada PDF tem seu hash criptográfico <strong>SHA-256</strong> calculado e indexado em banco local. Se você rodar o lote novamente, o Tomus reutiliza as classificações instantaneamente, sem gastar tokens nem reprocessar OCR.
+          </p>
+        </div>
+
+        <div class="eng-card">
+          <div class="eng-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3 class="eng-title">Retomada Tolerante a Falhas</h3>
+          <p class="eng-desc">
+            Precisa fechar o laptop no meio da catalogação de 1.000 livros? O Tomus salva o cursor da sessão em disco. Ao reabrir, um clique retoma o trabalho exatamente de onde parou.
           </p>
         </div>
       </div>
@@ -117,159 +434,83 @@
   </section>
 
   <!-- ========================================= -->
-  <!-- SEÇÃO: METODOLOGIA                        -->
+  <!-- SEÇÃO 4: INSTALAÇÃO NO MACOS              -->
   <!-- ========================================= -->
-  <section class="section section-metodologia" id="metodologia">
+  <section class="section section-download" id="download">
     <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Metodologia e Rigor Técnico</h2>
-        <p class="section-subtitle">Cinco estágios, da leitura ao fichamento.</p>
-      </div>
+      <div class="download-box">
+        <div class="download-badge">Instalação Nativa</div>
+        <h2 class="download-title">Pronto para catalogar o seu acervo?</h2>
+        <p class="download-lead">
+          O Tomus vem empacotado como uma aplicação autônoma para macOS. Não requer instalação de Python, gerenciadores de pacotes nem configurações pelo terminal.
+        </p>
 
-      <div class="etapas-container">
-        <div class="etapa" id="etapa1">
-          <div class="etapa-badge">1</div>
-          <h3 class="etapa-titulo">Leitura Estrutural</h3>
-          <p class="etapa-texto">Extração de texto e metadados via PyMuPDF, com OCR seletivo através do Docling para PDFs digitalizados.</p>
-        </div>
-
-        <div class="etapa" id="etapa2">
-          <div class="etapa-badge">2</div>
-          <h3 class="etapa-titulo">Identificação Canônica</h3>
-          <p class="etapa-texto">Detecção de DOI, ISBN e assinatura CIP para identificar a obra canônica, evitando duplicatas e erros.</p>
-        </div>
-
-        <div class="etapa" id="etapa3">
-          <div class="etapa-badge">3</div>
-          <h3 class="etapa-titulo">Taxonomia CAPES/CNPq</h3>
-          <p class="etapa-texto">Classificação automática nas Grandes Áreas e Áreas Básicas oficiais do catálogo CAPES/CNPq.</p>
-        </div>
-
-        <div class="etapa" id="etapa4">
-          <div class="etapa-badge">4</div>
-          <h3 class="etapa-titulo">Fichamento ABNT NBR 6023</h3>
-          <p class="etapa-texto">Geração da referência bibliográfica completa e arquivo companheiro .md com front matter YAML.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ========================================= -->
-  <!-- SEÇÃO: PRIVACIDADE                        -->
-  <!-- ========================================= -->
-  <section class="section section-privacidade" id="privacidade">
-    <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Privacidade Inegociável</h2>
-        <p class="section-subtitle">Privacy by Design &amp; by Default.</p>
-      </div>
-
-      <div class="privacidade-grid">
-        <div class="priv-card">
-          <div class="priv-icon">🔒</div>
-          <h3 class="priv-titulo">100% Local</h3>
-          <p class="priv-texto">
-            Leitura de PDFs, extração de metadados e movimentação de arquivos ocorrem estritamente no seu processador e disco rígido. Zero servidores intermediários. Zero telemetria.
-          </p>
-        </div>
-
-        <div class="priv-card">
-          <div class="priv-icon">🔑</div>
-          <h3 class="priv-titulo">Modelo BYOK</h3>
-          <p class="priv-texto">
-            Suas chaves de API (Gemini, Claude, DeepSeek, Groq, NVIDIA NIM) nunca saem do seu computador. Elas são salvas localmente com permissão 0600 e se comunicam diretamente com os provedores via TLS.
-          </p>
-        </div>
-
-        <div class="priv-card">
-          <div class="priv-icon">🛡️</div>
-          <h3 class="priv-titulo">LGPD &amp; GDPR</h3>
-          <p class="priv-texto">
-            Você é o único Controlador dos documentos submetidos ao processamento. Nenhum dado analítico é coletado ou enviado para os criadores do software.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ========================================= -->
-  <!-- SEÇÃO: INSTALAÇÃO                         -->
-  <!-- ========================================= -->
-  <section class="section section-instalacao" id="download">
-    <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Instalação no macOS</h2>
-        <p class="section-subtitle">Guia rápido para começar a organizar sua biblioteca.</p>
-      </div>
-
-      <div class="instalacao-card">
-        <div class="instalacao-visual">
-          <div class="dmg-icon">📦</div>
-          <div class="dmg-label">Tomus-1.1.0-macOS.dmg</div>
-        </div>
-
-        <div class="instalacao-passos">
-          <div class="passo">
-            <span class="passo-numero">1</span>
-            <span class="passo-texto">Baixe o <code>.dmg</code> na página de Releases</span>
-          </div>
-          <div class="passo">
-            <span class="passo-numero">2</span>
-            <span class="passo-texto">Clique duas vezes para montar o imagem de disco</span>
-          </div>
-          <div class="passo">
-            <span class="passo-numero">3</span>
-            <span class="passo-texto">Arraste o Tomus para a pasta <code>/Applications</code></span>
-          </div>
-        </div>
-
-        <div class="instalacao-gatekeeper">
-          <h4 class="gatekeeper-titulo">⚠️ Primeira execução (Gatekeeper)</h4>
-          <p class="gatekeeper-texto">
-            Como o Tomus é distribuído independentemente (sem certificado pago da Apple Developer ID), o macOS avisará sobre "desenvolvedor não identificado":
-          </p>
-          <ul class="gatekeeper-lista">
-            <li><strong>Método 1:</strong> No Finder, vá a <code>/Applications</code>, clique com o botão direito no ícone do Tomus e selecione <strong>Abrir</strong>.</li>
-            <li><strong>Método 2:</strong> Via terminal, execute <code>xattr -cr /Applications/Tomus.app</code> para liberar permanentemente.</li>
-          </ul>
-        </div>
-
-        <div class="instalacao-cta">
-          <a href="https://github.com/dcprj/tomus/releases/latest" class="btn btn-primary btn-large" target="_blank" rel="noopener">
-            <span class="btn-icon">⬇</span>
-            Baixar Tomus para macOS
+        <div class="download-btn-wrap">
+          <a href="https://github.com/dcprj/tomus/releases/latest" class="btn btn-download-primary" target="_blank" rel="noopener">
+            <svg class="icon-lg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.4c.64-.78 1.08-1.86.96-2.95-1 .04-2.12.67-2.77 1.45-.58.68-1.08 1.77-.95 2.83 1.11.09 2.15-.59 2.76-1.33z"/>
+            </svg>
+            <div class="download-text">
+              <span class="dl-main">Baixar Tomus para macOS (.dmg)</span>
+              <span class="dl-sub">Versão Universal · Apple Silicon (M1/M2/M3/M4) e Mac Intel</span>
+            </div>
           </a>
         </div>
+
+        <div class="gatekeeper-callout">
+          <div class="callout-header">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Dica de Primeira Execução no macOS (Gatekeeper)</span>
+          </div>
+          <p class="callout-text">
+            Por ser um utilitário livre e comunitário sem certificado corporativo pago da Apple, o macOS exibirá o aviso de desenvolvedor não verificado no primeiro lançamento. Para abrir:
+          </p>
+          <div class="callout-instructions">
+            <div class="inst-item">
+              <strong>Opção 1 (Interface Gráfica):</strong> No Finder, acesse sua pasta <code>/Aplicativos</code>, clique com o botão direito (ou Control + clique) no ícone do <strong>Tomus</strong> e selecione <strong>Abrir</strong>.
+            </div>
+            <div class="inst-item">
+              <strong>Opção 2 (Terminal rápido):</strong> Execute o comando de autorização:
+              <div class="code-pill">
+                <code>xattr -cr /Applications/Tomus.app</code>
+                <button class="btn-copy-code" data-code="xattr -cr /Applications/Tomus.app" title="Copiar comando">Copiar</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- ========================================= -->
-  <!-- SEÇÃO: APOIE                              -->
+  <!-- SEÇÃO 5: APOIO E FINANCIAMENTO COLETIVO   -->
   <!-- ========================================= -->
   <section class="section section-apoie" id="apoie">
     <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Apoie o Projeto</h2>
-        <p class="section-subtitle">Doação voluntária — Doação Pura e Simples (Art. 538 CC).</p>
-      </div>
-
-      <div class="apoio-card">
-        <div class="apoio-conteudo">
-          <h3 class="apoio-titulo">Mantenha o Tomus vivo</h3>
-          <p class="apoio-texto">
-            O Tomus é uma iniciativa independente, de código aberto e 100% gratuita. Sua contribuição espontânea ajuda a manter o desenvolvimento e novas funcionalidades.
+      <div class="apoie-card">
+        <div class="apoie-content">
+          <span class="eyebrow-accent">Mecenato Acadêmico</span>
+          <h2 class="apoie-title">Apoie a manutenção contínua do Tomus</h2>
+          <p class="apoie-lead">
+            O Tomus é e sempre será <strong>100% gratuito e livre</strong>. Cada hora de desenvolvimento foi voluntariamente dedicada para apoiar a ciência brasileira e acelerar a pesquisa de estudantes e professores.
           </p>
+          <p class="apoie-sublead">
+            Se o Tomus economizou dias de catalogação do seu acervo de teses ou artigos, considere realizar uma doação espontânea de qualquer valor via Pix para custear a infraestrutura de documentação e o desenvolvimento contínuo.
+          </p>
+
           <div class="pix-box">
-            <span class="pix-icon">💳</span>
-            <span class="pix-label">Chave Pix (Brasil):</span>
-            <div class="pix-valor">
-              <span class="pix-chave" id="pixChave">dpinheiro+tomus@gmail.com</span>
-              <button class="btn btn-outline btn-small" id="btnCopiarPix" title="Copiar chave Pix">Copiar</button>
+            <div class="pix-header">Chave Pix para Apoio Espontâneo</div>
+            <div class="pix-key-wrapper">
+              <span class="pix-key-value" id="pixKeyDisplay">dpinheiro+tomus@gmail.com</span>
+              <button class="btn btn-copy-pix" id="btnCopyPix">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span id="pixBtnText">Copiar Chave Pix</span>
+              </button>
             </div>
           </div>
-          <p class="pix-nota">
-            * Contribuições configuram <strong>Doação Pura e Simples</strong> (Art. 538 do Código Civil Brasileiro), por mera liberalidade, sem contraprestação mercantil.
+
+          <p class="legal-notice">
+            <strong>Nota Jurídica de Transparência:</strong> Contribuições financeiras constituem <em>Doação Pura por mera liberalidade e apreço (Art. 538 do Código Civil Brasileiro)</em>. Tais atos de mecenato não ensejam relação de consumo nem geram obrigações de suporte comercial com SLA.
           </p>
         </div>
       </div>
@@ -277,46 +518,44 @@
   </section>
 
   <!-- ========================================= -->
-  <!-- FOOTER                                    -->
+  <!-- RODAPÉ COMPLETO                           -->
   <!-- ========================================= -->
   <footer class="footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-col">
-          <div class="footer-brand">
-            <img src="../logo_e_icone/Logo.png" alt="Tomus" class="footer-logo">
-            <span class="footer-name">Tomus</span>
-          </div>
-          <p class="footer-desc">
-            Organizador Acadêmico de PDFs baseado na taxonomia CAPES/CNPq. Código aberto, 100% gratuito, privacidade 100% local.
-          </p>
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <div class="footer-logo-row">
+          <img src="site_assets/tomus_emblem.png" alt="Tomus" class="footer-logo">
+          <span class="footer-brand-name">Tomus</span>
         </div>
-
-        <div class="footer-col">
-          <h4 class="footer-titulo">Links Rápidos</h4>
-          <ul class="footer-lista">
-            <li><a href="#funcionalidades">Funcionalidades</a></li>
-            <li><a href="#metodologia">Metodologia CAPES</a></li>
-            <li><a href="#privacidade">Privacidade</a></li>
-            <li><a href="#documentacao">Documentação</a></li>
-            <li><a href="#download">Download macOS</a></li>
-            <li><a href="https://github.com/dcprj/tomus" target="_blank" rel="noopener">GitHub</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-col">
-          <h4 class="footer-titulo">Licença</h4>
-          <ul class="footer-lista">
-            <li><a href="LICENSE">MIT License</a></li>
-            <li><a href="docs/legal_distribution_framework.md">Termos de Jurisdição</a></li>
-          </ul>
-        </div>
+        <p class="footer-desc">
+          Organizador acadêmico de PDFs e bancada de catalogação científica para macOS.
+        </p>
+        <p class="footer-license">
+          Distribuído sob a licença de código aberto <a href="https://github.com/dcprj/tomus/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>.
+        </p>
       </div>
 
-      <div class="footer-bottom">
-        <p class="footer-copyright">
-          © 2026 Tomus — Organizador Acadêmico de PDFs. Todos os direitos reservados.
-        </p>
+      <div class="footer-nav">
+        <div class="footer-col">
+          <span class="footer-col-title">Navegação</span>
+          <a href="#genese">Gênese &amp; História</a>
+          <a href="#metodologia">Metodologia CAPES</a>
+          <a href="#arquitetura">Arquitetura Técnica</a>
+          <a href="#download">Download macOS</a>
+        </div>
+        <div class="footer-col">
+          <span class="footer-col-title">Comunidade &amp; Código</span>
+          <a href="https://github.com/dcprj/tomus" target="_blank" rel="noopener">Repositório no GitHub</a>
+          <a href="https://github.com/dcprj/tomus/releases" target="_blank" rel="noopener">Releases &amp; Changelog</a>
+          <a href="https://github.com/dcprj/tomus/issues" target="_blank" rel="noopener">Reportar Problema</a>
+          <a href="#apoie">Contribuir via Pix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <div class="footer-copy">
+        &copy; 2026 Tomus Contributors and Maintainers. Desenvolvido com respeito pela ciência e privacidade.
       </div>
     </div>
   </footer>

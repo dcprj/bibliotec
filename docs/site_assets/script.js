@@ -1,103 +1,92 @@
 /* ==========================================================================
-   Tomus — Landing Page Script
-   Funcionalidades: menu mobile, cópia da chave Pix, scroll suave
+   TOMUS — INTERAÇÕES E COPIADORES RÁPIDOS
    ========================================================================== */
 
 (function () {
   "use strict";
 
-  // ---------- Menu Mobile ----------
-  const navToggle = document.getElementById("nav-toggle");
-  const navMenu = document.getElementById("nav-menu");
+  // 1. Cópia da Chave Pix
+  const btnCopyPix = document.getElementById("btnCopyPix");
+  const pixKeyDisplay = document.getElementById("pixKeyDisplay");
+  const pixBtnText = document.getElementById("pixBtnText");
 
-  if (navToggle && navMenu) {
-    navToggle.addEventListener("click", function () {
-      const isOpen = navMenu.classList.contains("active");
-      navMenu.classList.toggle("active");
-      navToggle.setAttribute("aria-expanded", !isOpen);
-    });
+  if (btnCopyPix && pixKeyDisplay) {
+    btnCopyPix.addEventListener("click", function () {
+      const text = pixKeyDisplay.textContent.trim();
+      navigator.clipboard.writeText(text).then(function () {
+        const origText = pixBtnText.textContent;
+        pixBtnText.textContent = "✔ Chave Copiada!";
+        btnCopyPix.style.background = "#15803d";
 
-    // Fechar menu ao clicar em um link
-    const navLinks = navMenu.querySelectorAll(".nav-link");
-    navLinks.forEach(function (link) {
-      link.addEventListener("click", function () {
-        navMenu.classList.remove("active");
-        navToggle.setAttribute("aria-expanded", "false");
+        setTimeout(function () {
+          pixBtnText.textContent = origText;
+          btnCopyPix.style.background = "";
+        }, 2200);
       });
     });
   }
 
-  // ---------- Cópia da chave Pix ----------
-  const btnCopiarPix = document.getElementById("btnCopiarPix");
-  const pixChave = document.getElementById("pixChave");
-
-  if (btnCopiarPix && pixChave) {
-    btnCopiarPix.addEventListener("click", function () {
-      const chave = pixChave.textContent.trim();
-
-      navigator.clipboard
-        .writeText(chave)
-        .then(function () {
-          const textoOriginal = btnCopiarPix.textContent;
-          btnCopiarPix.textContent = "Copiado!";
-          btnCopiarPix.classList.add("btn-primary");
-          btnCopiarPix.classList.remove("btn-outline");
+  // 2. Cópia do Comando Gatekeeper
+  document.querySelectorAll(".btn-copy-code").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const code = btn.getAttribute("data-code");
+      if (code) {
+        navigator.clipboard.writeText(code).then(function () {
+          const orig = btn.textContent;
+          btn.textContent = "Copiado!";
+          btn.style.background = "#0284c7";
 
           setTimeout(function () {
-            btnCopiarPix.textContent = textoOriginal;
-            btnCopiarPix.classList.remove("btn-primary");
-            btnCopiarPix.classList.add("btn-outline");
+            btn.textContent = orig;
+            btn.style.background = "";
           }, 2000);
-        })
-        .catch(function (err) {
-          console.error("Falha ao copiar a chave Pix: ", err);
-          // Fallback para navegadores antigos
-          const textoSelecionado = document.createRange();
-          textoSelecionado.selectNodeContents(pixChave);
-          const selecao = window.getSelection();
-          selecao.removeAllRanges();
-          selecao.addRange(textoSelecionado);
-          document.execCommand("copy");
-          selecao.removeAllRanges();
         });
+      }
+    });
+  });
+
+  // 3. Demo do Mockup de Fichamento
+  const demoCopyBtn = document.getElementById("demoCopyBtn");
+  if (demoCopyBtn) {
+    demoCopyBtn.addEventListener("click", function () {
+      const citationText = "RAWLS, John. Uma Teoria da Justiça. Tradução de Almiro Pisetta e Lenita Maria Rímoli Esteves. São Paulo: Martins Fontes, 1997. 708 p. ISBN 85-336-0681-X.";
+      navigator.clipboard.writeText(citationText).then(function () {
+        const span = demoCopyBtn.querySelector("span");
+        if (span) {
+          const orig = span.textContent;
+          span.textContent = "✔ Citação ABNT Copiada!";
+          demoCopyBtn.style.background = "#dcfce7";
+          demoCopyBtn.style.color = "#15803d";
+          demoCopyBtn.style.borderColor = "#86efac";
+
+          setTimeout(function () {
+            span.textContent = orig;
+            demoCopyBtn.style.background = "";
+            demoCopyBtn.style.color = "";
+            demoCopyBtn.style.borderColor = "";
+          }, 2200);
+        }
+      });
     });
   }
 
-  // ---------- Scroll suave para âncoras ----------
-  document.querySelectorAll('a[href^="#"]').forEach(function (ancora) {
-    ancora.addEventListener("click", function (event) {
-      const alvoId = ancora.getAttribute("href");
-      if (alvoId === "#") return;
+  // 4. Scroll suave para âncoras internas
+  document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+    anchor.addEventListener("click", function (event) {
+      const targetId = anchor.getAttribute("href");
+      if (targetId === "#") return;
 
-      const alvo = document.querySelector(alvoId);
-      if (alvo) {
+      const target = document.querySelector(targetId);
+      if (target) {
         event.preventDefault();
-        const navbarAltura = document.getElementById("navbar")
-          ? document.getElementById("navbar").offsetHeight
-          : 72;
-        const posicao =
-          alvo.getBoundingClientRect().top +
-          window.pageYOffset -
-          navbarAltura -
-          16;
+        const navHeight = document.getElementById("navbar") ? 70 : 0;
+        const targetPos = target.getBoundingClientRect().top + window.pageYOffset - navHeight;
 
         window.scrollTo({
-          top: posicao,
-          behavior: "smooth",
+          top: targetPos,
+          behavior: "smooth"
         });
       }
     });
-  }
-
-  // ---------- Mudar estilo da navbar ao rolar ----------
-  const navbar = document.getElementById("navbar");
-  if (navbar) {
-    window.addEventListener("scroll", function () {
-      if (window.scrollY > 20) {
-        navbar.style.boxShadow = "0 4px 12px rgba(15, 23, 42, 0.08)";
-      } else {
-        navbar.style.boxShadow = "none";
-      }
-    });
-  }
+  });
 })();
