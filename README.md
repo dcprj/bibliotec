@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo_e_icone/Logo.png" alt="Tomus Logo" width="560">
+  <img src="logo_e_icone/Logo.png?v=2" alt="Tomus Logo" width="560">
 </p>
 
 # Tomus — Organizador Acadêmico de PDFs
