@@ -106,13 +106,13 @@ Se o Tomus foi útil para sua dissertação, tese ou organização bibliográfic
 
 ---
 
-## 🔒 Privacidade e Proteção de Dados (LGPD & GDPR)
+## 🔒 Privacidade, Transparência e Proteção de Dados (LGPD & GDPR)
 
-O Tomus foi construído sob o princípio fundamental de **Privacidade desde a Concepção (*Privacy by Design & by Default*)**:
+O Tomus adota uma política de **Transparência Técnica e Ética Integral** sobre como os seus documentos são manipulados:
 
-* **Processamento 100% Local:** A leitura dos arquivos PDF, a análise estrutural de metadados e a movimentação das pastas ocorrem estritamente no processador e no disco rígido do seu computador.
-* **Zero Telemetria:** O Tomus **não** possui servidores intermediários, não coleta métricas de uso e não envia dados analíticos para os criadores do software.
-* **Modelo BYOK (Bring Your Own Key):** Suas chaves de autenticação de API nunca saem do seu computador; elas são salvas em arquivos locais protegidos (`0600`) e estabelecem comunicação criptografada (TLS) direta entre o seu dispositivo e o provedor escolhido por você.
+* **Arquivos PDF 100% no seu Disco Local:** O arquivo binário do PDF integral, seus capítulos completos e dados brutos de pesquisa **nunca saem do seu computador** nem são enviados para servidores em nuvem. A extração inicial e o OCR (via Apple Vision no macOS) rodam exclusivamente no processador e na memória do seu Mac.
+* **Envio Estrito de Dados de Catalogação para a IA:** Para determinar a área do conhecimento na taxonomia CAPES e formatar a citação ABNT NBR 6023, o Tomus extrai um **recorte textual reduzido** (amostra das primeiras e últimas páginas, como folha de rosto, sumário e ficha catalográfica) e o submete via HTTPS/TLS diretamente à API do provedor de IA configurado por você (Google Gemini, Claude, DeepSeek, Groq ou NVIDIA NIM).
+* **Modelo BYOK (Bring Your Own Key):** Suas chaves de autenticação de API residem no seu computador (com permissão `0600`) e a comunicação é ponto a ponto direta com o provedor escolhido. O Tomus **não possui servidores intermediários** e **não realiza nenhuma telemetria** ou coleta de dados analíticos.
 * **Controlador dos Dados:** Perante a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018), o usuário atua como único Controlador dos documentos e conteúdos que submeter ao processamento.
 
 ---

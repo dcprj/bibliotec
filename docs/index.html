@@ -89,17 +89,17 @@
         <div class="hero-guarantees">
           <div class="guarantee-item">
             <svg class="guarantee-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>100% Local (Zero Nuvem)</span>
-          </div>
-          <div class="guarantee-dot">•</div>
-          <div class="guarantee-item">
-            <svg class="guarantee-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
-            <span>Sem Telemetria ou Rastreadores</span>
+            <span>PDFs 100% no seu Disco (Arquivos nunca sobem para a nuvem)</span>
           </div>
           <div class="guarantee-dot">•</div>
           <div class="guarantee-item">
             <svg class="guarantee-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Suas Chaves no seu Mac (BYOK)</span>
+            <span>Envio Estrito de Metadados para IA (BYOK via TLS)</span>
+          </div>
+          <div class="guarantee-dot">•</div>
+          <div class="guarantee-item">
+            <svg class="guarantee-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+            <span>Sem Servidores Intermediários ou Telemetria</span>
           </div>
         </div>
       </div>
@@ -428,6 +428,69 @@
           <p class="eng-desc">
             Precisa fechar o laptop no meio da catalogação de 1.000 livros? O Tomus salva o cursor da sessão em disco. Ao reabrir, um clique retoma o trabalho exatamente de onde parou.
           </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================= -->
+  <!-- SEÇÃO: TRANSPARÊNCIA RADICAL E PRIVACIDADE -->
+  <!-- ========================================= -->
+  <section class="section section-transparency" id="privacidade">
+    <div class="container">
+      <div class="editorial-header text-center">
+        <span class="eyebrow">Transparência Ética &amp; Técnica</span>
+        <h2 class="section-heading">O que fica no seu Mac vs. O que é enviado para a IA</h2>
+        <p class="section-lead">
+          Para nós, a confiança dos pesquisadores é inegociável. Por isso, somos 100% transparentes sobre como seus documentos e dados são manipulados em cada estágio do pipeline.
+        </p>
+      </div>
+
+      <div class="transparency-grid">
+        <!-- Coluna 1: O que NUNCA sai do Mac -->
+        <div class="transp-col transp-local">
+          <div class="transp-badge-header">
+            <svg class="transp-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Fica 100% no seu Mac (Nunca Sai do Computador)</span>
+          </div>
+
+          <ul class="transp-list">
+            <li class="transp-item">
+              <strong>O arquivo PDF integral:</strong> O documento físico completo, seus capítulos internos, ilustrações, anexos e dados brutos de pesquisa nunca são enviados para servidores em nuvem nem armazenados remotamente.
+            </li>
+            <li class="transp-item">
+              <strong>Extração estrutural e OCR:</strong> O processamento visual e a leitura de caracteres de páginas digitalizadas rodam localmente via Apple Vision Framework no hardware do seu Mac.
+            </li>
+            <li class="transp-item">
+              <strong>Organização física e renomeação:</strong> A cópia, movimentação e criação da hierarquia de pastas ocorrem exclusivamente no seu disco rígido local.
+            </li>
+            <li class="transp-item">
+              <strong>Banco de cache SQLite:</strong> Todos os hashes criptográficos SHA-256 e classificações aprovadas são indexados em <code>~/.cache/tomus/state.db</code>, sem envio de telemetria.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Coluna 2: O que é enviado para a IA -->
+        <div class="transp-col transp-api">
+          <div class="transp-badge-header">
+            <svg class="transp-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Enviado via HTTPS para a IA Escolhida por Você (BYOK)</span>
+          </div>
+
+          <ul class="transp-list">
+            <li class="transp-item">
+              <strong>Extrato textual estrito de catalogação:</strong> Apenas um recorte de texto reduzido contendo as primeiras páginas (folha de rosto, sumário e ficha catalográfica CIP) é extraído para fins exclusivos de classificação temática.
+            </li>
+            <li class="transp-item">
+              <strong>Comunicação Direta Ponto a Ponto:</strong> Esse extrato textual é enviado via requisição criptografada (TLS/HTTPS) diretamente do seu Mac para a API do provedor de IA escolhido por você (Google Gemini, Claude, DeepSeek, Groq ou NVIDIA NIM).
+            </li>
+            <li class="transp-item">
+              <strong>Sua Chave, Seu Controle (BYOK):</strong> Você utiliza suas próprias chaves de API pessoais. Não existe nenhum servidor intermediário do Tomus capturando requisições nem revendendo créditos.
+            </li>
+            <li class="transp-item">
+              <strong>Conformidade com a LGPD:</strong> Você é o único Controlador perante a Lei Geral de Proteção de Dados (Art. 5º, VI). Nenhum dado comportamental é coletado.
+            </li>
+          </ul>
         </div>
       </div>
     </div>

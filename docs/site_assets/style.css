@@ -943,6 +943,105 @@ code {
 }
 
 /* ==========================================================================
+   TRANSPARÊNCIA RADICAL: LOCAL VS API DE IA
+   ========================================================================== */
+.section-transparency {
+  background: #f7f6f2;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.transparency-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+}
+
+.transp-col {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.transp-local {
+  border-top: 4px solid #10b981;
+}
+
+.transp-api {
+  border-top: 4px solid #0284c7;
+}
+
+.transp-badge-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.transp-local .transp-badge-header {
+  color: #065f46;
+}
+
+.transp-api .transp-badge-header {
+  color: #0369a1;
+}
+
+.transp-badge-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.transp-local .transp-badge-icon {
+  stroke: #10b981;
+}
+
+.transp-api .transp-badge-icon {
+  stroke: #0284c7;
+}
+
+.transp-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.transp-item {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  position: relative;
+  padding-left: 20px;
+}
+
+.transp-item::before {
+  content: '•';
+  position: absolute;
+  left: 4px;
+  top: 0;
+  font-size: 1.2rem;
+}
+
+.transp-local .transp-item::before {
+  color: #10b981;
+}
+
+.transp-api .transp-item::before {
+  color: #0284c7;
+}
+
+.transp-item strong {
+  color: var(--navy-900);
+}
+
+/* ==========================================================================
    DOWNLOAD BOX & GATEKEEPER
    ========================================================================== */
 .section-download {
